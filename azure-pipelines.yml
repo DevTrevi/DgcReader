@@ -18,10 +18,10 @@ steps:
     patchVersion: '0'
     verbosityPack: 'Normal'
 
-#- task: NuGetToolInstaller@1
-#  displayName: 'Install NuGet'
-#- script: nuget push $(Build.ArtifactStagingDirectory)\$(projectName).*.nupkg -Source $(nugetSource) -ApiKey $(NuGet.nuget-org-apikey) -SkipDuplicate -NoSymbols
-#  displayName: 'Push to NuGet.org'
+- task: NuGetToolInstaller@1
+  displayName: 'Install NuGet'
+- script: nuget push $(Build.ArtifactStagingDirectory)\$(projectName).*.nupkg -Source $(nugetSource) -ApiKey $(NuGet.nuget-org-apikey) -SkipDuplicate -NoSymbols
+  displayName: 'Push to NuGet.org'
     
     
 - task: PublishBuildArtifacts@1

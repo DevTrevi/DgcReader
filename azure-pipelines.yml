@@ -3,6 +3,8 @@ trigger:
 
 variables:
 - group: NuGet
+- name: nugetSource
+  value: 'https://api.nuget.org/v3/index.json'
 
 pool:
   vmImage: windows-latest

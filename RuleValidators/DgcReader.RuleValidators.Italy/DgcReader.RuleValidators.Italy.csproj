@@ -10,10 +10,11 @@
     <RepositoryUrl>https://github.com/DevTrevi/DGCReader</RepositoryUrl>
     <PackageTags>DGC DCC DigitalGreenCertificate DigitalCovidCertificate Greenpass</PackageTags>
     <Description>Implementation of the Italian business rules for validating a Digital Green Certificate</Description>
-    <Version>1.1.2-pre1</Version>
+    <Version>1.1.2</Version>
     <PackageLicenseExpression> Apache-2.0</PackageLicenseExpression>
     <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
     <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageProjectUrl>https://github.com/DevTrevi/DgcReader</PackageProjectUrl>
   </PropertyGroup>
 
   <ItemGroup>

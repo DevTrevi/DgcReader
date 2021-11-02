@@ -1,5 +1,8 @@
 # DgcReader
 
+[![Build Status](https://dev.azure.com/devTrevi/DGCReader/_apis/build/status/DevTrevi.DgcReader?branchName=dev)](https://dev.azure.com/devTrevi/DGCReader/_build/latest?definitionId=9&branchName=dev)
+
+
 ### An extensible library for decoding and validate the European Digital Green Certificate
 
 #### Summary

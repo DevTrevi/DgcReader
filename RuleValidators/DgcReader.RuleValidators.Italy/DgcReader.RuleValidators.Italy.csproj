@@ -11,7 +11,18 @@
     <PackageTags>DGC DCC DigitalGreenCertificate DigitalCovidCertificate Greenpass</PackageTags>
     <Description>Implementation of the Italian business rules for validating a Digital Green Certificate</Description>
     <Version>1.1.2</Version>
+    <PackageLicenseExpression> Apache-2.0</PackageLicenseExpression>
+    <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageProjectUrl>https://github.com/DevTrevi/DgcReader</PackageProjectUrl>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\..\README.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\DgcReader\DgcReader.csproj" />

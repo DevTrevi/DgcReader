@@ -11,7 +11,17 @@
     <PackageTags>DGC DCC DigitalGreenCertificate DigitalCovidCertificate Greenpass</PackageTags>
     <Description>Implementation of a TrustList provider using the Italian backend endpoints</Description>
     <Version>1.1.0</Version>
+    <PackageLicenseExpression> Apache-2.0</PackageLicenseExpression>
+    <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\..\README.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\DgcReader.TrustListProviders.Abstractions\DgcReader.TrustListProviders.Abstractions.csproj" />

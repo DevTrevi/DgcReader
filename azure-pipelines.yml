@@ -1,0 +1,31 @@
+trigger:
+- dev
+
+variables:
+- name: 'BuildConfiguration'
+  value: 'release'
+- group: NuGet-api-key
+
+pool:
+  vmImage: ubuntu-latest
+
+steps:
+- task: DotNetCoreCLI@2
+  displayName: 'dotnet pack'
+  inputs:
+    command: 'pack'
+    packagesToPack: '**/*.csproj'
+    versioningScheme: 'off'
+
+
+#- task: NuGetToolInstaller@1
+#  displayName: 'Install NuGet'
+#- script: nuget push $(Build.ArtifactStagingDirectory)\$(projectName).*.nupkg -Source $(nugetSource) -ApiKey $(NuGet.nuget-org-apikey) -SkipDuplicate -NoSymbols
+#  displayName: 'Push to NuGet.org'
+    
+    
+- task: PublishBuildArtifacts@1
+  inputs:
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+    ArtifactName: 'drop'
+    publishLocation: 'Container'

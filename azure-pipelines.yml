@@ -4,7 +4,7 @@ trigger:
 variables:
 - name: 'BuildConfiguration'
   value: 'release'
-- group: NuGet-api-key
+- group: NuGet
 
 pool:
   vmImage: ubuntu-latest

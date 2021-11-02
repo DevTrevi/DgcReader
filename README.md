@@ -1,14 +1,15 @@
 # DgcReader
 
-[![Build Status](https://dev.azure.com/devTrevi/DGCReader/_apis/build/status/DevTrevi.DgcReader?branchName=dev)](https://dev.azure.com/devTrevi/DGCReader/_build/latest?definitionId=9&branchName=dev)
-
-
 ### An extensible library for decoding and validate the European Digital Green Certificate
+
+[![Build Status](https://dev.azure.com/devTrevi/DGCReader/_apis/build/status/DevTrevi.DgcReader?branchName=dev)](https://dev.azure.com/devTrevi/DGCReader/_build/latest?definitionId=9&branchName=dev) [![NuGet version (DgcReader)](https://img.shields.io/nuget/vpre/DgcReader?label=DgcReader)](https://www.nuget.org/packages/DgcReader/)
+
 
 #### Summary
 The library allows to decode and validate any EU Digital Green Certificate, providing some abstractions to easily implement specific providers for every country's backend. 
 
 It supports any kind of project compatible with .NET Standard 2.0 and also legacy applications from .NET Framework 4.5.2 onwards.
+
 
 #### Usage
 
@@ -120,6 +121,16 @@ The library supports a wide range of .NET and .NET Framework versions, trying to
 For this reason, the implementation of the cryptographic functionalities for signature validations and certificates parsing are implemented with the apis of the  `System.Security.Cryptography` namespace.  
 These APIs were not fully implemented in previous versions of the framework, so the version compiled for .NET Framework 4.5.2 uses the [BouncyCastle](https://www.bouncycastle.org/csharp/) library instead.
 
+#### Packages
+
+
+| Description | Version |
+|-----------------------------------------------|-----------------------------------|
+| Main package, containing the DgcReaderService         | [![NuGet version (DgcReader)](https://img.shields.io/nuget/vpre/DgcReader)](https://www.nuget.org/packages/DgcReader/) |
+| TrustList implementation for the Italian backend        | [![NuGet version (DgcReader.TrustListProviders.Italy)](https://img.shields.io/nuget/vpre/DgcReader.TrustListProviders.Italy)](https://www.nuget.org/packages/DgcReader.TrustListProviders.Italy/)  |
+| TrustList implementation for the Swedish backend        | [![NuGet version (DgcReader.TrustListProviders.Sweden)](https://img.shields.io/nuget/vpre/DgcReader.TrustListProviders.Sweden)](https://www.nuget.org/packages/DgcReader.TrustListProviders.Sweden/)  |
+| Abstractions for building TrustList providers | [![NuGet version (DgcReader.TrustListProviders.Abstractions)](https://img.shields.io/nuget/vpre/DgcReader.TrustListProviders.Abstractions)](https://www.nuget.org/packages/DgcReader.TrustListProviders.Abstractions/)  |
+| Implementation for the Italian validation rules| [![NuGet version (DgcReader.RuleValidators.Italy)](https://img.shields.io/nuget/vpre/DgcReader.RuleValidators.Italy)](https://www.nuget.org/packages/DgcReader.RuleValidators.Italy/)  |
 
 
 #### Disclaimer

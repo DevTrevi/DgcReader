@@ -11,7 +11,6 @@
     <PackageTags>DGC DCC DigitalGreenCertificate DigitalCovidCertificate Greenpass</PackageTags>
     <Description>Library for decode and validate the European Digital Green Certificate</Description>
     <Version>1.0.0-pre1</Version>
-    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <PackageLicenseExpression> Apache-2.0</PackageLicenseExpression>
     <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
     <PackageReadmeFile>README.md</PackageReadmeFile>

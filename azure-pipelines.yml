@@ -5,7 +5,7 @@ variables:
 - group: NuGet
 
 pool:
-  vmImage: ubuntu-latest
+  vmImage: windows-latest
 
 steps:
 - task: DotNetCoreCLI@2

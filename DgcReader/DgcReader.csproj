@@ -9,7 +9,7 @@
     <Copyright>Copyright © 2021 Davide Trevisan</Copyright>
     <RepositoryUrl>https://github.com/DevTrevi/DGCReader</RepositoryUrl>
     <PackageTags>DGC DCC DigitalGreenCertificate DigitalCovidCertificate Greenpass</PackageTags>
-    <Description>Library for decode and validate the European Digital Green Certificate</Description>
+    <Description>Unofficial library for decode and validate the European Digital Green Certificate</Description>
     <Version>1.1.0</Version>
     <PackageLicenseExpression> Apache-2.0</PackageLicenseExpression>
     <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>

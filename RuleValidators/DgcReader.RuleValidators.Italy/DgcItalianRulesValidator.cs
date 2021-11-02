@@ -11,7 +11,6 @@ using System.Threading.Tasks;
 using DgcReader.RuleValidators.Italy.Const;
 using DgcReader.RuleValidators.Italy.Models;
 using DgcReader.Models;
-using DgcReader.Exceptions;
 using System.Threading;
 using DgcReader.RuleValidators.Italy.Exceptions;
 using Microsoft.Extensions.Logging;
@@ -27,13 +26,21 @@ using Microsoft.Extensions.Options;
 namespace DgcReader.RuleValidators.Italy
 {
 
+
+    /// <summary>
+    /// Unofficial porting of the Italian rules from https://github.com/ministero-salute/it-dgc-verificac19-sdk-android
+    /// </summary>
     public class DgcItalianRulesValidator
     {
+        // File containing the business logic on the offical SDK repo:
+        // https://github.com/ministero-salute/it-dgc-verificac19-sdk-android/blob/develop/sdk/src/main/java/it/ministerodellasalute/verificaC19sdk/model/VerificationViewModel.kt
+
+
         private const string ValidationRulesUrl = "https://get.dgc.gov.it/v1/dgc/settings";
         /// <summary>
         /// The version of the sdk used as reference for implementing the rules.
         /// </summary>
-        private const string ReferenceSdkVersion = "1.1.2";
+        private const string ReferenceSdkVersion = "1.1.2"; // NOTE: this is the app version. The SDK version is not available in the settings right now.
 
 
         private readonly HttpClient _httpClient;
@@ -134,110 +141,48 @@ namespace DgcReader.RuleValidators.Italy
             var result = new DgcRulesValidationResult
             {
                 Dgc = signedDgc,
-                ValidationInstant = DateTimeOffset.Now
+                ValidationInstant = DateTimeOffset.Now,
             };
+
+            if (signedDgc?.Dgc == null)
+            {
+                result.Status = DgcResultStatus.NotEuDCC;
+                return result;
+            }
 
             try
             {
-                if (dgc.Vaccinations?.Any() == true)
+                
+                if (dgc.Recoveries?.Any(r => r.TargetedDiseaseAgent == DiseaseAgents.Covid19) == true)
                 {
-                    var vaccination = dgc.Vaccinations.First(r => r.TargetedDiseaseAgent == DiseaseAgents.Covid19);
-                    int startDay, endDay;
-
-                    if (vaccination.DoseNumber > 0 && vaccination.TotalDoseSeries > 0)
-                    {
-
-                        if (vaccination.DoseNumber < vaccination.TotalDoseSeries)
-                        {
-                            // Vaccination is not completed (partial number of doses)
-                            startDay = rules.GetBestMatchInteger(SettingNames.VaccineStartDayNotComplete,
-                                vaccination.MedicinalProduct);
-                            endDay = rules.GetBestMatchInteger(SettingNames.VaccineEndDayNotComplete,
-                                vaccination.MedicinalProduct);
-                        }
-                        else
-                        {
-                            // Vaccination completed (full number of doses)
-                            startDay = rules.GetBestMatchInteger(SettingNames.VaccineStartDayComplete,
-                                vaccination.MedicinalProduct);
-                            endDay = rules.GetBestMatchInteger(SettingNames.VaccineEndDayComplete,
-                                vaccination.MedicinalProduct);
-                        }
-
-                        if (vaccination.MedicinalProduct == VaccineProducts.JeJVacineCode &&
-                            vaccination.DoseNumber > vaccination.TotalDoseSeries)
-                        {
-                            // For J&J, in case of more vaccinations than expected, the vaccine is valid immediately
-                            result.ActiveFrom = vaccination.Date;
-                            result.ActiveUntil = vaccination.Date.AddDays(endDay);
-                        }
-                        else
-                        {
-                            result.ActiveFrom = vaccination.Date.AddDays(startDay);
-                            result.ActiveUntil = vaccination.Date.AddDays(endDay);
-                        }
-                    }
-
-                    
+                    CheckRecoveryStatements(signedDgc, result, rules);
                 }
-                else if (dgc.Recoveries?.Any() == true)
+                else if (dgc.Tests?.Any(r => r.TargetedDiseaseAgent == DiseaseAgents.Covid19) == true)
                 {
-                    var recovery = dgc.Recoveries.First(r => r.TargetedDiseaseAgent == DiseaseAgents.Covid19);
-                    //int startDay, endDay;
-
-                    // Note: the C-19 app use the dates of the recovery element, ignoring the settings.
-                    //startDay = rules.GetBestMatchInteger(SettingNames.RecoveryCertStartDay);
-                    //endDay = rules.GetBestMatchInteger(SettingNames.RecoveryCertEndDay);
-                    //result.ActiveFrom = recovery.ValidFrom.AddDays(startDay);
-                    //result.ActiveUntil = recovery.ValidFrom.AddDays(endDay);
-
-                    result.ActiveFrom = recovery.ValidFrom;
-                    result.ActiveUntil = recovery.ValidUntil;
+                    CheckTests(signedDgc, result, rules);
                 }
-                else if (dgc.Tests?.Any() == true)
+                else if (dgc.Vaccinations?.Any(r => r.TargetedDiseaseAgent == DiseaseAgents.Covid19) == true)
                 {
-                    var test = dgc.Tests.First(r => r.TargetedDiseaseAgent == DiseaseAgents.Covid19);
-
-                    if (test.TestResult == TestResults.NotDetected)
-                    {
-                        // Negative test
-                        int startHours, endHours;
-
-                        switch (test.TestType)
-                        {
-                            case TestTypes.Rapid:
-                                startHours = rules.GetBestMatchInteger(SettingNames.RapidTestStartHours);
-                                endHours = rules.GetBestMatchInteger(SettingNames.RapidTestEndHours);
-                                break;
-                            case TestTypes.Molecular:
-                                startHours = rules.GetBestMatchInteger(SettingNames.MolecularTestStartHours);
-                                endHours = rules.GetBestMatchInteger(SettingNames.MolecularTestEndHours);
-                                break;
-                            default:
-                                throw new DgcException($"Test type {test.TestType} not supported by current rules");
-                        }
-
-                        result.ActiveFrom = test.SampleCollectionDate.AddHours(startHours);
-                        result.ActiveUntil = test.SampleCollectionDate.AddHours(endHours);
-                    }
-                    else
-                    {
-                        // Positive test or unknown result
-                        if (test.TestResult != TestResults.Detected)
-                            _logger?.LogWarning($"Found test with unkwnown TestResult {test.TestResult}. The certificate is considered invalid");
-
-                    }
+                    CheckVaccinations(signedDgc, result, rules);
+                }
+                else
+                {
+                    // An EU DCC must have one of the sections above.
+                    _logger?.LogWarning($"No vaccinations, tests or recovery statements found in the certificate.");
+                    result.Status = DgcResultStatus.NotEuDCC;
                 }
 
-                // Calculate the active status of the result
-                result.IsActive = result.ValidationInstant >= result.ActiveFrom &&
-                    result.ValidationInstant <= result.ActiveUntil &&
-                    result.ActiveFrom != null && result.ActiveUntil != null;
+                // Checking signature
+                if (!signedDgc.HasValidSignature)
+                {
+                    result.Status = DgcResultStatus.NotValid;
+                }
+
             }
             catch (Exception e)
             {
-                _logger?.LogError(e,  $"Validation failed with error {e.Message}");
-                result.IsActive = false;
+                _logger?.LogError(e, $"Validation failed with error {e.Message}");
+                result.Status = DgcResultStatus.NotValid;
             }
             return result;
         }
@@ -306,7 +251,7 @@ namespace DgcReader.RuleValidators.Italy
             }
             catch (Exception e)
             {
-                _logger?.LogError(e,  $"Error getting rules: {e.Message}");
+                _logger?.LogError(e, $"Error getting rules: {e.Message}");
                 throw;
             }
             finally
@@ -333,7 +278,7 @@ namespace DgcReader.RuleValidators.Italy
                 rulesList.Rules = rules.ToArray();
 
                 // Checking min version:
-                var minVersion = rules.Where(r=>r.Name == "android" && r.Type == SettingTypes.AppMinVersion).FirstOrDefault();
+                var minVersion = rules.GetRule("android", SettingTypes.AppMinVersion);
                 if (minVersion != null)
                 {
                     if (minVersion.Value.CompareTo(ReferenceSdkVersion) > 0)
@@ -349,9 +294,8 @@ namespace DgcReader.RuleValidators.Italy
                         {
                             throw new DgcRulesValidationException(message);
                         }
-                        
+
                     }
-                        
                 }
 
                 _currentRulesList = rulesList;
@@ -365,21 +309,160 @@ namespace DgcReader.RuleValidators.Italy
                 }
                 catch (Exception e)
                 {
-                    _logger?.LogError(e,  $"Error saving rules list to file: {e.Message}");
+                    _logger?.LogError(e, $"Error saving rules list to file: {e.Message}");
                 }
 
                 return rulesList.Rules;
             }
             catch (Exception e)
             {
-                _logger?.LogError(e,  $"Error refreshing rules list from server: {e.Message}");
+                _logger?.LogError(e, $"Error refreshing rules list from server: {e.Message}");
                 return null;
             }
         }
 
-#endregion
+        #endregion
 
-#region Private
+        #region Validation methods
+
+        /// <summary>
+        /// Computes the status by checking the vaccinations in the DCC
+        /// </summary>
+        /// <param name="signedDgc"></param>
+        /// <param name="result">The output result compiled by the function</param>
+        /// <param name="rules"></param>
+        private void CheckVaccinations(DgcResult signedDgc, DgcRulesValidationResult result, IEnumerable<RuleSetting> rules)
+        {
+            var vaccination = signedDgc.Dgc.Vaccinations.Last(r => r.TargetedDiseaseAgent == DiseaseAgents.Covid19);
+
+            int startDay, endDay;
+            if (vaccination.DoseNumber > 0 && vaccination.TotalDoseSeries > 0)
+            {
+
+                if (vaccination.DoseNumber < vaccination.TotalDoseSeries)
+                {
+                    // Vaccination is not completed (partial number of doses)
+                    startDay = rules.GetRuleInteger(SettingNames.VaccineStartDayNotComplete,
+                        vaccination.MedicinalProduct);
+                    endDay = rules.GetRuleInteger(SettingNames.VaccineEndDayNotComplete,
+                        vaccination.MedicinalProduct);
+                }
+                else
+                {
+                    // Vaccination completed (full number of doses)
+                    startDay = rules.GetRuleInteger(SettingNames.VaccineStartDayComplete,
+                        vaccination.MedicinalProduct);
+                    endDay = rules.GetRuleInteger(SettingNames.VaccineEndDayComplete,
+                        vaccination.MedicinalProduct);
+                }
+
+                if (vaccination.MedicinalProduct == VaccineProducts.JeJVacineCode &&
+                    vaccination.DoseNumber > vaccination.TotalDoseSeries)
+                {
+                    // For J&J booster, in case of more vaccinations than expected, the vaccine is immediately valid 
+                    result.ActiveFrom = vaccination.Date;
+                    result.ActiveUntil = vaccination.Date.AddDays(endDay);
+                }
+                else
+                {
+                    result.ActiveFrom = vaccination.Date.AddDays(startDay);
+                    result.ActiveUntil = vaccination.Date.AddDays(endDay);
+                }
+
+                // Calculate the status
+                if (result.ActiveFrom > result.ValidationInstant)
+                    result.Status = DgcResultStatus.NotValidYet;
+                else if (result.ActiveUntil < result.ValidationInstant)
+                    result.Status = DgcResultStatus.NotValid;
+                else if (vaccination.DoseNumber < vaccination.TotalDoseSeries)
+                    result.Status = DgcResultStatus.PartiallyValid;
+                else
+                    result.Status = DgcResultStatus.Valid;
+            }            
+        }
+
+        /// <summary>
+        /// Computes the status by checking the tests in the DCC
+        /// </summary>
+        /// <param name="signedDgc"></param>
+        /// <param name="rules"></param>
+        private void CheckTests(DgcResult signedDgc, DgcRulesValidationResult result, IEnumerable<RuleSetting> rules)
+        {
+            var test = signedDgc.Dgc.Tests.Last(r => r.TargetedDiseaseAgent == DiseaseAgents.Covid19);
+
+            if (test.TestResult == TestResults.NotDetected)
+            {
+                // Negative test
+                int startHours, endHours;
+
+                switch (test.TestType)
+                {
+                    case TestTypes.Rapid:
+                        startHours = rules.GetRuleInteger(SettingNames.RapidTestStartHours);
+                        endHours = rules.GetRuleInteger(SettingNames.RapidTestEndHours);
+                        break;
+                    case TestTypes.Molecular:
+                        startHours = rules.GetRuleInteger(SettingNames.MolecularTestStartHours);
+                        endHours = rules.GetRuleInteger(SettingNames.MolecularTestEndHours);
+                        break;
+                    default:
+                        _logger?.LogWarning($"Test type {test.TestType} not supported by current rules");
+                        result.Status = DgcResultStatus.NotValid;
+                        return;
+                }
+
+                result.ActiveFrom = test.SampleCollectionDate.AddHours(startHours);
+                result.ActiveUntil = test.SampleCollectionDate.AddHours(endHours);
+
+                // Calculate the status
+                if (result.ActiveFrom > result.ValidationInstant)
+                    result.Status = DgcResultStatus.NotValidYet;
+                else if (result.ActiveUntil < result.ValidationInstant)
+                    result.Status = DgcResultStatus.NotValid;
+                else
+                    result.Status = DgcResultStatus.Valid;
+            }
+            else
+            {
+                // Positive test or unknown result
+                if (test.TestResult != TestResults.Detected)
+                    _logger?.LogWarning($"Found test with unkwnown TestResult {test.TestResult}. The certificate is considered invalid");
+
+                result.Status = DgcResultStatus.NotValid;
+            }
+        }
+
+        /// <summary>
+        /// Computes the status by checking the recovery statements in the DCC
+        /// </summary>
+        /// <param name="signedDgc"></param>
+        /// <param name="rules"></param>
+        private void CheckRecoveryStatements(DgcResult signedDgc, DgcRulesValidationResult result, IEnumerable<RuleSetting> rules)
+        {
+            var recovery = signedDgc.Dgc.Recoveries.Last(r => r.TargetedDiseaseAgent == DiseaseAgents.Covid19);
+            
+            int startDay, endDay;
+
+            startDay = rules.GetRuleInteger(SettingNames.RecoveryCertStartDay);
+            endDay = rules.GetRuleInteger(SettingNames.RecoveryCertEndDay);
+
+            result.ActiveFrom = recovery.ValidFrom.Date.AddDays(startDay);
+            result.ActiveUntil = recovery.ValidUntil.Date;
+
+            if (result.ActiveFrom > result.ValidationInstant)
+                result.Status = DgcResultStatus.NotValidYet;
+            else if (result.ValidationInstant > result.ActiveFrom.Value.AddDays(endDay))
+                result.Status = DgcResultStatus.NotValid;
+            else if (result.ValidationInstant > result.ActiveUntil)
+                result.Status = DgcResultStatus.PartiallyValid;
+            else
+                result.Status = DgcResultStatus.Valid;
+        }
+
+        #endregion
+
+
+        #region Private
         private async Task<RuleSetting[]> FetchSettings()
         {
             try
@@ -413,7 +496,7 @@ namespace DgcReader.RuleValidators.Italy
         {
             return Path.Combine(_options.BasePath, _options.RulesListFileName);
         }
-#endregion
+        #endregion
 
     }
 }

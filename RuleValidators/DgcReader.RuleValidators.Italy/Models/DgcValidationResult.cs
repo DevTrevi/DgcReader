@@ -34,8 +34,43 @@ namespace DgcReader.RuleValidators.Italy.Models
         public DateTimeOffset? ActiveUntil { get; internal set; }
 
         /// <summary>
-        /// If true, the certificate is considered valid at the moment of validation
+        /// If true, the certificate is considered valid at the moment of validation in the country of verification.
         /// </summary>
-        public bool IsActive { get; internal set; }
+        public bool IsActive => Status == DgcResultStatus.Valid || Status == DgcResultStatus.PartiallyValid;
+
+        /// <summary>
+        /// The validation status of the DGC
+        /// </summary>
+        public DgcResultStatus Status { get; internal set; } = DgcResultStatus.NotValid;
+    }
+
+    /// <summary>
+    /// Detailed status of validation
+    /// </summary>
+    public enum DgcResultStatus
+    {
+        /// <summary>
+        /// The certificate is not valid
+        /// </summary>
+        NotValid,
+        /// <summary>
+        /// The certificate is not valid yet. It will be valid after the <see cref="DgcRulesValidationResult.ActiveFrom"/> date
+        /// </summary>
+        NotValidYet,
+
+        /// <summary>
+        /// The certificate is valid in the country of verification, and should be valid in other countries as well
+        /// </summary>
+        Valid,
+
+        /// <summary>
+        /// The certificate is considered valid in the country of verificstion, but may be considered not valid in other countries
+        /// </summary>
+        PartiallyValid,
+
+        /// <summary>
+        /// The certificate is not a valid EU DCC
+        /// </summary>
+        NotEuDCC
     }
 }

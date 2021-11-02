@@ -5,6 +5,8 @@ variables:
 - group: NuGet
 - name: nugetSource
   value: 'https://api.nuget.org/v3/index.json'
+- name: BuildConfiguration
+  value: 'release'
 
 pool:
   vmImage: windows-latest

@@ -2,8 +2,6 @@ trigger:
 - dev
 
 variables:
-- name: 'BuildConfiguration'
-  value: 'release'
 - group: NuGet
 
 pool:
@@ -11,12 +9,11 @@ pool:
 
 steps:
 - task: DotNetCoreCLI@2
-  displayName: 'dotnet pack'
   inputs:
     command: 'pack'
     packagesToPack: '**/*.csproj'
-    versioningScheme: 'off'
-
+    versioningScheme: 'byBuildNumber'
+    verbosityPack: 'Normal'
 
 #- task: NuGetToolInstaller@1
 #  displayName: 'Install NuGet'

@@ -370,6 +370,14 @@ namespace DgcReader.RuleValidators.Italy
                 }
 
                 // Calculate the status
+
+                // Exception: Checking sputnik not from San Marino
+                if (vaccination.MedicinalProduct == VaccineProducts.Sputnik && vaccination.Country != "SM")
+                {
+                    result.Status = DgcResultStatus.NotValid;
+                    return;
+                }
+
                 if (result.ActiveFrom > result.ValidationInstant)
                     result.Status = DgcResultStatus.NotValidYet;
                 else if (result.ActiveUntil < result.ValidationInstant)

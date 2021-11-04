@@ -5,7 +5,7 @@ using System;
 // Copyright (c) 2021 Davide Trevisan
 // Licensed under the Apache License, Version 2.0
 
-namespace DgcReader
+namespace Microsoft.Extensions.DependencyInjection
 {
     public static class DgcReaderServiceExtensions
     {
@@ -17,6 +17,7 @@ namespace DgcReader
             }
             return new DgcReaderServiceBuilder(services);
         }
+
     }
 }
 #endif

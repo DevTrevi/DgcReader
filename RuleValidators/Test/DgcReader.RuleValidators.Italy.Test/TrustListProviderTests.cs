@@ -59,7 +59,8 @@ namespace DgcReader.RuleValidators.Italy.Test
         {
             base.ConfigureServices(services);
 
-            services.AddItalianRulesValidator();
+            services.AddDgcReader()
+                .AddItalianRulesValidator();
         }
 #endif
     }

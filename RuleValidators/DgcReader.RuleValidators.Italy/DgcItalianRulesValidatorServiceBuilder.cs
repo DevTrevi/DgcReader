@@ -1,14 +1,14 @@
 ﻿#if NETSTANDARD2_0_OR_GREATER || NET5_0_OR_GREATER || NET47_OR_GREATER
 using DgcReader.Interfaces.BlacklistProviders;
 using DgcReader.Interfaces.RulesValidators;
-using Microsoft.Extensions.DependencyInjection;
+using DgcReader.RuleValidators.Italy;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using System;
 
 // Copyright (c) 2021 Davide Trevisan
 // Licensed under the Apache License, Version 2.0
 
-namespace DgcReader.RuleValidators.Italy
+namespace Microsoft.Extensions.DependencyInjection
 {
     public class DgcItalianRulesValidatorServiceBuilder
     {

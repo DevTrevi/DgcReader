@@ -1,13 +1,13 @@
 ﻿#if NETSTANDARD2_0_OR_GREATER || NET5_0_OR_GREATER || NET47_OR_GREATER
 using DgcReader.Interfaces.TrustListProviders;
-using Microsoft.Extensions.DependencyInjection;
+using DgcReader.TrustListProviders.Sweden;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using System;
 
 // Copyright (c) 2021 Davide Trevisan
 // Licensed under the Apache License, Version 2.0
 
-namespace DgcReader.TrustListProviders.Sweden
+namespace Microsoft.Extensions.DependencyInjection
 {
     public class SwedishTrustListProviderBuilder
     {

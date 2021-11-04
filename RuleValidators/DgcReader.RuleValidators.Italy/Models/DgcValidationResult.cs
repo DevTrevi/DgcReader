@@ -1,4 +1,6 @@
-﻿using DgcReader.Models;
+﻿using DgcReader.Interfaces.RulesValidators;
+using DgcReader.Models;
+using GreenpassReader.Models;
 using System;
 
 // Copyright (c) 2021 Davide Trevisan
@@ -9,33 +11,36 @@ namespace DgcReader.RuleValidators.Italy.Models
     /// <summary>
     /// Represents a validation result for the italia rules
     /// </summary>
-    public class DgcRulesValidationResult
+    public class DgcRulesValidationResult : IRuleValidationResult
     {
         /// <summary>
         /// The validated Dgc
         /// </summary>
-        public DgcResult Dgc {  get; set; }
+        public EuDGC Dgc {  get; internal set; }
 
         /// <summary>
         /// The instant when the certificate was validated against the business rules.
         /// </summary>
         public DateTimeOffset ValidationInstant { get; internal set; }
 
-        /// <summary>
-        /// If specified, determines the date and time when the certification is considered active.
-        /// If null, the certification is to be considered invalid
-        /// </summary>
-        public DateTimeOffset? ActiveFrom { get; internal set; }
+        /// <inheritdoc/>
+        public DateTimeOffset? ValidFrom { get; internal set; }
+
+        /// <inheritdoc/>
+        public DateTimeOffset? ValidUntil { get; internal set; }
 
         /// <summary>
-        /// If specified, determines the date and time when the certification is considered expired.
-        /// If null, the certification is to be considered invalid
+        /// The validation status of the DGC
         /// </summary>
-        public DateTimeOffset? ActiveUntil { get; internal set; }
+        public DgcResultStatus Status { get; internal set; } = DgcResultStatus.NotValid;
+
+
+        /// <inheritdoc/>
+        public string RulesVerificationCountry => "IT";
 
         /// <summary>
-        /// If true, the certificate is considered valid at the moment of validation
+        /// If true, the certificate is considered valid at the moment of validation in the country of verification.
         /// </summary>
-        public bool IsActive { get; internal set; }
+        public bool IsActive => Status == DgcResultStatus.Valid || Status == DgcResultStatus.PartiallyValid;
     }
 }

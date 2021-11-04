@@ -3,22 +3,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
-
-/* Unmerged change from project 'DgcReader.TrustListProviders.Abstractions (netstandard2.0)'
-Before:
-using System.Threading.Tasks;
-After:
-using System.Threading.Tasks;
-using DgcReader.TrustListProviders.Abstractions;
-using DgcReader;
-using DgcReader.TrustListProviders;
-using DgcReader.TrustListProviders.Common;
-*/
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
-#if NETSTANDARD2_0_OR_GREATER || NET5_0_OR_GREATER || NET47_OR_GREATER
-
-#endif
+using DgcReader.Interfaces.TrustListProviders;
 
 // Copyright (c) 2021 Davide Trevisan
 // Licensed under the Apache License, Version 2.0

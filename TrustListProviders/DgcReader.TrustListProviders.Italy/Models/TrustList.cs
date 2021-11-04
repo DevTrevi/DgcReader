@@ -1,4 +1,5 @@
-﻿using DgcReader.TrustListProviders.Abstractions.Interfaces;
+﻿using DgcReader.Interfaces.TrustListProviders;
+using DgcReader.TrustListProviders.Abstractions.Interfaces;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;

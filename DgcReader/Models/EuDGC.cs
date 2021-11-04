@@ -91,7 +91,7 @@ namespace GreenpassReader.Models
     /// <summary>
     /// Recovery Entry
     /// </summary>
-    public class RecoveryEntry
+    public class RecoveryEntry : ICertificateEntry
     {
         /// <summary>
         /// Unique Certificate Identifier, UVCI
@@ -104,6 +104,19 @@ namespace GreenpassReader.Models
         /// </summary>
         [JsonProperty("co")]
         public string Country { get; internal set; }
+
+        /// <summary>
+        /// Certificate Issuer
+        /// </summary>
+        [JsonProperty("is")]
+        public string Issuer { get; internal set; }
+
+
+        /// <summary>
+        /// A coded value from the value set disease-agent-targeted.json
+        /// </summary>
+        [JsonProperty("tg")]
+        public string TargetedDiseaseAgent { get; internal set; }
 
         /// <summary>
         /// ISO 8601 Date: Certificate Valid From
@@ -123,25 +136,13 @@ namespace GreenpassReader.Models
         [JsonProperty("fr")]
         public DateTimeOffset FirstPositiveTestResult { get; internal set; }
 
-        /// <summary>
-        /// Certificate Issuer
-        /// </summary>
-        [JsonProperty("is")]
-        public string Issuer { get; internal set; }
-
-
-        /// <summary>
-        /// A coded value from the value set disease-agent-targeted.json
-        /// </summary>
-        [JsonProperty("tg")]
-        public string TargetedDiseaseAgent { get; internal set; }
     }
 
     /// <summary>
     /// Test Entry
     /// Test group, if present, MUST contain exactly 1 (one) entry describing exactly one test result.
     /// </summary>
-    public class TestEntry
+    public class TestEntry : ICertificateEntry
     {
         /// <summary>
         /// Unique Certificate Identifier, UVCI
@@ -159,17 +160,17 @@ namespace GreenpassReader.Models
         [JsonProperty("co")]
         public string Country { get; internal set; }
 
-        ///// <summary>
-        ///// Date/Time of Test Result
-        ///// </summary>
-        //[JsonProperty("dr", NullValueHandling = NullValueHandling.Ignore)]
-        //public DateTimeOffset? Dr { get; internal set; }
-
         /// <summary>
         /// Certificate Issuer
         /// </summary>
         [JsonProperty("is")]
         public string Issuer { get; internal set; }
+
+        /// <summary>
+        /// A coded value from the value set disease-agent-targeted.json
+        /// </summary>
+        [JsonProperty("tg")]
+        public string TargetedDiseaseAgent { get; internal set; }
 
         /// <summary>
         /// RAT Test name and manufacturer (rapid antigen tests only)
@@ -209,12 +210,6 @@ namespace GreenpassReader.Models
         public string TestingCentre { get; internal set; }
 
         /// <summary>
-        /// A coded value from the value set disease-agent-targeted.json
-        /// </summary>
-        [JsonProperty("tg")]
-        public string TargetedDiseaseAgent { get; internal set; }
-
-        /// <summary>
         /// Test Result
         /// A coded value from the value set test-result.json
         /// </summary>
@@ -232,7 +227,7 @@ namespace GreenpassReader.Models
     /// <summary>
     /// Vaccination Entry
     /// </summary>
-    public class VaccinationEntry
+    public class VaccinationEntry : ICertificateEntry
     {
         /// <summary>
         /// Unique Certificate Identifier: UVCI
@@ -255,6 +250,13 @@ namespace GreenpassReader.Models
         /// </summary>
         [JsonProperty("is")]
         public string Issuer { get; internal set; }
+
+        /// <summary>
+        /// Disease or agent targeted
+        /// A coded value from the value set disease-agent-targeted.json
+        /// </summary>
+        [JsonProperty("tg")]
+        public string TargetedDiseaseAgent { get; internal set; }
 
         /// <summary>
         /// Dose Number
@@ -294,13 +296,6 @@ namespace GreenpassReader.Models
         public int TotalDoseSeries { get; internal set; }
 
         /// <summary>
-        /// Disease or agent targeted
-        /// A coded value from the value set disease-agent-targeted.json
-        /// </summary>
-        [JsonProperty("tg")]
-        public string TargetedDiseaseAgent { get; internal set; }
-
-        /// <summary>
         /// Vaccine or prophylaxis
         /// Type of the vaccine or prophylaxis used. 
         /// A coded value from the value set vaccine-prophylaxis.json
@@ -309,6 +304,34 @@ namespace GreenpassReader.Models
         public string VaccineOrProphylaxis { get; internal set; }
     }
 
+    /// <summary>
+    /// A certificate entry supported by the EuDGC
+    /// </summary>
+    public interface ICertificateEntry
+    {
+        /// <summary>
+        /// Unique Certificate Identifier: UVCI
+        /// </summary>
+        string CertificateIdentifier { get; }
+
+        /// <summary>
+        /// Country
+        /// 2-letter ISO3166 code (RECOMMENDED) or a reference to an international 
+        /// organisation responsible for carrying out the test which the test 
+        /// was carried out (such as UNHCR or WHO)
+        /// </summary>
+        string Country { get; }
+
+        /// <summary>
+        /// Certificate Issuer
+        /// </summary>
+        string Issuer { get; }
+
+        /// <summary>
+        /// Disease or agent targeted
+        /// </summary>
+        string TargetedDiseaseAgent { get; }
+    }
 
     public partial class EuDGC
     {

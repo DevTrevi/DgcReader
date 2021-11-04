@@ -1,12 +1,12 @@
 using DgcReader.DgcTestData.Test.Models;
 using DgcReader.DgcTestData.Test.Services;
 using DgcReader.Exceptions;
-using DgcReader.TrustListProviders;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
+using DgcReader.Interfaces.TrustListProviders;
 #if NET452
 using System.Net.Http;
 using Microsoft.Extensions.Configuration;
@@ -106,7 +106,67 @@ namespace DgcReader.DgcTestData.Test
                         Assert.IsNotNull(result.Dgc);
                         Assert.IsTrue(result.HasValidSignature);
                     }
-                    catch (DgcExpiredException e)
+                    catch (DgcSignatureExpiredException e)
+                    {
+                        if (entry.ExpectedResults.ContainsKey(ExpectedResultsKeys.EXPECTEDEXPIRATIONCHECK))
+                        {
+                            if (entry.ExpectedResults[ExpectedResultsKeys.EXPECTEDEXPIRATIONCHECK])
+                            {
+                                Assert.Fail($"Expiraton check failed for DGC of country {folder} - file {entry.Filename}: {e.Message}");
+                            }
+                        }
+                    }
+                    catch (DgcSignatureValidationException e)
+                    {
+                        if (entry.ExpectedResults[ExpectedResultsKeys.EXPECTEDVERIFY])
+                        {
+                            Assert.Fail($"Signature check failed for DGC of country {folder} - file {entry.Filename}: {e.Message}");
+                        }
+                    }
+                    catch (System.Exception e)
+                    {
+                        if (ExpectedDecodeSucced(entry))
+                        {
+                            Assert.Fail($"Failed to decode data for country {folder} - file {entry.Filename}: {e.Message}");
+                        }
+                        else
+                        {
+                            Debug.WriteLine($"Verify failed for country {folder} - file {entry.Filename}: {e.Message}");
+                        }
+
+                    }
+
+                }
+            }
+        }
+
+        [TestMethod]
+        public async Task TestGetValidationResultMethod()
+        {
+
+            foreach (var folder in TestEntries.Keys.Where(r => r != CertificatesTestsLoader.CommonTestDirName))
+            {
+                foreach (var entry in TestEntries[folder])
+                {
+                    try
+                    {
+                        var clock = entry.TestContext.ValidationClock ?? System.DateTimeOffset.Now;
+
+                        var result = await DgcReader.GetValidationResult(entry.PREFIX, clock);
+
+                        Assert.IsNotNull(result);
+                        Assert.IsNotNull(result.Dgc);
+                        Assert.IsTrue(result.HasValidSignature);
+
+                        if (entry.ExpectedResults.ContainsKey(ExpectedResultsKeys.EXPECTEDEXPIRATIONCHECK))
+                        {
+                            if (entry.ExpectedResults[ExpectedResultsKeys.EXPECTEDEXPIRATIONCHECK])
+                            {
+                                Assert.AreEqual(result.HasValidSignature, entry.ExpectedResults[ExpectedResultsKeys.EXPECTEDEXPIRATIONCHECK]);
+                            }
+                        }
+                    }
+                    catch (DgcSignatureExpiredException e)
                     {
                         if (entry.ExpectedResults.ContainsKey(ExpectedResultsKeys.EXPECTEDEXPIRATIONCHECK))
                         {

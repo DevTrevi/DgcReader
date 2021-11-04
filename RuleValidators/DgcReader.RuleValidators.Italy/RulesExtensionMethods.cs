@@ -12,6 +12,20 @@ namespace DgcReader.RuleValidators.Italy
     internal static class RulesExtensionMethods
     {
         /// <summary>
+        /// Search the rule with the specified type.
+        /// If no match exists for the specified type, returns null.
+        /// </summary>
+        /// <param name="settings"></param>
+        /// <param name="name">The setting name to search</param>
+        /// <param name="type">The setting type to search</param>
+        /// <returns></returns>
+        public static RuleSetting? GetRule(this IEnumerable<RuleSetting> settings, string name, string type)
+        {
+            return settings.SingleOrDefault(r => r.Name == name && r.Type == type);
+        }
+
+
+        /// <summary>
         /// Search rules with the specified name, trying to match the type.
         /// If no match exists for the specified type, the <see cref="SettingTypes.Generic"/> type is used.
         /// </summary>
@@ -19,7 +33,7 @@ namespace DgcReader.RuleValidators.Italy
         /// <param name="name">The setting name to search</param>
         /// <param name="type">The setting type to search</param>
         /// <returns></returns>
-        public static RuleSetting GetBestMatch(this IEnumerable<RuleSetting> settings, string name, string type)
+        public static RuleSetting? GetBestMatch(this IEnumerable<RuleSetting> settings, string name, string type)
         {
             return settings.SingleOrDefault(r => r.Name == name && r.Type == type) ??
                 settings.SingleOrDefault(r => r.Name == name && r.Type == SettingTypes.Generic);
@@ -48,6 +62,25 @@ namespace DgcReader.RuleValidators.Italy
                 throw new DgcRulesValidationException($"Invalid value {rule.Value} in rule {name} type {type}");
 
             return value.Value;
+        }
+
+        public static int GetRuleInteger(this IEnumerable<RuleSetting> settings, string name, string type = SettingTypes.Generic)
+        {
+            var rule = settings.GetRule(name, type);
+            if (rule == null)
+                throw new DgcRulesValidationException($"No rules found for setting {name} and type {type}");
+
+            var value = rule.ToInteger();
+            if (value == null)
+                throw new DgcRulesValidationException($"Invalid value {rule.Value} in rule {name} type {type}");
+
+            return value.Value;
+        }
+
+        public static string[]? GetBlackList(this IEnumerable<RuleSetting> settings)
+        {
+            var blackList = settings?.GetRule(SettingNames.Blacklist, SettingNames.Blacklist);
+            return blackList?.Value?.Split(';').ToArray();
         }
     }
 

@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 // Copyright (c) 2021 Davide Trevisan
 // Licensed under the Apache License, Version 2.0
 
-namespace DgcReader.TrustListProviders
+namespace DgcReader.Interfaces.TrustListProviders
 {
     /// <summary>
     /// Represents a provider used to retrieve the certificates used to verify the signature of a Greenpass

@@ -9,12 +9,13 @@
     <Copyright>Copyright © 2021 Davide Trevisan</Copyright>
     <RepositoryUrl>https://github.com/DevTrevi/DGCReader</RepositoryUrl>
     <PackageTags>DGC DCC DigitalGreenCertificate DigitalCovidCertificate Greenpass</PackageTags>
-    <Description>Implementation of the Italian business rules for validating a Digital Green Certificate</Description>
-    <Version>1.1.2</Version>
+    <Description>Unofficial implementation of the Italian rules for validating a Digital Green Certificate</Description>
+    <Version>1.2.0</Version>
     <PackageLicenseExpression> Apache-2.0</PackageLicenseExpression>
     <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageProjectUrl>https://github.com/DevTrevi/DgcReader</PackageProjectUrl>
+    <PackageReleaseNotes>Aligned rules from official SDK version 1.0.2, check for Sputnik vaccine not from San Marino and UVCI blacklist provider. Implemented standard interfaces IBlacklistProvider and IRulesValidator</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>

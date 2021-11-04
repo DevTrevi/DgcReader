@@ -12,5 +12,10 @@ namespace DgcReader.RuleValidators.Italy.Const
         /// Johnson &amp; Johnson
         /// </summary>
         public const string JeJVacineCode = "EU/1/20/1525";
+
+        /// <summary>
+        /// Sputnik-V
+        /// </summary>
+        public const string Sputnik = "Sputnik-V";
     }
 }

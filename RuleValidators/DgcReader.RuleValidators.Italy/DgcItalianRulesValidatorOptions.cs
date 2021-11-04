@@ -42,6 +42,6 @@ namespace DgcReader.RuleValidators.Italy
         /// <summary>
         /// If true, validates the rules even if the reference SDK version is obsolete
         /// </summary>
-        public bool IgnoreMinimumSdkVersion { get; set; } = false;
+        public bool IgnoreMinimumSdkVersion { get; set; } = false;        
     }
 }

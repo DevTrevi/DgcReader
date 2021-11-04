@@ -1,6 +1,5 @@
 ﻿#if NETSTANDARD2_0_OR_GREATER || NET5_0_OR_GREATER || NET47_OR_GREATER
 using DgcReader.RuleValidators.Italy;
-using Microsoft.Extensions.DependencyInjection;
 using System;
 
 // Copyright (c) 2021 Davide Trevisan
@@ -66,14 +65,15 @@ namespace Microsoft.Extensions.DependencyInjection
             return services;
         }
 
-        // Extensions for DgcReaderbuilder
+        // Extensions for DgcReaderServiceBuilder
 
-        public static DgcItalianRulesValidatorServiceBuilder AddItalianRulesValidator(this DgcReaderServiceBuilder dgcBuilder)
+        public static DgcReaderServiceBuilder AddItalianRulesValidator(this DgcReaderServiceBuilder dgcBuilder)
         {
             if (dgcBuilder is null)
                 throw new ArgumentNullException(nameof(dgcBuilder));
             
-            return dgcBuilder.Services.AddItalianRulesValidator();
+            dgcBuilder.Services.AddItalianRulesValidator();
+            return dgcBuilder;
         }
 
         public static DgcReaderServiceBuilder AddItalianRulesValidator(this DgcReaderServiceBuilder dgcBuilder,
@@ -84,7 +84,8 @@ namespace Microsoft.Extensions.DependencyInjection
             if (configuration is null)
                 throw new ArgumentNullException(nameof(configuration));
 
-            dgcBuilder.AddItalianRulesValidator().Configure(configuration);
+            dgcBuilder.AddItalianRulesValidator();
+            dgcBuilder.Services.Configure(configuration);
 
             return dgcBuilder;
         }
@@ -97,17 +98,20 @@ namespace Microsoft.Extensions.DependencyInjection
             if (configuration is null)
                 throw new ArgumentNullException(nameof(configuration));
 
-            configuration(dgcBuilder.AddItalianRulesValidator());
+            var builder = dgcBuilder.Services.AddItalianRulesValidator();
+            configuration(builder);
 
             return dgcBuilder;
         }
 
-        public static DgcItalianRulesValidatorServiceBuilder AddItalianBlacklistProvider(this DgcReaderServiceBuilder dgcBuilder)
+        public static DgcReaderServiceBuilder AddItalianBlacklistProvider(this DgcReaderServiceBuilder dgcBuilder)
         {
             if (dgcBuilder is null)
                 throw new ArgumentNullException(nameof(dgcBuilder));
 
-            return dgcBuilder.Services.AddItalianBlacklistProvider();
+            dgcBuilder.Services.AddItalianBlacklistProvider();
+
+            return dgcBuilder;
         }
 
         public static DgcReaderServiceBuilder AddItalianBlacklistProvider(this DgcReaderServiceBuilder dgcBuilder,
@@ -118,7 +122,8 @@ namespace Microsoft.Extensions.DependencyInjection
             if (configuration is null)
                 throw new ArgumentNullException(nameof(configuration));
 
-            dgcBuilder.AddItalianBlacklistProvider().Configure(configuration);
+            dgcBuilder.AddItalianBlacklistProvider();
+            dgcBuilder.Services.Configure(configuration);
 
             return dgcBuilder;
         }
@@ -131,7 +136,8 @@ namespace Microsoft.Extensions.DependencyInjection
             if (configuration is null)
                 throw new ArgumentNullException(nameof(configuration));
 
-            configuration(dgcBuilder.AddItalianBlacklistProvider());
+            var builder = dgcBuilder.Services.AddItalianBlacklistProvider();
+            configuration(builder);
 
             return dgcBuilder;
         }

@@ -23,7 +23,7 @@ namespace DgcReader
     /// </summary>
     public class DgcReaderService
     {
-        private readonly ITrustListProvider? CertificatesProvider;
+        private readonly ITrustListProvider TrustListProvider;
         private readonly IBlacklistProvider? BlackListProvider;
         private readonly IRulesValidator? RulesValidator;
         private readonly ILogger? Logger;
@@ -35,12 +35,12 @@ namespace DgcReader
         /// <param name="blackListProvider">The provider used to check if a certificate is blacklisted</param>
         /// <param name="rulesValidator">The service used to validate the rules for a specific country</param>
         /// <param name="logger"></param>
-        public DgcReaderService(ITrustListProvider? trustListProvider = null,
+        public DgcReaderService(ITrustListProvider trustListProvider = null,
             IBlacklistProvider? blackListProvider = null,
             IRulesValidator? rulesValidator = null,
             ILogger<DgcReaderService>? logger = null)
         {
-            CertificatesProvider = trustListProvider;
+            TrustListProvider = trustListProvider;
             BlackListProvider = blackListProvider;
             RulesValidator = rulesValidator;
             Logger = logger;
@@ -146,7 +146,7 @@ namespace DgcReader
                     result.Dgc = signedDgc.Dgc;
 
                     // Step 2: check signature
-                    if (CertificatesProvider == null)
+                    if (TrustListProvider == null)
                     {
                         throw new DgcSignatureValidationException($"No trustlist provider is registered for signature validation");
                     }
@@ -170,6 +170,10 @@ namespace DgcReader
                             throw new DgcBlackListException($"The certificate is blacklisted", certEntry.CertificateIdentifier);
                         }
                     }
+                    else
+                    {
+                        Logger?.LogWarning($"No blacklist provider is registered, blacklist validation is skipped");
+                    }
 
                     // Step 4: check country rules
                     if (RulesValidator != null)
@@ -192,14 +196,7 @@ namespace DgcReader
                     else
                     {
                         result.Status = DgcResultStatus.NeedRulesVerification;
-                        if (throwOnError)
-                        {
-                            throw new DgcRulesValidationException(GetDgcResultStatusDescription(result.Status), null);
-                        }
-                        else
-                        {
-                            Logger?.LogWarning($"No rules validator is registered, rules validation is skipped");
-                        }
+                        Logger?.LogWarning($"No rules validator is registered, rules validation is skipped");
                     }
 
                 }
@@ -244,6 +241,8 @@ namespace DgcReader
             if (result.Status == DgcResultStatus.Valid)
                 Logger?.LogInformation($"Validation succeded: {GetDgcResultStatusDescription(result.Status)}");
             else if (result.Status == DgcResultStatus.PartiallyValid)
+                Logger?.LogWarning($"Validation succeded: {GetDgcResultStatusDescription(result.Status)}");
+            else if (result.Status == DgcResultStatus.NeedRulesVerification && RulesValidator == null)
                 Logger?.LogWarning($"Validation succeded: {GetDgcResultStatusDescription(result.Status)}");
             else
                 Logger?.LogError($"Validation failed: {GetDgcResultStatusDescription(result.Status)}");
@@ -333,12 +332,12 @@ namespace DgcReader
                 string kidStr = Convert.ToBase64String(kid);
 
                 // Try by kid and country
-                var publicKeyData = await CertificatesProvider.GetByKid(kidStr, issuer);
+                var publicKeyData = await TrustListProvider.GetByKid(kidStr, issuer);
 
                 // If not found, try Kid only
                 // Sometimes the issuer of the CBOR is different from the ISO code fo the country
                 if (publicKeyData == null)
-                    publicKeyData = await CertificatesProvider.GetByKid(kidStr);
+                    publicKeyData = await TrustListProvider.GetByKid(kidStr);
 
                 if (publicKeyData == null)
                     throw new DgcUnknownSignerException($"No signer certificate could be found for kid {kidStr}", kidStr,

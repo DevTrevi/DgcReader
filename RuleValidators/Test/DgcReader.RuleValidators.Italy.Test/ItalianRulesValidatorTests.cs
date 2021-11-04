@@ -20,7 +20,7 @@ using Microsoft.Extensions.DependencyInjection;
 namespace DgcReader.RuleValidators.Italy.Test
 {
     [TestClass]
-    public class TrustListProviderTests : TestBase
+    public class ItalianRulesValidatorTests : TestBase
     {
         DgcItalianRulesValidator Validator { get; set; }
 
@@ -34,6 +34,7 @@ namespace DgcReader.RuleValidators.Italy.Test
             Validator = DgcItalianRulesValidator.Create(httpClient);
 #else
             Validator = ServiceProvider.GetRequiredService<DgcItalianRulesValidator>();
+
 #endif
         }
 
@@ -44,6 +45,7 @@ namespace DgcReader.RuleValidators.Italy.Test
             try
             {
                 var test = await Validator.RefreshRulesList();
+
             }
             catch (Exception e)
             {

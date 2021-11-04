@@ -1,8 +1,8 @@
 ﻿using System;
 using PeterO.Cbor;
 using System.Security.Cryptography;
-using DgcReader.TrustListProviders;
 using DgcReader.Exceptions;
+using DgcReader.Interfaces.TrustListProviders;
 
 #if NET5_0_OR_GREATER
 using System.Formats.Asn1;
@@ -16,6 +16,7 @@ using Org.BouncyCastle.Math;
 using Org.BouncyCastle.Security;
 using System.Collections.Generic;
 using System.Linq;
+using DgcReader.Interfaces.TrustListProviders;
 #endif
 
 // Copyright (c) 2021 Davide Trevisan
@@ -303,6 +304,7 @@ namespace DgcReader.Cwt.Cose
                 {
                     throw new DgcSignatureValidationException("Object is not signed");
                 }
+                
 
 
                 // Signature check
@@ -311,8 +313,6 @@ namespace DgcReader.Cwt.Cose
                     var ec = publicKeyData.GetECParameters();
                     if (ec == null)
                         throw new DgcSignatureValidationException($"Certificate {publicKeyData.Kid} does not have a ECDsa Public Key parameters", publicKeyData);
-
-
 
                     var oids = ECNamedCurveTable.Names.Cast<string>()
                         .Select(r => ECNamedCurveTable.GetOid(r));

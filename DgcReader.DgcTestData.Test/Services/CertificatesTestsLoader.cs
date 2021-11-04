@@ -1,8 +1,10 @@
 ﻿using DgcReader.DgcTestData.Test.Models;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -24,6 +26,17 @@ namespace DgcReader.DgcTestData.Test.Services
         public const string CommonTestDirName = "common";
 
         private readonly string basePath;
+
+        private static JsonSerializerSettings SerializerSettings = new JsonSerializerSettings
+        {
+            //MetadataPropertyHandling = MetadataPropertyHandling.Ignore,
+            DateParseHandling = DateParseHandling.None,
+            DateTimeZoneHandling = DateTimeZoneHandling.RoundtripKind,
+            Converters = {
+                new DateTimeOffsetConverter(),
+                //new DateTimeOffsetConverter { DateTimeStyles = DateTimeStyles.AssumeUniversal },
+            },
+        };
 
         /// <summary>
         /// Instantiate the loader class, specifying the path of the 
@@ -82,7 +95,7 @@ namespace DgcReader.DgcTestData.Test.Services
 #else
                     var json = File.ReadAllText(file);
 #endif
-                    var entry = JsonConvert.DeserializeObject<TestEntry>(json);
+                    var entry = JsonConvert.DeserializeObject<TestEntry>(json, SerializerSettings);
                     entry.Filename = Path.GetFileName(file);
                     temp.Add(entry);
                 }
@@ -92,6 +105,28 @@ namespace DgcReader.DgcTestData.Test.Services
                 }
             }
             return temp;
+        }
+    }
+
+    public class DateTimeOffsetConverter : JsonConverter
+    {
+        public override bool CanConvert(Type objectType)
+        {
+            return objectType == typeof(DateTimeOffset) || objectType == typeof(DateTimeOffset?);
+        }
+
+        public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
+        {
+            if (reader.Value == null) return null;
+
+            var dateTimeOffset = DateTimeOffset.Parse(reader.Value.ToString(), CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal);
+
+            return dateTimeOffset;
+        }
+
+        public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
+        {
+            writer.WriteValue(value);
         }
     }
 

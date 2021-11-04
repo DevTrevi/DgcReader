@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using DgcReader.Interfaces.TrustListProviders;
+using Newtonsoft.Json;
 
 // Copyright (c) 2021 Davide Trevisan
 // Licensed under the Apache License, Version 2.0

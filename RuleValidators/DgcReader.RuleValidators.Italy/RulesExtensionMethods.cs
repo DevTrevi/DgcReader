@@ -76,6 +76,12 @@ namespace DgcReader.RuleValidators.Italy
 
             return value.Value;
         }
+
+        public static string[]? GetBlackList(this IEnumerable<RuleSetting> settings)
+        {
+            var blackList = settings?.GetRule(SettingNames.Blacklist, SettingNames.Blacklist);
+            return blackList?.Value?.Split(';').ToArray();
+        }
     }
 
 

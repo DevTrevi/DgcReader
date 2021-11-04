@@ -14,9 +14,10 @@ using DgcReader.Models;
 using System.Threading;
 using DgcReader.RuleValidators.Italy.Exceptions;
 using Microsoft.Extensions.Logging;
+using DgcReader.Interfaces.RulesValidators;
+using DgcReader.Interfaces.BlacklistProviders;
 
 #if NETSTANDARD2_0_OR_GREATER || NET5_0_OR_GREATER || NET47_OR_GREATER
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 #endif
 
@@ -28,9 +29,10 @@ namespace DgcReader.RuleValidators.Italy
 
 
     /// <summary>
-    /// Unofficial porting of the Italian rules from https://github.com/ministero-salute/it-dgc-verificac19-sdk-android
+    /// Unofficial porting of the Italian rules from https://github.com/ministero-salute/it-dgc-verificac19-sdk-android.
+    /// This service is also an implementation of <see cref="IBlacklistProvider"/>
     /// </summary>
-    public class DgcItalianRulesValidator
+    public class DgcItalianRulesValidator : IRulesValidator, IBlacklistProvider
     {
         // File containing the business logic on the offical SDK repo:
         // https://github.com/ministero-salute/it-dgc-verificac19-sdk-android/blob/develop/sdk/src/main/java/it/ministerodellasalute/verificaC19sdk/model/VerificationViewModel.kt
@@ -40,8 +42,8 @@ namespace DgcReader.RuleValidators.Italy
         /// <summary>
         /// The version of the sdk used as reference for implementing the rules.
         /// </summary>
-        private const string ReferenceSdkVersion = "1.1.2"; // NOTE: this is the app version. The SDK version is not available in the settings right now.
-
+        private const string ReferenceAppMinVersion = "1.1.2"; // NOTE: this is the app version. The SDK version is not available in the settings right now.
+        private const string ReferenceSdkVersion = "1.0.2";
 
         private readonly HttpClient _httpClient;
         private readonly ILogger? _logger;
@@ -121,30 +123,18 @@ namespace DgcReader.RuleValidators.Italy
         }
 #endif
 
-        #region Public methods
+        #region Implementation of IRulesValidator
 
-        /// <summary>
-        /// Validates the specified certificate against the Italian business rules.
-        /// Is assumed that the Signed DGC signature was already validated for signature and expiration
-        /// </summary>
-        /// <param name="signedDgc">Info of the signed DGC</param>
-        /// <returns></returns>
-        public async Task<DgcRulesValidationResult> ValidateBusinessRules(DgcResult signedDgc)
+        /// <inheritdoc/>
+        public async Task<IRuleValidationResult> GetRulesValidationResult(EuDGC dgc, DateTimeOffset validationInstant, CancellationToken cancellationToken = default)
         {
-            var dgc = signedDgc.Dgc;
-
-            var rules = await GetRules();
-
-            if (rules == null)
-                throw new Exception("Unable to get validation rules");
-
             var result = new DgcRulesValidationResult
             {
-                Dgc = signedDgc,
-                ValidationInstant = DateTimeOffset.Now,
+                Dgc = dgc,
+                ValidationInstant = validationInstant,
             };
 
-            if (signedDgc?.Dgc == null)
+            if (result.Dgc == null)
             {
                 result.Status = DgcResultStatus.NotEuDCC;
                 return result;
@@ -152,18 +142,21 @@ namespace DgcReader.RuleValidators.Italy
 
             try
             {
-                
+                var rules = await GetRules(cancellationToken);
+                if (rules == null)
+                    throw new Exception("Unable to get validation rules");
+
                 if (dgc.Recoveries?.Any(r => r.TargetedDiseaseAgent == DiseaseAgents.Covid19) == true)
                 {
-                    CheckRecoveryStatements(signedDgc, result, rules);
+                    CheckRecoveryStatements(dgc, result, rules);
                 }
                 else if (dgc.Tests?.Any(r => r.TargetedDiseaseAgent == DiseaseAgents.Covid19) == true)
                 {
-                    CheckTests(signedDgc, result, rules);
+                    CheckTests(dgc, result, rules);
                 }
                 else if (dgc.Vaccinations?.Any(r => r.TargetedDiseaseAgent == DiseaseAgents.Covid19) == true)
                 {
-                    CheckVaccinations(signedDgc, result, rules);
+                    CheckVaccinations(dgc, result, rules);
                 }
                 else
                 {
@@ -171,13 +164,6 @@ namespace DgcReader.RuleValidators.Italy
                     _logger?.LogWarning($"No vaccinations, tests or recovery statements found in the certificate.");
                     result.Status = DgcResultStatus.NotEuDCC;
                 }
-
-                // Checking signature
-                if (!signedDgc.HasValidSignature)
-                {
-                    result.Status = DgcResultStatus.NotValid;
-                }
-
             }
             catch (Exception e)
             {
@@ -187,15 +173,65 @@ namespace DgcReader.RuleValidators.Italy
             return result;
         }
 
+        /// <inheritdoc/>
+        public async Task RefreshRules(CancellationToken cancellationToken = default)
+        {
+            await RefreshRulesList(cancellationToken);
+        }
+        #endregion
+
+        #region Implementation of IBlackListProvider
+
+        /// <inheritdoc/>
+        public async Task<bool> IsBlacklisted(string certificateIdentifier, CancellationToken cancellationToken = default)
+        {
+            var blacklist = await GetBlacklist(cancellationToken);
+            if (blacklist == null)
+            {
+                _logger?.LogWarning($"Unable to get the blacklist: considering the certificate valid");
+                return true;
+            }
+
+            return blacklist.Contains(certificateIdentifier);
+        }
+
+        /// <inheritdoc/>
+        public async Task<IEnumerable<string>?> GetBlacklist(CancellationToken cancellationToken = default)
+        {
+            var rules = await GetRules(cancellationToken);
+            return rules?.GetBlackList();
+        }
+
+        /// <inheritdoc/>
+        public async Task<IEnumerable<string>?> RefreshBlacklist(CancellationToken cancellationToken = default)
+        {
+            var rules = await RefreshRulesList(cancellationToken);
+            return rules?.GetBlackList();
+        }
+        #endregion
+
+        #region Public methods
+
+        /// <summary>
+        /// Validates the specified certificate against the Italian business rules.
+        /// Is assumed that the Signed DGC signature was already validated for signature and expiration
+        /// </summary>
+        /// <param name="signedDgc">Info of the signed DGC</param>
+        /// <returns></returns>
+        public async Task<DgcRulesValidationResult> ValidateBusinessRules(SignedDgc signedDgc)
+        {
+            return (DgcRulesValidationResult)await GetRulesValidationResult(signedDgc.Dgc, DateTimeOffset.Now);
+        }
+
 
         /// <summary>
         /// Return the validation rules
         /// </summary>
         /// <returns></returns>
-        public async Task<IEnumerable<RuleSetting>?> GetRules()
+        public async Task<IEnumerable<RuleSetting>?> GetRules(CancellationToken cancellationToken = default)
         {
 
-            await _getRulesSemaphore.WaitAsync();
+            await _getRulesSemaphore.WaitAsync(cancellationToken);
             try
             {
                 var filePath = GetRulesListFilePath();
@@ -220,7 +256,7 @@ namespace DgcReader.RuleValidators.Italy
                 if (_currentRulesList == null)
                 {
                     // If not present, always try to refresh the rules
-                    await RefreshRulesList();
+                    await RefreshRulesList(cancellationToken);
                 }
                 else if (_currentRulesList.LastUpdate.Add(_options.MaxFileAge) < DateTime.Now)
                 {
@@ -236,14 +272,14 @@ namespace DgcReader.RuleValidators.Italy
                     {
                         _logger?.LogError(e, $"Error deleting rules list file: {e.Message}");
                     }
-                    await RefreshRulesList();
+                    await RefreshRulesList(cancellationToken);
 
                 }
                 else if (_currentRulesList.LastUpdate.Add(_options.RefreshInterval) < DateTime.Now)
                 {
                     // If file is expired and the min refresh interval is over, refresh the list
                     if (_lastRefreshAttempt.Add(_options.MinRefreshInterval) < DateTime.Now)
-                        await RefreshRulesList();
+                        await RefreshRulesList(cancellationToken);
                 }
 
                 return _currentRulesList?.Rules;
@@ -260,7 +296,7 @@ namespace DgcReader.RuleValidators.Italy
             }
         }
 
-        public async Task<IEnumerable<RuleSetting>?> RefreshRulesList()
+        public async Task<IEnumerable<RuleSetting>?> RefreshRulesList(CancellationToken cancellationToken = default)
         {
             try
             {
@@ -272,7 +308,7 @@ namespace DgcReader.RuleValidators.Italy
                 {
                     LastUpdate = DateTime.Now,
                 };
-                var rules = await FetchSettings();
+                var rules = await FetchSettings(cancellationToken);
 
 
                 rulesList.Rules = rules.ToArray();
@@ -281,7 +317,7 @@ namespace DgcReader.RuleValidators.Italy
                 var minVersion = rules.GetRule("android", SettingTypes.AppMinVersion);
                 if (minVersion != null)
                 {
-                    if (minVersion.Value.CompareTo(ReferenceSdkVersion) > 0)
+                    if (minVersion.Value.CompareTo(ReferenceAppMinVersion) > 0)
                     {
                         var message = $"The minimum version of the SDK implementation is {minVersion.Value}. " +
                             $"Please update the package with the latest implementation in order to get a reliable result";
@@ -328,12 +364,12 @@ namespace DgcReader.RuleValidators.Italy
         /// <summary>
         /// Computes the status by checking the vaccinations in the DCC
         /// </summary>
-        /// <param name="signedDgc"></param>
+        /// <param name="dgc"></param>
         /// <param name="result">The output result compiled by the function</param>
         /// <param name="rules"></param>
-        private void CheckVaccinations(DgcResult signedDgc, DgcRulesValidationResult result, IEnumerable<RuleSetting> rules)
+        private void CheckVaccinations(EuDGC dgc, DgcRulesValidationResult result, IEnumerable<RuleSetting> rules)
         {
-            var vaccination = signedDgc.Dgc.Vaccinations.Last(r => r.TargetedDiseaseAgent == DiseaseAgents.Covid19);
+            var vaccination = dgc.Vaccinations.Last(r => r.TargetedDiseaseAgent == DiseaseAgents.Covid19);
 
             int startDay, endDay;
             if (vaccination.DoseNumber > 0 && vaccination.TotalDoseSeries > 0)
@@ -360,13 +396,13 @@ namespace DgcReader.RuleValidators.Italy
                     vaccination.DoseNumber > vaccination.TotalDoseSeries)
                 {
                     // For J&J booster, in case of more vaccinations than expected, the vaccine is immediately valid 
-                    result.ActiveFrom = vaccination.Date;
-                    result.ActiveUntil = vaccination.Date.AddDays(endDay);
+                    result.ValidFrom = vaccination.Date;
+                    result.ValidUntil = vaccination.Date.AddDays(endDay);
                 }
                 else
                 {
-                    result.ActiveFrom = vaccination.Date.AddDays(startDay);
-                    result.ActiveUntil = vaccination.Date.AddDays(endDay);
+                    result.ValidFrom = vaccination.Date.AddDays(startDay);
+                    result.ValidUntil = vaccination.Date.AddDays(endDay);
                 }
 
                 // Calculate the status
@@ -378,9 +414,9 @@ namespace DgcReader.RuleValidators.Italy
                     return;
                 }
 
-                if (result.ActiveFrom > result.ValidationInstant)
+                if (result.ValidFrom > result.ValidationInstant)
                     result.Status = DgcResultStatus.NotValidYet;
-                else if (result.ActiveUntil < result.ValidationInstant)
+                else if (result.ValidUntil < result.ValidationInstant)
                     result.Status = DgcResultStatus.NotValid;
                 else if (vaccination.DoseNumber < vaccination.TotalDoseSeries)
                     result.Status = DgcResultStatus.PartiallyValid;
@@ -392,11 +428,11 @@ namespace DgcReader.RuleValidators.Italy
         /// <summary>
         /// Computes the status by checking the tests in the DCC
         /// </summary>
-        /// <param name="signedDgc"></param>
+        /// <param name="dgc"></param>
         /// <param name="rules"></param>
-        private void CheckTests(DgcResult signedDgc, DgcRulesValidationResult result, IEnumerable<RuleSetting> rules)
+        private void CheckTests(EuDGC dgc, DgcRulesValidationResult result, IEnumerable<RuleSetting> rules)
         {
-            var test = signedDgc.Dgc.Tests.Last(r => r.TargetedDiseaseAgent == DiseaseAgents.Covid19);
+            var test = dgc.Tests.Last(r => r.TargetedDiseaseAgent == DiseaseAgents.Covid19);
 
             if (test.TestResult == TestResults.NotDetected)
             {
@@ -419,13 +455,13 @@ namespace DgcReader.RuleValidators.Italy
                         return;
                 }
 
-                result.ActiveFrom = test.SampleCollectionDate.AddHours(startHours);
-                result.ActiveUntil = test.SampleCollectionDate.AddHours(endHours);
+                result.ValidFrom = test.SampleCollectionDate.AddHours(startHours);
+                result.ValidUntil = test.SampleCollectionDate.AddHours(endHours);
 
                 // Calculate the status
-                if (result.ActiveFrom > result.ValidationInstant)
+                if (result.ValidFrom > result.ValidationInstant)
                     result.Status = DgcResultStatus.NotValidYet;
-                else if (result.ActiveUntil < result.ValidationInstant)
+                else if (result.ValidUntil < result.ValidationInstant)
                     result.Status = DgcResultStatus.NotValid;
                 else
                     result.Status = DgcResultStatus.Valid;
@@ -443,41 +479,42 @@ namespace DgcReader.RuleValidators.Italy
         /// <summary>
         /// Computes the status by checking the recovery statements in the DCC
         /// </summary>
-        /// <param name="signedDgc"></param>
+        /// <param name="dgc"></param>
         /// <param name="rules"></param>
-        private void CheckRecoveryStatements(DgcResult signedDgc, DgcRulesValidationResult result, IEnumerable<RuleSetting> rules)
+        private void CheckRecoveryStatements(EuDGC dgc, DgcRulesValidationResult result, IEnumerable<RuleSetting> rules)
         {
-            var recovery = signedDgc.Dgc.Recoveries.Last(r => r.TargetedDiseaseAgent == DiseaseAgents.Covid19);
+            var recovery = dgc.Recoveries.Last(r => r.TargetedDiseaseAgent == DiseaseAgents.Covid19);
             
             int startDay, endDay;
 
             startDay = rules.GetRuleInteger(SettingNames.RecoveryCertStartDay);
             endDay = rules.GetRuleInteger(SettingNames.RecoveryCertEndDay);
 
-            result.ActiveFrom = recovery.ValidFrom.Date.AddDays(startDay);
-            result.ActiveUntil = recovery.ValidUntil.Date;
+            result.ValidFrom = recovery.ValidFrom.Date.AddDays(startDay);
+            result.ValidUntil = recovery.ValidUntil.Date;
 
-            if (result.ActiveFrom > result.ValidationInstant)
+            if (result.ValidFrom > result.ValidationInstant)
                 result.Status = DgcResultStatus.NotValidYet;
-            else if (result.ValidationInstant > result.ActiveFrom.Value.AddDays(endDay))
+            else if (result.ValidationInstant > result.ValidFrom.Value.AddDays(endDay))
                 result.Status = DgcResultStatus.NotValid;
-            else if (result.ValidationInstant > result.ActiveUntil)
+            else if (result.ValidationInstant > result.ValidUntil)
                 result.Status = DgcResultStatus.PartiallyValid;
             else
                 result.Status = DgcResultStatus.Valid;
         }
 
+
         #endregion
 
 
         #region Private
-        private async Task<RuleSetting[]> FetchSettings()
+        private async Task<RuleSetting[]> FetchSettings(CancellationToken cancellationToken = default)
         {
             try
             {
                 var start = DateTime.Now;
                 _logger?.LogDebug("Fetching rules settings...");
-                var response = await _httpClient.GetAsync(ValidationRulesUrl);
+                var response = await _httpClient.GetAsync(ValidationRulesUrl, cancellationToken);
                 if (response.IsSuccessStatusCode)
                 {
                     string content = await response.Content.ReadAsStringAsync();
@@ -504,6 +541,7 @@ namespace DgcReader.RuleValidators.Italy
         {
             return Path.Combine(_options.BasePath, _options.RulesListFileName);
         }
+
         #endregion
 
     }

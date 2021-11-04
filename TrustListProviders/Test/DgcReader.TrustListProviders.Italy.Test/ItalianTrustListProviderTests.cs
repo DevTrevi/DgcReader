@@ -2,13 +2,14 @@ using System;
 using System.Diagnostics;
 using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using DgcReader.TrustListProviders;
 using DgcReader.TrustListProviders.Italy;
 using System.Threading.Tasks;
 using System.Collections.Generic;
+using DgcReader.Interfaces.TrustListProviders;
 
 #if NETFRAMEWORK
 using System.Net;
+using DgcReader.Interfaces.TrustListProviders;
 #endif
 
 #if NET452

@@ -21,6 +21,7 @@ namespace DgcReader.RuleValidators.Italy.Const
         public const string RecoveryCertStartDay = "recovery_cert_start_day";
         public const string RecoveryCertEndDay = "recovery_cert_end_day";
 
-        public const string Blacklist = "black_list_uvci";
+        public const string AndroidAppMinVersion = "android";
+        public const string SdkMinVersion = "sdk";
     }
 }

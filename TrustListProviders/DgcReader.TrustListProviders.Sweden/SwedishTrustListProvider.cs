@@ -235,7 +235,7 @@ namespace DgcReader.TrustListProviders.Sweden
                     }
                     catch (Exception e)
                     {
-                        Logger?.LogError(e, $"Error deleting rules list file: {e.Message}");
+                        Logger?.LogError(e, $"Error deleting trustlist file: {e.Message}");
                     }
                     return Task.FromResult<ITrustList?>(null);
                 }

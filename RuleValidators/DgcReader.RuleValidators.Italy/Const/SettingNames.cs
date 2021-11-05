@@ -23,5 +23,7 @@ namespace DgcReader.RuleValidators.Italy.Const
 
         public const string AndroidAppMinVersion = "android";
         public const string SdkMinVersion = "sdk";
+
+        public const string Blacklist = "black_list_uvci";
     }
 }

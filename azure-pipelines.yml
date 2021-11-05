@@ -1,5 +1,12 @@
 trigger:
-- master
+  branches:
+    include:
+      - master
+  paths:
+   exclude:
+     - README.md
+     - '**/*.Test'
+pr: none
 
 variables:
 - group: NuGet

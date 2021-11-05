@@ -240,11 +240,11 @@ namespace DgcReader.RuleValidators.Italy
         /// </summary>
         /// <param name="signedDgc">Info of the signed DGC</param>
         /// <returns></returns>
+
         public async Task<DgcRulesValidationResult> ValidateBusinessRules(SignedDgc signedDgc)
         {
             return (DgcRulesValidationResult)await GetRulesValidationResult(signedDgc.Dgc, DateTimeOffset.Now);
         }
-
 
         /// <summary>
         /// Return the validation rules
@@ -334,7 +334,7 @@ namespace DgcReader.RuleValidators.Italy
 
                 // Checking min version:
                 CheckMinSdkVersion(rules);
-
+                
                 _currentRulesList = rulesList;
 
                 try

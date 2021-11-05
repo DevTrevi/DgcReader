@@ -37,13 +37,18 @@ namespace DgcReader.RuleValidators.Italy
         // File containing the business logic on the offical SDK repo:
         // https://github.com/ministero-salute/it-dgc-verificac19-sdk-android/blob/develop/sdk/src/main/java/it/ministerodellasalute/verificaC19sdk/model/VerificationViewModel.kt
 
-
         private const string ValidationRulesUrl = "https://get.dgc.gov.it/v1/dgc/settings";
+
         /// <summary>
         /// The version of the sdk used as reference for implementing the rules.
         /// </summary>
-        private const string ReferenceAppMinVersion = "1.1.2"; // NOTE: this is the app version. The SDK version is not available in the settings right now.
-        private const string ReferenceSdkVersion = "1.0.2";
+        private const string ReferenceSdkMinVersion = "1.0.2";
+
+        /// <summary>
+        /// The version of the app used as reference for implementing the rules.
+        /// NOTE: this is the version of the android app using the <see cref="ReferenceSdkMinVersion"/> of the SDK. The SDK version is not available in the settings right now.
+        /// </summary>
+        private const string ReferenceAppMinVersion = "1.1.6";
 
         private readonly HttpClient _httpClient;
         private readonly ILogger? _logger;
@@ -52,7 +57,21 @@ namespace DgcReader.RuleValidators.Italy
         private RulesList? _currentRulesList = null;
         private DateTimeOffset _lastRefreshAttempt;
 
-        private SemaphoreSlim _getRulesSemaphore = new SemaphoreSlim(1, 1);
+        /// <summary>
+        /// Semaphore controlling access to <see cref="_refreshTask"/>
+        /// </summary>
+        private readonly SemaphoreSlim _refreshTaskSemaphore = new SemaphoreSlim(1, 1);
+
+        /// <summary>
+        /// The task that is currently executing the <see cref="RefreshRulesList"/> method
+        /// </summary>
+        private Task<IEnumerable<RuleSetting>?>? _refreshTask = null;
+        private CancellationTokenSource? _refreshTaskCancellation;
+
+        /// <summary>
+        /// Semaphore controlling access to <see cref="_currentRulesList"/>
+        /// </summary>
+        private readonly SemaphoreSlim _currentRulesListSemaphore = new SemaphoreSlim(1, 1);
 
         private static readonly JsonSerializerSettings JsonSettings = new JsonSerializerSettings
         {
@@ -146,6 +165,9 @@ namespace DgcReader.RuleValidators.Italy
                 if (rules == null)
                     throw new Exception("Unable to get validation rules");
 
+                // Checking min version:
+                CheckMinSdkVersion(rules);
+
                 if (dgc.Recoveries?.Any(r => r.TargetedDiseaseAgent == DiseaseAgents.Covid19) == true)
                 {
                     CheckRecoveryStatements(dgc, result, rules);
@@ -230,70 +252,67 @@ namespace DgcReader.RuleValidators.Italy
         /// <returns></returns>
         public async Task<IEnumerable<RuleSetting>?> GetRules(CancellationToken cancellationToken = default)
         {
-
-            await _getRulesSemaphore.WaitAsync(cancellationToken);
+            await _currentRulesListSemaphore.WaitAsync(cancellationToken);
             try
             {
-                var filePath = GetRulesListFilePath();
                 // If not loaded, try to load from file
                 if (_currentRulesList == null)
                 {
-                    try
-                    {
-                        if (File.Exists(filePath))
-                        {
-                            var fileContent = File.ReadAllText(filePath);
-                            //var fileContent = await File.ReadAllTextAsync(filePath);   Only > .net5.0
-                            _currentRulesList = JsonConvert.DeserializeObject<RulesList>(fileContent, JsonSettings);
-                        }
-                    }
-                    catch (Exception e)
-                    {
-                        _logger?.LogError(e, $"Error reading rules list from file: {e.Message}");
-                    }
+                    _currentRulesList = await LoadCache();
                 }
-
-                if (_currentRulesList == null)
-                {
-                    // If not present, always try to refresh the rules
-                    await RefreshRulesList(cancellationToken);
-                }
-                else if (_currentRulesList.LastUpdate.Add(_options.MaxFileAge) < DateTime.Now)
-                {
-                    // File has passed the max age and is deleted
-
-                    _currentRulesList = null;
-                    try
-                    {
-                        if (File.Exists(filePath))
-                            File.Delete(filePath);
-                    }
-                    catch (Exception e)
-                    {
-                        _logger?.LogError(e, $"Error deleting rules list file: {e.Message}");
-                    }
-                    await RefreshRulesList(cancellationToken);
-
-                }
-                else if (_currentRulesList.LastUpdate.Add(_options.RefreshInterval) < DateTime.Now)
-                {
-                    // If file is expired and the min refresh interval is over, refresh the list
-                    if (_lastRefreshAttempt.Add(_options.MinRefreshInterval) < DateTime.Now)
-                        await RefreshRulesList(cancellationToken);
-                }
-
-                return _currentRulesList?.Rules;
-
             }
-            catch (Exception e)
+            catch (Exception)
             {
-                _logger?.LogError(e, $"Error getting rules: {e.Message}");
                 throw;
             }
             finally
             {
-                _getRulesSemaphore.Release();
+                _currentRulesListSemaphore.Release();
             }
+
+            // Checking validity of the rules list:
+            // If is null or expired, refresh
+            var rulesList = _currentRulesList;
+
+            Task<IEnumerable<RuleSetting>?>? refreshTask = null;
+
+            if (rulesList == null)
+            {
+                _logger?.LogInformation($"Rules list not loaded, refreshing from server");
+
+                // If not present, always try to refresh the list
+                refreshTask = await GetRefreshTask(cancellationToken);
+            }
+            else if (rulesList.LastUpdate.Add(_options.RefreshInterval) < DateTime.Now)
+            {
+                // If refresh interval is expired and the min refresh interval is over, refresh the list
+                if (_lastRefreshAttempt.Add(_options.MinRefreshInterval) < DateTime.Now)
+                {
+                    _logger?.LogInformation($"Rules list refresh interval expired, refreshing from server");
+                    refreshTask = await GetRefreshTask(cancellationToken);
+                }
+            }
+
+            if (refreshTask != null)
+            {
+                if (rulesList == null)
+                {
+                    _logger?.LogInformation($"No Rules list loaded in memory, waiting for refresh to complete");
+                    return await refreshTask;
+                }
+                else if (_options.UseAvailableListWhileRefreshing == false)
+                {
+                    // If UseAvailableListWhileRefreshing, always wait for the task to complete
+                    _logger?.LogInformation($"Rules list is expired, waiting for refresh to complete");
+                    return await refreshTask;
+                }
+            }
+
+
+
+            return rulesList?.Rules ?? Enumerable.Empty<RuleSetting>();
+
+
         }
 
         public async Task<IEnumerable<RuleSetting>?> RefreshRulesList(CancellationToken cancellationToken = default)
@@ -314,25 +333,7 @@ namespace DgcReader.RuleValidators.Italy
                 rulesList.Rules = rules.ToArray();
 
                 // Checking min version:
-                var minVersion = rules.GetRule("android", SettingTypes.AppMinVersion);
-                if (minVersion != null)
-                {
-                    if (minVersion.Value.CompareTo(ReferenceAppMinVersion) > 0)
-                    {
-                        var message = $"The minimum version of the SDK implementation is {minVersion.Value}. " +
-                            $"Please update the package with the latest implementation in order to get a reliable result";
-
-                        if (_options.IgnoreMinimumSdkVersion)
-                        {
-                            _logger?.LogWarning(message);
-                        }
-                        else
-                        {
-                            throw new DgcRulesValidationException(message);
-                        }
-
-                    }
-                }
+                CheckMinSdkVersion(rules);
 
                 _currentRulesList = rulesList;
 
@@ -504,6 +505,59 @@ namespace DgcReader.RuleValidators.Italy
         }
 
 
+        /// <summary>
+        /// Check the minimum version of the SDK implementation required.
+        /// If <see cref="DgcItalianRulesValidatorOptions.IgnoreMinimumSdkVersion"/> is false, an exception will be thrown if the implementation is obsolete
+        /// </summary>
+        /// <param name="rules"></param>
+        /// <exception cref="DgcRulesValidationException"></exception>
+        private void CheckMinSdkVersion(IEnumerable<RuleSetting> rules)
+        {
+            var obsolete = false;
+            string message = string.Empty;
+
+
+            var sdkMinVersion = rules.GetRule(SettingNames.SdkMinVersion, SettingTypes.AppMinVersion);
+            if (sdkMinVersion != null)
+            {
+                if (sdkMinVersion.Value.CompareTo(ReferenceSdkMinVersion) > 0)
+                {
+                    obsolete = true;
+                    message = $"The minimum version of the SDK implementation is {sdkMinVersion.Value}. " +
+                        $"Please update the package with the latest implementation in order to get a reliable result";
+                }
+            }
+            else
+            {
+                // Fallback to android app version
+                var appMinVersion = rules.GetRule(SettingNames.AndroidAppMinVersion, SettingTypes.AppMinVersion);
+                if (appMinVersion != null)
+                {
+                    if (appMinVersion.Value.CompareTo(ReferenceAppMinVersion) > 0)
+                    {
+                        obsolete = true;
+                        message = $"The minimum version of the App implementation is {appMinVersion.Value}. " +
+                            $"Please update the package with the latest implementation in order to get a reliable result";
+                    }
+                }
+
+            }
+
+            if (obsolete)
+            {
+
+                if (_options.IgnoreMinimumSdkVersion)
+                {
+                    _logger?.LogWarning(message);
+                }
+                else
+                {
+                    throw new DgcRulesValidationException(message);
+                }
+            }
+            
+        }
+
         #endregion
 
 
@@ -524,7 +578,7 @@ namespace DgcReader.RuleValidators.Italy
                     if (results == null)
                         throw new Exception("Error wile deserializing rules from server");
 
-                    _logger?.LogDebug($"{results.Length} rules read in {DateTime.Now - start}");
+                    _logger?.LogInformation($"{results.Length} rules read in {DateTime.Now - start}");
                     return results;
                 }
 
@@ -532,9 +586,53 @@ namespace DgcReader.RuleValidators.Italy
             }
             catch (Exception ex)
             {
-                _logger?.LogError(ex, $"Error while getting status list from server: {ex.Message}");
+                _logger?.LogError(ex, $"Error while getting rules list from server: {ex.Message}");
                 throw;
             }
+        }
+
+        /// <summary>
+        /// Load the rules list stored in file
+        /// </summary>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        private Task<RulesList?> LoadCache(CancellationToken cancellationToken = default)
+        {
+            var filePath = GetRulesListFilePath();
+            RulesList rulesList = null;
+            try
+            {
+                if (File.Exists(filePath))
+                {
+                    _logger?.LogInformation($"Loading rules from file");
+                    var fileContent = File.ReadAllText(filePath);
+                    rulesList = JsonConvert.DeserializeObject<RulesList>(fileContent, JsonSettings);
+                }
+            }
+            catch (Exception e)
+            {
+                _logger?.LogError(e, $"Error reading trustlist from file: {e.Message}");
+            }
+
+            // Check max age and delete file
+            if (rulesList != null &&
+                rulesList.LastUpdate.Add(_options.MaxFileAge) < DateTime.Now)
+            {
+                _logger?.LogInformation($"Rules list expired for MaxFileAge, deleting list and file");
+                // File has passed the max age, removing file
+                try
+                {
+                    if (File.Exists(filePath))
+                        File.Delete(filePath);
+                }
+                catch (Exception e)
+                {
+                    _logger?.LogError(e, $"Error deleting rules list file: {e.Message}");
+                }
+                return Task.FromResult<RulesList?>(null);
+            }
+
+            return Task.FromResult<RulesList?>(rulesList);
         }
 
         private string GetRulesListFilePath()
@@ -544,5 +642,80 @@ namespace DgcReader.RuleValidators.Italy
 
         #endregion
 
+        #region Single task optimization
+
+        /// <summary>
+        /// If not already started, starts a new task for refreshing the rules list
+        /// </summary>
+        /// <returns></returns>
+        private async Task<Task<IEnumerable<RuleSetting>?>> GetRefreshTask(CancellationToken cancellationToken = default)
+        {
+            await _refreshTaskSemaphore.WaitAsync(cancellationToken);
+            try
+            {
+                if (_refreshTask == null)
+                {
+                    _refreshTask = Task.Run(async () =>
+                    {
+                        try
+                        {
+                            _refreshTaskCancellation = new CancellationTokenSource();
+                            return await RefreshRulesList(_refreshTaskCancellation.Token);
+                        }
+                        finally
+                        {
+                            await _refreshTaskSemaphore.WaitAsync(_refreshTaskCancellation?.Token ?? default);
+                            try
+                            {
+                                _refreshTask = null;
+                                _refreshTaskCancellation?.Dispose();
+                                _refreshTaskCancellation = null;
+                            }
+                            catch (Exception e)
+                            {
+                                _logger?.LogError(e, $"Error while checking refresh semaphore: {e.Message}");
+                            }
+                            finally
+                            {
+                                _refreshTaskSemaphore.Release();
+                            }
+
+                        }
+                    });
+                }
+                return _refreshTask;
+            }
+            catch (Exception e)
+            {
+                _logger?.LogError(e, $"Error while getting Refresh Task: {e.Message}");
+                throw;
+            }
+            finally
+            {
+                _refreshTaskSemaphore.Release();
+            }
+
+        }
+
+        private void CancelRefreshTaskExecution()
+        {
+            if (_refreshTaskCancellation == null)
+                return;
+
+            if (!_refreshTaskCancellation.IsCancellationRequested &&
+                _refreshTaskCancellation.Token.CanBeCanceled)
+            {
+                _logger?.LogWarning($"Requesting cancellation for the RefreshListTask");
+                _refreshTaskCancellation.Cancel();
+            }
+        }
+
+        /// <inheritdoc/>
+        public void Dispose()
+        {
+            CancelRefreshTaskExecution();
+        }
+
+        #endregion
     }
 }

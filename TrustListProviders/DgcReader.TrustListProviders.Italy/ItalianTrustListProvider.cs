@@ -261,7 +261,7 @@ namespace DgcReader.TrustListProviders.Italy
                 }
                 catch (Exception e)
                 {
-                    Logger?.LogError(e, $"Error deleting rules list file: {e.Message}");
+                    Logger?.LogError(e, $"Error deleting trustlist file: {e.Message}");
                 }
                 return Task.FromResult<ITrustList?>(null);
             }
@@ -333,9 +333,9 @@ namespace DgcReader.TrustListProviders.Italy
                             // Sometimes the backend returns the same certificate multiple times
                             var len = certificates[result.Kid].Length;
                             if (len == result.Certificate.Length)
-                                Logger?.LogInformation($"Certificate with kid {result.Kid} already exist with same lenght. Skip");
+                                Logger?.LogInformation($"Certificate with kid {result.Kid} already exist with same length. Skip");
                             else
-                                Logger?.LogWarning($"Certificate with kid {result.Kid} (size {result.Certificate.Length}) already exist (lenght {len}). Skip");
+                                Logger?.LogWarning($"Certificate with kid {result.Kid} (size {result.Certificate.Length}) already exist (length {len}). Skip");
                         }
                         else
                         {

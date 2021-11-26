@@ -60,7 +60,7 @@ Once instantiated and configured with at least the `ITrustListProvider` service,
 
 #### b) Use the `DgcReaderService` without arguments (i.e. **no** `TrustListProvider`and `RulesValidator`):
 
-This lets you decrypt all the QR code data without verification, but still gives you a quick idea about how the library works.
+This lets you decode all the QR code data without verification, but still gives you a quick idea about how the library works.
  You can use the open source [EU Digital Green Test Certifactes](https://github.com/eu-digital-green-certificates/dgc-testdata) or your personal certificate.
  
 ```csharp

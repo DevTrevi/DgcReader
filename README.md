@@ -43,6 +43,9 @@ var dgcReader = ServiceCollection.GetService<DgcReaderService>();
 ```  
 
 If you don't use the dependency injection, you can instantiate it directly:
+
+#### a) Use a `TrustListProvider`and `RulesValidator`:
+
 ``` csharp
 // Create an instance of the TrustListProvider (eg. ItalianTrustListProvider) and the other required services
 var httpClient = new HttpClient();
@@ -53,8 +56,19 @@ var rulesValidator = new DgcItalianRulesValidator(httpClient);  // Note: this im
 var dgcReader = new DgcReaderService(trustListProvider, rulesValidator, rulesValidator);
 ```
 
-Once instantiated and configured with at least the `ITrustListProvider` service, you can simply call one of the following methods:
+Once instantiated and configured with at least the `ITrustListProvider` service, you can simply call one of methods shown in c)
 
+#### b) Use the `DgcReaderService` without arguments (i.e. **no** `TrustListProvider`and `RulesValidator`):
+
+This lets you decode all the QR code data without verification, but still gives you a quick idea about how the library works.
+ You can use the open source [EU Digital Green Test Certifactes](https://github.com/eu-digital-green-certificates/dgc-testdata) or your personal certificate.
+ 
+```csharp
+// Create the default instance of the `DgcReaderService` with an empty constructor
+var dgcReader = new DgcReaderService();
+``` 
+
+#### c) Run the validation
 
 ``` csharp
 ...
@@ -85,6 +99,7 @@ catch(Exception e)
 }
 ```
 
+Information about how to interprete the decoded values can be found in the [Value Sets for Digital Green Certificates](https://ec.europa.eu/health/sites/default/files/ehealth/docs/digital-green-certificates_dt-specifications_en.pdf) and the [COVID-19 Data Reporting for Non-Lab-Based Testing](https://www.hhs.gov/sites/default/files/non-lab-based-covid19-test-reporting.pdf).
 
 
 #### Rules validation

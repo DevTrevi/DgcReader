@@ -46,8 +46,7 @@ namespace DgcReader.RuleValidators.Italy.Test
         {
             try
             {
-                var test = await Validator.RefreshRulesList();
-
+                await Validator.RefreshRules();
             }
             catch (Exception e)
             {

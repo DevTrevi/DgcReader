@@ -27,8 +27,10 @@ namespace DgcReader.Interfaces.RulesValidators
         /// <summary>
         /// Refresh the validation rules used by the prodvider from server
         /// </summary>
+        /// <param name="countryCode">The 2-letter ISO country code for which to request rules to be refreshed. If not specified, all rules will be refreshed</param>
+        /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        Task RefreshRules(CancellationToken cancellationToken = default);
+        Task RefreshRules(string? countryCode = null, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Returns a list of 2 letter ISO county codes supported by the provider for rule validations

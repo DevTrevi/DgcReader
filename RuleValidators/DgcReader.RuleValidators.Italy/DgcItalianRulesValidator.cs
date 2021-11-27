@@ -16,6 +16,7 @@ using DgcReader.RuleValidators.Italy.Exceptions;
 using Microsoft.Extensions.Logging;
 using DgcReader.Interfaces.RulesValidators;
 using DgcReader.Interfaces.BlacklistProviders;
+using DgcReader.RuleValidators.Abstractions;
 
 #if NETSTANDARD2_0_OR_GREATER || NET5_0_OR_GREATER || NET47_OR_GREATER
 using Microsoft.Extensions.Options;
@@ -32,7 +33,7 @@ namespace DgcReader.RuleValidators.Italy
     /// Unofficial porting of the Italian rules from https://github.com/ministero-salute/it-dgc-verificac19-sdk-android.
     /// This service is also an implementation of <see cref="IBlacklistProvider"/>
     /// </summary>
-    public class DgcItalianRulesValidator : IRulesValidator, IBlacklistProvider
+    public class DgcItalianRulesValidator : ThreadsafeRulesValidatorProvider<RulesList, DgcItalianRulesValidatorOptions>, IRulesValidator, IBlacklistProvider
     {
         // File containing the business logic on the offical SDK repo:
         // https://github.com/ministero-salute/it-dgc-verificac19-sdk-android/blob/develop/sdk/src/main/java/it/ministerodellasalute/verificaC19sdk/model/VerificationViewModel.kt
@@ -51,27 +52,6 @@ namespace DgcReader.RuleValidators.Italy
         private const string ReferenceAppMinVersion = "1.1.6";
 
         private readonly HttpClient _httpClient;
-        private readonly ILogger? _logger;
-        private readonly DgcItalianRulesValidatorOptions _options;
-
-        private RulesList? _currentRulesList = null;
-        private DateTimeOffset _lastRefreshAttempt;
-
-        /// <summary>
-        /// Semaphore controlling access to <see cref="_refreshTask"/>
-        /// </summary>
-        private readonly SemaphoreSlim _refreshTaskSemaphore = new SemaphoreSlim(1, 1);
-
-        /// <summary>
-        /// The task that is currently executing the <see cref="RefreshRulesList"/> method
-        /// </summary>
-        private Task<IEnumerable<RuleSetting>?>? _refreshTask = null;
-        private CancellationTokenSource? _refreshTaskCancellation;
-
-        /// <summary>
-        /// Semaphore controlling access to <see cref="_currentRulesList"/>
-        /// </summary>
-        private readonly SemaphoreSlim _currentRulesListSemaphore = new SemaphoreSlim(1, 1);
 
         private static readonly JsonSerializerSettings JsonSettings = new JsonSerializerSettings
         {
@@ -90,10 +70,9 @@ namespace DgcReader.RuleValidators.Italy
         public DgcItalianRulesValidator(HttpClient httpClient,
             DgcItalianRulesValidatorOptions? options = null,
             ILogger<DgcItalianRulesValidator>? logger = null)
+            : base(options, logger)
         {
             _httpClient = httpClient;
-            _options = options ?? new DgcItalianRulesValidatorOptions();
-            _logger = logger;
         }
 
         /// <summary>
@@ -118,10 +97,9 @@ namespace DgcReader.RuleValidators.Italy
         public DgcItalianRulesValidator(HttpClient httpClient,
             IOptions<DgcItalianRulesValidatorOptions>? options = null,
             ILogger<DgcItalianRulesValidator>? logger = null)
+            : base(options?.Value, logger)
         {
             _httpClient = httpClient;
-            _options = options?.Value ?? new DgcItalianRulesValidatorOptions();
-            _logger = logger;
         }
 
         /// <summary>
@@ -137,7 +115,7 @@ namespace DgcReader.RuleValidators.Italy
             ILogger<DgcItalianRulesValidator>? logger = null)
         {
             return new DgcItalianRulesValidator(httpClient,
-                options == null ? null : Options.Create(options),
+                options == null ? null : Microsoft.Extensions.Options.Options.Create(options),
                 logger);
         }
 #endif
@@ -145,7 +123,7 @@ namespace DgcReader.RuleValidators.Italy
         #region Implementation of IRulesValidator
 
         /// <inheritdoc/>
-        public async Task<IRuleValidationResult> GetRulesValidationResult(EuDGC dgc, DateTimeOffset validationInstant, string countryCode = "IT", CancellationToken cancellationToken = default)
+        public override async Task<IRuleValidationResult> GetRulesValidationResult(EuDGC dgc, DateTimeOffset validationInstant, string countryCode = "IT", CancellationToken cancellationToken = default)
         {
             if (!await SupportsCountry(countryCode))
                 throw new DgcRulesValidationException($"Rules validation for country {countryCode} is not supported by this provider");
@@ -164,9 +142,11 @@ namespace DgcReader.RuleValidators.Italy
 
             try
             {
-                var rules = await GetRules(cancellationToken);
-                if (rules == null)
+                var rulesContainer = await GetRules(countryCode, cancellationToken);
+                if (rulesContainer == null)
                     throw new Exception("Unable to get validation rules");
+
+                var rules = rulesContainer.Rules;
 
                 // Checking min version:
                 CheckMinSdkVersion(rules);
@@ -186,39 +166,22 @@ namespace DgcReader.RuleValidators.Italy
                 else
                 {
                     // An EU DCC must have one of the sections above.
-                    _logger?.LogWarning($"No vaccinations, tests or recovery statements found in the certificate.");
+                    Logger?.LogWarning($"No vaccinations, tests or recovery statements found in the certificate.");
                     result.Status = DgcResultStatus.NotEuDCC;
                 }
             }
             catch (Exception e)
             {
-                _logger?.LogError(e, $"Validation failed with error {e.Message}");
+                Logger?.LogError(e, $"Validation failed with error {e.Message}");
                 result.Status = DgcResultStatus.NotValid;
             }
             return result;
         }
 
         /// <inheritdoc/>
-        public async Task RefreshRules(CancellationToken cancellationToken = default)
-        {
-            await RefreshRulesList(cancellationToken);
-        }
-
-        /// <inheritdoc/>
-        public Task<IEnumerable<string>> GetSupportedCountries(CancellationToken cancellationToken = default)
+        public override Task<IEnumerable<string>> GetSupportedCountries(CancellationToken cancellationToken = default)
         {
             return Task.FromResult(new[] { "IT" }.AsEnumerable());
-        }
-
-        /// <inheritdoc/>
-        public async Task<bool> SupportsCountry(string countryCode, CancellationToken cancellationToken = default)
-        {
-            if (string.IsNullOrEmpty(countryCode))
-                return false;
-
-            var supportedCountries = await GetSupportedCountries(cancellationToken);
-
-            return supportedCountries.Any(c => c.Equals(countryCode, StringComparison.InvariantCultureIgnoreCase));
         }
         #endregion
 
@@ -230,7 +193,7 @@ namespace DgcReader.RuleValidators.Italy
             var blacklist = await GetBlacklist(cancellationToken);
             if (blacklist == null)
             {
-                _logger?.LogWarning($"Unable to get the blacklist: considering the certificate valid");
+                Logger?.LogWarning($"Unable to get the blacklist: considering the certificate valid");
                 return true;
             }
 
@@ -240,16 +203,97 @@ namespace DgcReader.RuleValidators.Italy
         /// <inheritdoc/>
         public async Task<IEnumerable<string>?> GetBlacklist(CancellationToken cancellationToken = default)
         {
-            var rules = await GetRules(cancellationToken);
-            return rules?.GetBlackList();
+            var rulesContainer = await GetRules("IT", cancellationToken);
+            return rulesContainer?.Rules?.GetBlackList();
         }
 
         /// <inheritdoc/>
         public async Task<IEnumerable<string>?> RefreshBlacklist(CancellationToken cancellationToken = default)
         {
-            var rules = await RefreshRulesList(cancellationToken);
-            return rules?.GetBlackList();
+            await RefreshRules(null, cancellationToken);
+            var rulesContainer = await GetRules(null, cancellationToken);
+            return rulesContainer?.Rules?.GetBlackList();
         }
+        #endregion
+
+        #region Implementation of ThreadsafeRulesValidatorProvider
+
+        /// <inheritdoc/>
+        protected override async Task<RulesList> GetRulesFromServer(string countryCode, CancellationToken cancellationToken = default)
+        {
+            Logger?.LogInformation("Refreshing rules from server...");
+            var rulesList = new RulesList()
+            {
+                LastUpdate = DateTime.Now,
+            };
+            var rules = await FetchSettings(cancellationToken);
+
+
+            rulesList.Rules = rules.ToArray();
+
+            // Checking min version:
+            CheckMinSdkVersion(rules);
+
+            return rulesList;
+        }
+
+        /// <summary>
+        /// Load the rules list stored in file
+        /// </summary>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        protected override Task<RulesList?> LoadCache(string countryCode, CancellationToken cancellationToken = default)
+        {
+            var filePath = GetRulesListFilePath();
+            RulesList rulesList = null;
+            try
+            {
+                if (File.Exists(filePath))
+                {
+                    Logger?.LogInformation($"Loading rules from file");
+                    var fileContent = File.ReadAllText(filePath);
+                    rulesList = JsonConvert.DeserializeObject<RulesList>(fileContent, JsonSettings);
+                }
+            }
+            catch (Exception e)
+            {
+                Logger?.LogError(e, $"Error reading trustlist from file: {e.Message}");
+            }
+
+            // Check max age and delete file
+            if (rulesList != null &&
+                rulesList.LastUpdate.Add(Options.MaxFileAge) < DateTime.Now)
+            {
+                Logger?.LogInformation($"Rules list expired for MaxFileAge, deleting list and file");
+                // File has passed the max age, removing file
+                try
+                {
+                    if (File.Exists(filePath))
+                        File.Delete(filePath);
+                }
+                catch (Exception e)
+                {
+                    Logger?.LogError(e, $"Error deleting rules list file: {e.Message}");
+                }
+                return Task.FromResult<RulesList?>(null);
+            }
+
+            return Task.FromResult<RulesList?>(rulesList);
+        }
+
+        /// <inheritdoc/>
+        protected override Task UpdateCache(RulesList rules, string countryCode, CancellationToken cancellationToken = default)
+        {
+            var filePath = GetRulesListFilePath();
+            var json = JsonConvert.SerializeObject(rules, JsonSettings);
+
+            File.WriteAllText(filePath, json);
+            return Task.FromResult(0);
+        }
+
+        /// <inheritdoc/>
+        protected override DateTimeOffset GetRulesLastUpdate(RulesList rules) => rules.LastUpdate;
+
         #endregion
 
         #region Public methods
@@ -266,117 +310,6 @@ namespace DgcReader.RuleValidators.Italy
             return (DgcRulesValidationResult)await GetRulesValidationResult(signedDgc.Dgc, DateTimeOffset.Now);
         }
 
-        /// <summary>
-        /// Return the validation rules
-        /// </summary>
-        /// <returns></returns>
-        public async Task<IEnumerable<RuleSetting>?> GetRules(CancellationToken cancellationToken = default)
-        {
-            await _currentRulesListSemaphore.WaitAsync(cancellationToken);
-            try
-            {
-                // If not loaded, try to load from file
-                if (_currentRulesList == null)
-                {
-                    _currentRulesList = await LoadCache();
-                }
-            }
-            catch (Exception)
-            {
-                throw;
-            }
-            finally
-            {
-                _currentRulesListSemaphore.Release();
-            }
-
-            // Checking validity of the rules list:
-            // If is null or expired, refresh
-            var rulesList = _currentRulesList;
-
-            Task<IEnumerable<RuleSetting>?>? refreshTask = null;
-
-            if (rulesList == null)
-            {
-                _logger?.LogInformation($"Rules list not loaded, refreshing from server");
-
-                // If not present, always try to refresh the list
-                refreshTask = await GetRefreshTask(cancellationToken);
-            }
-            else if (rulesList.LastUpdate.Add(_options.RefreshInterval) < DateTime.Now)
-            {
-                // If refresh interval is expired and the min refresh interval is over, refresh the list
-                if (_lastRefreshAttempt.Add(_options.MinRefreshInterval) < DateTime.Now)
-                {
-                    _logger?.LogInformation($"Rules list refresh interval expired, refreshing from server");
-                    refreshTask = await GetRefreshTask(cancellationToken);
-                }
-            }
-
-            if (refreshTask != null)
-            {
-                if (rulesList == null)
-                {
-                    _logger?.LogInformation($"No Rules list loaded in memory, waiting for refresh to complete");
-                    return await refreshTask;
-                }
-                else if (_options.UseAvailableListWhileRefreshing == false)
-                {
-                    // If UseAvailableListWhileRefreshing, always wait for the task to complete
-                    _logger?.LogInformation($"Rules list is expired, waiting for refresh to complete");
-                    return await refreshTask;
-                }
-            }
-
-
-
-            return rulesList?.Rules ?? Enumerable.Empty<RuleSetting>();
-
-
-        }
-
-        public async Task<IEnumerable<RuleSetting>?> RefreshRulesList(CancellationToken cancellationToken = default)
-        {
-            try
-            {
-                _lastRefreshAttempt = DateTime.Now;
-                var filePath = GetRulesListFilePath();
-
-                _logger?.LogInformation("Refreshing rules settings from server...");
-                var rulesList = new RulesList()
-                {
-                    LastUpdate = DateTime.Now,
-                };
-                var rules = await FetchSettings(cancellationToken);
-
-
-                rulesList.Rules = rules.ToArray();
-
-                // Checking min version:
-                CheckMinSdkVersion(rules);
-
-                _currentRulesList = rulesList;
-
-                try
-                {
-                    var json = JsonConvert.SerializeObject(rulesList, JsonSettings);
-
-                    File.WriteAllText(filePath, json);
-                    //await File.WriteAllTextAsync(filePath, json);  Only > .net5.0
-                }
-                catch (Exception e)
-                {
-                    _logger?.LogError(e, $"Error saving rules list to file: {e.Message}");
-                }
-
-                return rulesList.Rules;
-            }
-            catch (Exception e)
-            {
-                _logger?.LogError(e, $"Error refreshing rules list from server: {e.Message}");
-                return null;
-            }
-        }
 
         #endregion
 
@@ -471,7 +404,7 @@ namespace DgcReader.RuleValidators.Italy
                         endHours = rules.GetRuleInteger(SettingNames.MolecularTestEndHours);
                         break;
                     default:
-                        _logger?.LogWarning($"Test type {test.TestType} not supported by current rules");
+                        Logger?.LogWarning($"Test type {test.TestType} not supported by current rules");
                         result.Status = DgcResultStatus.NotValid;
                         return;
                 }
@@ -491,7 +424,7 @@ namespace DgcReader.RuleValidators.Italy
             {
                 // Positive test or unknown result
                 if (test.TestResult != TestResults.Detected)
-                    _logger?.LogWarning($"Found test with unkwnown TestResult {test.TestResult}. The certificate is considered invalid");
+                    Logger?.LogWarning($"Found test with unkwnown TestResult {test.TestResult}. The certificate is considered invalid");
 
                 result.Status = DgcResultStatus.NotValid;
             }
@@ -566,9 +499,9 @@ namespace DgcReader.RuleValidators.Italy
             if (obsolete)
             {
 
-                if (_options.IgnoreMinimumSdkVersion)
+                if (Options.IgnoreMinimumSdkVersion)
                 {
-                    _logger?.LogWarning(message);
+                    Logger?.LogWarning(message);
                 }
                 else
                 {
@@ -587,7 +520,7 @@ namespace DgcReader.RuleValidators.Italy
             try
             {
                 var start = DateTime.Now;
-                _logger?.LogDebug("Fetching rules settings...");
+                Logger?.LogDebug("Fetching rules...");
                 var response = await _httpClient.GetAsync(ValidationRulesUrl, cancellationToken);
                 if (response.IsSuccessStatusCode)
                 {
@@ -598,7 +531,7 @@ namespace DgcReader.RuleValidators.Italy
                     if (results == null)
                         throw new Exception("Error wile deserializing rules from server");
 
-                    _logger?.LogInformation($"{results.Length} rules read in {DateTime.Now - start}");
+                    Logger?.LogInformation($"{results.Length} rules read in {DateTime.Now - start}");
                     return results;
                 }
 
@@ -606,134 +539,14 @@ namespace DgcReader.RuleValidators.Italy
             }
             catch (Exception ex)
             {
-                _logger?.LogError(ex, $"Error while getting rules list from server: {ex.Message}");
+                Logger?.LogError(ex, $"Error while getting rules from server: {ex.Message}");
                 throw;
             }
-        }
-
-        /// <summary>
-        /// Load the rules list stored in file
-        /// </summary>
-        /// <param name="cancellationToken"></param>
-        /// <returns></returns>
-        private Task<RulesList?> LoadCache(CancellationToken cancellationToken = default)
-        {
-            var filePath = GetRulesListFilePath();
-            RulesList rulesList = null;
-            try
-            {
-                if (File.Exists(filePath))
-                {
-                    _logger?.LogInformation($"Loading rules from file");
-                    var fileContent = File.ReadAllText(filePath);
-                    rulesList = JsonConvert.DeserializeObject<RulesList>(fileContent, JsonSettings);
-                }
-            }
-            catch (Exception e)
-            {
-                _logger?.LogError(e, $"Error reading trustlist from file: {e.Message}");
-            }
-
-            // Check max age and delete file
-            if (rulesList != null &&
-                rulesList.LastUpdate.Add(_options.MaxFileAge) < DateTime.Now)
-            {
-                _logger?.LogInformation($"Rules list expired for MaxFileAge, deleting list and file");
-                // File has passed the max age, removing file
-                try
-                {
-                    if (File.Exists(filePath))
-                        File.Delete(filePath);
-                }
-                catch (Exception e)
-                {
-                    _logger?.LogError(e, $"Error deleting rules list file: {e.Message}");
-                }
-                return Task.FromResult<RulesList?>(null);
-            }
-
-            return Task.FromResult<RulesList?>(rulesList);
         }
 
         private string GetRulesListFilePath()
         {
-            return Path.Combine(_options.BasePath, _options.RulesListFileName);
-        }
-
-        #endregion
-
-        #region Single task optimization
-
-        /// <summary>
-        /// If not already started, starts a new task for refreshing the rules list
-        /// </summary>
-        /// <returns></returns>
-        private async Task<Task<IEnumerable<RuleSetting>?>> GetRefreshTask(CancellationToken cancellationToken = default)
-        {
-            await _refreshTaskSemaphore.WaitAsync(cancellationToken);
-            try
-            {
-                if (_refreshTask == null)
-                {
-                    _refreshTask = Task.Run(async () =>
-                    {
-                        try
-                        {
-                            _refreshTaskCancellation = new CancellationTokenSource();
-                            return await RefreshRulesList(_refreshTaskCancellation.Token);
-                        }
-                        finally
-                        {
-                            await _refreshTaskSemaphore.WaitAsync(_refreshTaskCancellation?.Token ?? default);
-                            try
-                            {
-                                _refreshTask = null;
-                                _refreshTaskCancellation?.Dispose();
-                                _refreshTaskCancellation = null;
-                            }
-                            catch (Exception e)
-                            {
-                                _logger?.LogError(e, $"Error while checking refresh semaphore: {e.Message}");
-                            }
-                            finally
-                            {
-                                _refreshTaskSemaphore.Release();
-                            }
-
-                        }
-                    });
-                }
-                return _refreshTask;
-            }
-            catch (Exception e)
-            {
-                _logger?.LogError(e, $"Error while getting Refresh Task: {e.Message}");
-                throw;
-            }
-            finally
-            {
-                _refreshTaskSemaphore.Release();
-            }
-
-        }
-
-        private void CancelRefreshTaskExecution()
-        {
-            if (_refreshTaskCancellation == null)
-                return;
-
-            if (!_refreshTaskCancellation.IsCancellationRequested &&
-                _refreshTaskCancellation.Token.CanBeCanceled)
-            {
-                _logger?.LogWarning($"Requesting cancellation for the RefreshListTask");
-                _refreshTaskCancellation.Cancel();
-            }
-        }
-
-        /// <inheritdoc/>
-        public void Dispose()
-        {
-            CancelRefreshTaskExecution();
+            return Path.Combine(Options.BasePath, Options.RulesListFileName);
         }
 
         #endregion

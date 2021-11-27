@@ -36,6 +36,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DgcReader.TrustListProvider
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DgcReader.TrustListProviders.Sweden.Test", "TrustListProviders\Test\DgcReader.TrustListProviders.Sweden.Test\DgcReader.TrustListProviders.Sweden.Test.csproj", "{5EFC234F-DFE7-410B-A6F6-0B5C93C03FA6}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DgcReader.RuleValidators.Abstractions", "RuleValidators\DgcReader.RuleValidators.Abstractions\DgcReader.RuleValidators.Abstractions.csproj", "{18055260-4A0A-4C7C-A8FC-26D69B848EB8}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -78,6 +80,10 @@ Global
 		{5EFC234F-DFE7-410B-A6F6-0B5C93C03FA6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5EFC234F-DFE7-410B-A6F6-0B5C93C03FA6}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5EFC234F-DFE7-410B-A6F6-0B5C93C03FA6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{18055260-4A0A-4C7C-A8FC-26D69B848EB8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{18055260-4A0A-4C7C-A8FC-26D69B848EB8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{18055260-4A0A-4C7C-A8FC-26D69B848EB8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{18055260-4A0A-4C7C-A8FC-26D69B848EB8}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -92,6 +98,7 @@ Global
 		{DBF0FE0F-3FB3-4CB4-BB1E-1A3A85A6CA58} = {3EF4A069-88A1-484F-AA55-8703DC4E7754}
 		{C60069CB-71EA-4868-B173-830FEDBEF40B} = {1EDBDF25-24C7-4B77-8FDA-1D891E3DF11C}
 		{5EFC234F-DFE7-410B-A6F6-0B5C93C03FA6} = {7124E97F-3F0F-471F-8330-176CCD30FD9F}
+		{18055260-4A0A-4C7C-A8FC-26D69B848EB8} = {BEA722FC-0C1B-4BDD-A273-4B415029F06F}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {4B910BDD-0DA5-4052-94AE-2E889E4FB766}

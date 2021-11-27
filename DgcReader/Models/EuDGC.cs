@@ -10,7 +10,7 @@ using Newtonsoft.Json.Converters;
 // Based on the original work of Myndigheten för digital förvaltning (DIGG)
 
 namespace GreenpassReader.Models
-{   
+{
     /// <summary>
     /// EU Digital Green Certificate
     /// Schema version: 1.3.0 - 2021-06-09
@@ -152,8 +152,8 @@ namespace GreenpassReader.Models
 
         /// <summary>
         /// Country of Test
-        /// 2-letter ISO3166 code (RECOMMENDED) or a reference to an international 
-        /// organisation responsible for carrying out the test which the test 
+        /// 2-letter ISO3166 code (RECOMMENDED) or a reference to an international
+        /// organisation responsible for carrying out the test which the test
         /// was carried out (such as UNHCR or WHO)
         /// This MUST be a coded value from the value set country-2-codes.json
         /// </summary>
@@ -174,7 +174,7 @@ namespace GreenpassReader.Models
 
         /// <summary>
         /// RAT Test name and manufacturer (rapid antigen tests only)
-        /// Rapid antigen test (RAT) device identifier from the JRC database. 
+        /// Rapid antigen test (RAT) device identifier from the JRC database.
         /// Value set (HSC common list):
         /// <see href="https://covid-19-diagnostics.jrc.ec.europa.eu/devices/hsc-common-recognition-rat">(machine-readable, values of the field id_device included on the list form the value set)</see>
         /// </summary>
@@ -183,8 +183,8 @@ namespace GreenpassReader.Models
 
         /// <summary>
         /// NAA Test Name
-        /// The name of the nucleic acid amplification test (NAAT) used. 
-        /// The name should include the name of the test manufacturer and 
+        /// The name of the nucleic acid amplification test (NAAT) used.
+        /// The name should include the name of the test manufacturer and
         /// the commercial name of the test, separated by a comma.
         /// For NAAT: the field is optional.
         /// For RAT: the field SHOULD NOT be used, as the name of the test is supplied
@@ -195,9 +195,9 @@ namespace GreenpassReader.Models
 
         /// <summary>
         /// Date/Time of Sample Collection
-        /// The date and time when the test sample was collected. The time MUST 
+        /// The date and time when the test sample was collected. The time MUST
         /// include information on the time zone.The value MUST NOT denote the time
-        /// when the test result was produced. 
+        /// when the test result was produced.
         /// </summary>
         [JsonProperty("sc")]
         public DateTimeOffset SampleCollectionDate { get; internal set; }
@@ -237,8 +237,8 @@ namespace GreenpassReader.Models
 
         /// <summary>
         /// Country of Vaccination
-        /// 2-letter ISO3166 code (RECOMMENDED) or a reference to an international 
-        /// organisation responsible for carrying out the test which the test 
+        /// 2-letter ISO3166 code (RECOMMENDED) or a reference to an international
+        /// organisation responsible for carrying out the test which the test
         /// was carried out (such as UNHCR or WHO)
         ///A coded value from the value set country-2-codes.json
         /// </summary>
@@ -279,7 +279,7 @@ namespace GreenpassReader.Models
 
         /// <summary>
         /// Vaccine medicinal product
-        /// Medicinal product used for this specific dose of vaccination. 
+        /// Medicinal product used for this specific dose of vaccination.
         /// A coded value from the value set vaccine-medicinal-product.json
         /// </summary>
         [JsonProperty("mp")]
@@ -287,7 +287,7 @@ namespace GreenpassReader.Models
 
         /// <summary>
         /// Total Series of Doses
-        /// Total number of doses (positive integer) in a complete vaccination series 
+        /// Total number of doses (positive integer) in a complete vaccination series
         /// according to the used vaccination protocol.The protocol is not in all cases
         /// directly defined by the vaccine product, as in some countries only one dose of
         /// normally two-dose vaccines is delivered to people recovered from COVID-19
@@ -297,7 +297,7 @@ namespace GreenpassReader.Models
 
         /// <summary>
         /// Vaccine or prophylaxis
-        /// Type of the vaccine or prophylaxis used. 
+        /// Type of the vaccine or prophylaxis used.
         /// A coded value from the value set vaccine-prophylaxis.json
         /// </summary>
         [JsonProperty("vp")]
@@ -316,8 +316,8 @@ namespace GreenpassReader.Models
 
         /// <summary>
         /// Country
-        /// 2-letter ISO3166 code (RECOMMENDED) or a reference to an international 
-        /// organisation responsible for carrying out the test which the test 
+        /// 2-letter ISO3166 code (RECOMMENDED) or a reference to an international
+        /// organisation responsible for carrying out the test which the test
         /// was carried out (such as UNHCR or WHO)
         /// </summary>
         string Country { get; }

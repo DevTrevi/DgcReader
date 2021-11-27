@@ -6,6 +6,8 @@ using DgcReader.RuleValidators.Italy;
 using DgcReader;
 using System.Threading.Tasks;
 using System.Collections.Generic;
+using DgcReader.Exceptions;
+using GreenpassReader.Models;
 
 #if NETFRAMEWORK
 using System.Net;
@@ -53,6 +55,24 @@ namespace DgcReader.RuleValidators.Italy.Test
                 throw;
             }
 
+        }
+
+        [TestMethod]
+        public async Task TestUnsupportedCountry()
+        {
+            var country = "DE";
+            var supported = await Validator.SupportsCountry(country);
+
+            Assert.IsFalse(supported);
+        }
+
+        [TestMethod]
+        public async Task TestSupportedCountry()
+        {
+            var country = "IT";
+            var supported = await Validator.SupportsCountry(country);
+
+            Assert.IsTrue(supported);
         }
 
 

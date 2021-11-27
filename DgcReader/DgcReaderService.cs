@@ -12,6 +12,7 @@ using Microsoft.Extensions.Logging;
 using DgcReader.Interfaces.RulesValidators;
 using DgcReader.Interfaces.TrustListProviders;
 using DgcReader.Interfaces.BlacklistProviders;
+using System.Linq;
 
 // Copyright (c) 2021 Davide Trevisan
 // Licensed under the Apache License, Version 2.0
@@ -104,12 +105,13 @@ namespace DgcReader
         /// Decodes the DGC data, verifying signature, blacklist and rules if a provider is available.
         /// </summary>
         /// <param name="qrCodeData">The QRCode data of the DGC</param>
+        /// <param name="countryCode">The 2-letter ISO country code for which to request rules validation. This information is mandatory if the registered rules validator provider supports rules for multiple countries</param>
         /// <param name="throwOnError">If true, throw an exception if the validation fails</param>
         /// <returns></returns>
-        /// 
-        public Task<DgcValidationResult> Verify(string qrCodeData, bool throwOnError = true)
+        ///
+        public Task<DgcValidationResult> Verify(string qrCodeData, string? countryCode = null, bool throwOnError = true)
         {
-            return Verify(qrCodeData, DateTimeOffset.Now, throwOnError);
+            return Verify(qrCodeData, DateTimeOffset.Now, countryCode, throwOnError);
         }
 
 
@@ -119,10 +121,11 @@ namespace DgcReader
         /// </summary>
         /// <param name="qrCodeData">The QRCode data of the DGC</param>
         /// <param name="validationInstant">The instant for the validation of the object (for testing purposes)</param>
+        /// <param name="countryCode">The 2-letter ISO country code for which to request rules validation. This information is mandatory if the registered rules validator provider supports rules for multiple countries</param>
         /// <param name="throwOnError">If true, throw an exception if the validation fails</param>
         /// <returns></returns>
         /// <exception cref="DgcException"></exception>
-        public async Task<DgcValidationResult> Verify(string qrCodeData, DateTimeOffset validationInstant, bool throwOnError = true)
+        public async Task<DgcValidationResult> Verify(string qrCodeData, DateTimeOffset validationInstant, string? countryCode = null, bool throwOnError = true)
         {
             var result = new DgcValidationResult()
             {
@@ -178,7 +181,17 @@ namespace DgcReader
                     // Step 4: check country rules
                     if (RulesValidator != null)
                     {
-                        var rulesResult = await RulesValidator.GetRulesValidationResult(result.Dgc, result.ValidationInstant);
+                        if (string.IsNullOrEmpty(countryCode))
+                        {
+                            var supportedCountries = await RulesValidator.GetSupportedCountries();
+                            if (supportedCountries.Count() > 1)
+                                throw new DgcException($"The registered rule validator provider supports multiple countries. " +
+                                    $"Please specify the countryCode for rules verification.");
+
+                            countryCode = supportedCountries.FirstOrDefault();
+                        }
+
+                        var rulesResult = await RulesValidator.GetRulesValidationResult(result.Dgc, result.ValidationInstant, countryCode ?? string.Empty);
                         result.ValidFrom = rulesResult.ValidFrom;
                         result.ValidUntil = rulesResult.ValidUntil;
                         result.RulesVerificationCountry = rulesResult.RulesVerificationCountry;
@@ -256,10 +269,11 @@ namespace DgcReader
         /// A result is always returned
         /// </summary>
         /// <param name="qrCodeData">The QRCode data of the DGC</param>
+        /// <param name="countryCode">The 2-letter ISO country code for which to request rules validation. This information is mandatory if the registered rules validator provider supports rules for multiple countries</param>
         /// <returns></returns>
-        public Task<DgcValidationResult> GetValidationResult(string qrCodeData)
+        public Task<DgcValidationResult> GetValidationResult(string qrCodeData, string? countryCode = null)
         {
-            return Verify(qrCodeData, false);
+            return Verify(qrCodeData, countryCode, false);
         }
 
         /// <summary>
@@ -267,13 +281,14 @@ namespace DgcReader
         /// A result is always returned
         /// </summary>
         /// <param name="qrCodeData">The QRCode data of the DGC</param>
+        /// <param name="countryCode">The 2-letter ISO country code for which to request rules validation. This information is mandatory if the registered rules validator provider supports rules for multiple countries</param>
         /// <param name="validationInstant">The instant for the validation of the object (for testing purposes)</param>
         /// <returns></returns>
-        public Task<DgcValidationResult> GetValidationResult(string qrCodeData, DateTimeOffset validationInstant)
+        public Task<DgcValidationResult> GetValidationResult(string qrCodeData, DateTimeOffset validationInstant, string? countryCode = null)
         {
-            return Verify(qrCodeData, validationInstant, false);
+            return Verify(qrCodeData, validationInstant, countryCode, false);
         }
-        
+
         #region Private
 
         /// <summary>

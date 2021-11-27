@@ -97,7 +97,7 @@ namespace DgcReader.RuleValidators.Italy
         }
 
         /// <summary>
-        /// Factory method for creating an instance of <see cref="DgcItalianRulesValidator"/> 
+        /// Factory method for creating an instance of <see cref="DgcItalianRulesValidator"/>
         /// whithout using the DI mechanism. Useful for legacy applications
         /// </summary>
         /// <param name="httpClient">The http client instance that will be used for requests to the server</param>
@@ -125,7 +125,7 @@ namespace DgcReader.RuleValidators.Italy
         }
 
         /// <summary>
-        /// Factory method for creating an instance of <see cref="DgcItalianRulesValidator"/> 
+        /// Factory method for creating an instance of <see cref="DgcItalianRulesValidator"/>
         /// whithout using the DI mechanism. Useful for legacy applications
         /// </summary>
         /// <param name="httpClient">The http client instance that will be used for requests to the server</param>
@@ -136,8 +136,8 @@ namespace DgcReader.RuleValidators.Italy
             DgcItalianRulesValidatorOptions? options = null,
             ILogger<DgcItalianRulesValidator>? logger = null)
         {
-            return new DgcItalianRulesValidator(httpClient, 
-                options == null ? null : Options.Create(options), 
+            return new DgcItalianRulesValidator(httpClient,
+                options == null ? null : Options.Create(options),
                 logger);
         }
 #endif
@@ -145,8 +145,11 @@ namespace DgcReader.RuleValidators.Italy
         #region Implementation of IRulesValidator
 
         /// <inheritdoc/>
-        public async Task<IRuleValidationResult> GetRulesValidationResult(EuDGC dgc, DateTimeOffset validationInstant, CancellationToken cancellationToken = default)
+        public async Task<IRuleValidationResult> GetRulesValidationResult(EuDGC dgc, DateTimeOffset validationInstant, string countryCode = "IT", CancellationToken cancellationToken = default)
         {
+            if (!await SupportsCountry(countryCode))
+                throw new DgcRulesValidationException($"Rules validation for country {countryCode} is not supported by this provider");
+
             var result = new DgcRulesValidationResult
             {
                 Dgc = dgc,
@@ -199,6 +202,23 @@ namespace DgcReader.RuleValidators.Italy
         public async Task RefreshRules(CancellationToken cancellationToken = default)
         {
             await RefreshRulesList(cancellationToken);
+        }
+
+        /// <inheritdoc/>
+        public Task<IEnumerable<string>> GetSupportedCountries(CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult(new[] { "IT" }.AsEnumerable());
+        }
+
+        /// <inheritdoc/>
+        public async Task<bool> SupportsCountry(string countryCode, CancellationToken cancellationToken = default)
+        {
+            if (string.IsNullOrEmpty(countryCode))
+                return false;
+
+            var supportedCountries = await GetSupportedCountries(cancellationToken);
+
+            return supportedCountries.Any(c => c.Equals(countryCode, StringComparison.InvariantCultureIgnoreCase));
         }
         #endregion
 
@@ -334,7 +354,7 @@ namespace DgcReader.RuleValidators.Italy
 
                 // Checking min version:
                 CheckMinSdkVersion(rules);
-                
+
                 _currentRulesList = rulesList;
 
                 try
@@ -396,7 +416,7 @@ namespace DgcReader.RuleValidators.Italy
                 if (vaccination.MedicinalProduct == VaccineProducts.JeJVacineCode &&
                     vaccination.DoseNumber > vaccination.TotalDoseSeries)
                 {
-                    // For J&J booster, in case of more vaccinations than expected, the vaccine is immediately valid 
+                    // For J&J booster, in case of more vaccinations than expected, the vaccine is immediately valid
                     result.ValidFrom = vaccination.Date;
                     result.ValidUntil = vaccination.Date.AddDays(endDay);
                 }
@@ -423,7 +443,7 @@ namespace DgcReader.RuleValidators.Italy
                     result.Status = DgcResultStatus.PartiallyValid;
                 else
                     result.Status = DgcResultStatus.Valid;
-            }            
+            }
         }
 
         /// <summary>
@@ -485,7 +505,7 @@ namespace DgcReader.RuleValidators.Italy
         private void CheckRecoveryStatements(EuDGC dgc, DgcRulesValidationResult result, IEnumerable<RuleSetting> rules)
         {
             var recovery = dgc.Recoveries.Last(r => r.TargetedDiseaseAgent == DiseaseAgents.Covid19);
-            
+
             int startDay, endDay;
 
             startDay = rules.GetRuleInteger(SettingNames.RecoveryCertStartDay);
@@ -555,7 +575,7 @@ namespace DgcReader.RuleValidators.Italy
                     throw new DgcRulesValidationException(message);
                 }
             }
-            
+
         }
 
         #endregion

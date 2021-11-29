@@ -53,10 +53,13 @@ namespace DgcReader.TrustListProviders.Abstractions
         /// <param name="options"></param>
         /// <param name="logger"></param>
         protected ThreadsafeTrustListProvider(
-            ITrustListProviderBaseOptions? options,
+            ITrustListProviderBaseOptions options,
             ILogger? logger)
         {
-            Options = options ?? new TrustListProviderBaseOptions();
+            if (options == null)
+                throw new ArgumentNullException(nameof(options));
+
+            Options = options;
             Logger = logger;
         }
 
@@ -137,8 +140,6 @@ namespace DgcReader.TrustListProviders.Abstractions
                     return await refreshTask;
                 }
             }
-            
-
 
             return trustList?.Certificates ?? Enumerable.Empty<ITrustedCertificateData>();
         }
@@ -188,7 +189,7 @@ namespace DgcReader.TrustListProviders.Abstractions
             catch (Exception e)
             {
                 Logger?.LogError(e, $"Error refreshing trustlist from server: {e.Message}");
-                return null;
+                throw;
             }
         }
 
@@ -225,7 +226,7 @@ namespace DgcReader.TrustListProviders.Abstractions
         protected virtual Task<ITrustList?> LoadCache(CancellationToken cancellationToken = default) => Task.FromResult<ITrustList?>(null);
 
         /// <summary>
-        /// Store the updated trustlist to the cache of the provider (eg. to a file) 
+        /// Store the updated trustlist to the cache of the provider (eg. to a file)
         /// </summary>
         /// <param name="trustList"></param>
         /// <param name="cancellationToken"></param>
@@ -253,6 +254,11 @@ namespace DgcReader.TrustListProviders.Abstractions
                         {
                             _refreshTaskCancellation = new CancellationTokenSource();
                             return await RefreshTrustList(_refreshTaskCancellation.Token);
+                        }
+                        catch (Exception ex)
+                        {
+                            Logger?.LogError($"Error while executing {nameof(RefreshTrustList)} task: {ex}");
+                            return null;
                         }
                         finally
                         {
@@ -312,13 +318,13 @@ namespace DgcReader.TrustListProviders.Abstractions
 
     /// <inheritdoc cref="ThreadsafeTrustListProvider"/>
     public abstract class ThreadsafeTrustListProvider<TOptions> : ThreadsafeTrustListProvider
-        where TOptions : class, ITrustListProviderBaseOptions
+        where TOptions : class, ITrustListProviderBaseOptions, new()
     {
         /// <inheritdoc cref="ThreadsafeTrustListProvider.Options"/>
         public new TOptions Options => (TOptions)base.Options;
 
         /// <inheritdoc />
-        protected ThreadsafeTrustListProvider(TOptions? options, ILogger? logger) : base(options, logger)
+        protected ThreadsafeTrustListProvider(TOptions? options, ILogger? logger) : base(options ?? new TOptions(), logger)
         {
 
         }

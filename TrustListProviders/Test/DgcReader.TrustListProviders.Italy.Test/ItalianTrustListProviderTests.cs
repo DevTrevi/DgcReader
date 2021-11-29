@@ -6,15 +6,14 @@ using DgcReader.TrustListProviders.Italy;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using DgcReader.Interfaces.TrustListProviders;
+using System.Net.Http;
 
 #if NETFRAMEWORK
 using System.Net;
-using DgcReader.Interfaces.TrustListProviders;
+
 #endif
 
-#if NET452
-using System.Net.Http;
-#else
+#if !NET452
 using Microsoft.Extensions.DependencyInjection;
 #endif
 
@@ -53,11 +52,11 @@ namespace DgcReader.TrustListProviders.Italy.Test
                 Assert.IsNotNull(test);
                 Assert.IsTrue(test.Any());
             }
-            catch (System.Exception e)
+            catch (Exception e)
             {
                 throw;
             }
-            
+
         }
 
 
@@ -88,7 +87,7 @@ namespace DgcReader.TrustListProviders.Italy.Test
 
                 await Task.Delay(5);
             }
-            catch (System.Exception e)
+            catch (Exception e)
             {
 
                 throw;
@@ -100,14 +99,14 @@ namespace DgcReader.TrustListProviders.Italy.Test
         [TestMethod]
         public void TestConstructor()
         {
-            var httpClient = new System.Net.Http.HttpClient();
+            var httpClient = new HttpClient();
 
 #if NET452
-            var instance = new ItalianTrustListProvider(httpClient, 
-                Options, 
+            var instance = new ItalianTrustListProvider(httpClient,
+                Options,
                 null);
 #else
-            var instance = new ItalianTrustListProvider(httpClient, 
+            var instance = new ItalianTrustListProvider(httpClient,
                 Microsoft.Extensions.Options.Options.Create(Options), null);
 #endif
 
@@ -117,7 +116,7 @@ namespace DgcReader.TrustListProviders.Italy.Test
         [TestMethod]
         public void TestFactory()
         {
-            var httpClient = new System.Net.Http.HttpClient();
+            var httpClient = new HttpClient();
 
 #if NET452
             var instance = ItalianTrustListProvider.Create(httpClient, Options, null);
@@ -128,8 +127,34 @@ namespace DgcReader.TrustListProviders.Italy.Test
             Assert.IsNotNull(instance);
         }
 
+        [TestMethod]
+        public async Task TestConstructorWithoutOptions()
+        {
+            // Verify that an instance can be created without specifiyng custom options
+            var httpClient = new HttpClient();
+
+            var instance = new ItalianTrustListProvider(httpClient);
+
+            await instance.RefreshTrustList();
+
+            Assert.IsNotNull(instance);
+        }
+
+        [TestMethod]
+        public async Task TestFactoryWithoutOptions()
+        {
+            // Verify that an instance can be created without specifiyng custom options
+            var httpClient = new HttpClient();
+
+            var instance = new ItalianTrustListProvider(httpClient);
+
+            await instance.RefreshTrustList();
+
+            Assert.IsNotNull(instance);
+        }
 
 #if !NET452
+
         [TestMethod]
         public void TestServiceDI()
         {

@@ -203,8 +203,6 @@ namespace DgcReader.TrustListProviders.Abstractions
         public virtual async Task<ITrustedCertificateData?> GetByKid(string kid, string? country, CancellationToken cancellationToken = default)
         {
             var trustList = await GetTrustList(cancellationToken);
-            if (trustList == null)
-                return null;
 
             var q = trustList.Where(x => x.Kid == kid);
             if (!string.IsNullOrEmpty(country))

@@ -42,7 +42,7 @@ namespace DgcReader.Models
         /// True if a blacklist check was performed on the certificate.
         /// This is true also if the certificate is blacklisted
         /// </summary>
-        public bool BlaclistVerified { get; internal set; } = false;
+        public bool BlacklistVerified { get; internal set; } = false;
 
         /// <summary>
         /// The validity status of the certificate.
@@ -51,7 +51,7 @@ namespace DgcReader.Models
         public DgcResultStatus Status { get; internal set; } = DgcResultStatus.NotEuDCC;
 
         /// <summary>
-        /// If specified, determines the date and time when the certification is considered active.
+        /// If specified, determines the date and time when the certification is considered Valid.
         /// If null, the certification should be considered invalid
         /// Always refer to <see cref="Status"/> for the effective validity for the verifying country
         /// </summary>
@@ -70,9 +70,14 @@ namespace DgcReader.Models
         public DateTimeOffset ValidationInstant { get; internal set; }
 
         /// <summary>
-        /// Country for which the rules has been verified (2 letter ISO code)
+        /// Country for which the rules has been verified (2-letter ISO code)
         /// </summary>
         public string? RulesVerificationCountry { get; internal set; }
+
+        /// <summary>
+        /// A string message describing the status of the validation result
+        /// </summary>
+        public string StatusMessage { get; internal set; }
 
     }
 

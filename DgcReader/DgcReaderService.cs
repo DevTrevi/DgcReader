@@ -142,10 +142,6 @@ namespace DgcReader
                     result.Dgc = signedDgc.Dgc;
 
                     // Step 2: check signature
-                    if (TrustListProvider == null)
-                    {
-                        throw new DgcSignatureValidationException($"No trustlist provider is registered for signature validation");
-                    }
                     // Checking signature first, throwing exceptions if not valid
                     await VerifySignature(cose, validationInstant);
 
@@ -160,7 +156,7 @@ namespace DgcReader
                         var blacklisted = await BlackListProvider.IsBlacklisted(certEntry.CertificateIdentifier);
 
                         // Check performed
-                        result.BlaclistVerified = true;
+                        result.BlacklistVerified = true;
                         if (blacklisted)
                         {
                             throw new DgcBlackListException($"The certificate is blacklisted", certEntry.CertificateIdentifier);
@@ -185,7 +181,11 @@ namespace DgcReader
                             if (rulesResult.Status != DgcResultStatus.Valid &&
                                 rulesResult.Status != DgcResultStatus.PartiallyValid)
                             {
-                                throw new DgcRulesValidationException(GetDgcResultStatusDescription(rulesResult.Status), rulesResult);
+                                var message = rulesResult.StatusMessage;
+                                if (string.IsNullOrEmpty(message))
+                                    message = GetDgcResultStatusDescription(rulesResult.Status);
+
+                                throw new DgcRulesValidationException(message, rulesResult);
                             }
                         }
                     }
@@ -227,6 +227,7 @@ namespace DgcReader
             }
             catch (DgcException e)
             {
+                result.StatusMessage = e.Message;
                 if (throwOnError)
                 {
                     Logger?.LogError($"Validation failed: {e.Message}");
@@ -234,14 +235,18 @@ namespace DgcReader
                 }
             }
 
+            // Fallback message if not specified before
+            if (string.IsNullOrEmpty(result.StatusMessage))
+                result.StatusMessage = GetDgcResultStatusDescription(result.Status);
+
             if (result.Status == DgcResultStatus.Valid)
-                Logger?.LogInformation($"Validation succeded: {GetDgcResultStatusDescription(result.Status)}");
+                Logger?.LogInformation($"Validation succeded: {result.StatusMessage}");
             else if (result.Status == DgcResultStatus.PartiallyValid)
-                Logger?.LogWarning($"Validation succeded: {GetDgcResultStatusDescription(result.Status)}");
+                Logger?.LogWarning($"Validation succeded: {result.StatusMessage}");
             else if (result.Status == DgcResultStatus.NeedRulesVerification && RulesValidator == null)
-                Logger?.LogWarning($"Validation succeded: {GetDgcResultStatusDescription(result.Status)}");
+                Logger?.LogWarning($"Validation succeded: {result.StatusMessage}");
             else
-                Logger?.LogError($"Validation failed: {GetDgcResultStatusDescription(result.Status)}");
+                Logger?.LogError($"Validation failed: {result.StatusMessage}");
 
             return result;
         }
@@ -308,6 +313,10 @@ namespace DgcReader
         /// <exception cref="DgcSignatureValidationException"></exception>
         private async Task VerifySignature(CoseSign1_Object cose, DateTimeOffset validationInstant)
         {
+            if (TrustListProvider == null)
+            {
+                throw new DgcSignatureValidationException($"No trustlist provider is registered for signature validation");
+            }
             try
             {
                 var cwt = cose.GetCwt();

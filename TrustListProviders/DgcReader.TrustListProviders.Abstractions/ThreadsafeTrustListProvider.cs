@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using DgcReader.Interfaces.TrustListProviders;
+using DgcReader.Exceptions;
 
 // Copyright (c) 2021 Davide Trevisan
 // Licensed under the Apache License, Version 2.0
@@ -72,7 +73,7 @@ namespace DgcReader.TrustListProviders.Abstractions
         public abstract bool SupportsCertificates { get; }
 
         /// <inheritdoc/>
-        public async Task<IEnumerable<ITrustedCertificateData>?> GetTrustList(CancellationToken cancellationToken = default)
+        public async Task<IEnumerable<ITrustedCertificateData>> GetTrustList(CancellationToken cancellationToken = default)
         {
 
             // Reading trustlist from cache if the provider supports it
@@ -126,22 +127,27 @@ namespace DgcReader.TrustListProviders.Abstractions
                 }
             }
 
+            var certificates = trustList?.Certificates;
+
             if (refreshTask != null)
             {
-                if (trustList == null)
+                if (certificates == null)
                 {
                     Logger?.LogInformation($"No TrustList loaded in memory, waiting for refresh to complete");
-                    return await refreshTask;
+                    certificates =  await refreshTask;
                 }
                 else if (Options.UseAvailableListWhileRefreshing == false)
                 {
                     // If UseAvailableListWhileRefreshing, always wait for the task to complete
                     Logger?.LogInformation($"Trustlist is expired, waiting for refresh to complete");
-                    return await refreshTask;
+                    certificates = await refreshTask;
                 }
             }
 
-            return trustList?.Certificates ?? Enumerable.Empty<ITrustedCertificateData>();
+            if (certificates == null)
+                throw new DgcException($"Can not get a valid TrustList. Make sure that the application can connect to the remote server and try again.");
+
+            return certificates;
         }
 
         /// <inheritdoc/>
@@ -194,11 +200,9 @@ namespace DgcReader.TrustListProviders.Abstractions
         }
 
         /// <inheritdoc/>
-        public virtual async Task<ITrustedCertificateData?> GetByKid(string kid, string country, CancellationToken cancellationToken = default)
+        public virtual async Task<ITrustedCertificateData?> GetByKid(string kid, string? country, CancellationToken cancellationToken = default)
         {
             var trustList = await GetTrustList(cancellationToken);
-            if (trustList == null)
-                return null;
 
             var q = trustList.Where(x => x.Kid == kid);
             if (!string.IsNullOrEmpty(country))

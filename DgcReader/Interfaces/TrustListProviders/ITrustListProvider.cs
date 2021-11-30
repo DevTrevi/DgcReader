@@ -27,7 +27,8 @@ namespace DgcReader.Interfaces.TrustListProviders
         /// Get all the valid certificates public keys for signature check
         /// </summary>
         /// <returns></returns>
-        Task<IEnumerable<ITrustedCertificateData>?> GetTrustList(CancellationToken cancellationToken = default);
+        /// <exception cref="DgcReaderService">If is not possible to return a trustlist, an exception will be thrown</exception>
+        Task<IEnumerable<ITrustedCertificateData>> GetTrustList(CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Get the certificate with the specified key identifier and optionally by the specified country code

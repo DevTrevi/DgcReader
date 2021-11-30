@@ -7,11 +7,11 @@ Implementation of `IRulesValidator` for validating Digital Green Certificates ag
 
 The `DgcItalianRulesValidator` implements also the `IBlacklistProvider` interface, and can be used for both purposes.
 
-#### Usage
+## Usage
 
 In order to use the validator, you can register it as a service or you can instantiate it directly, depending on how your application is designed:
 
-a) Registering as a service:
+##### a) Registering as a service:
  ``` csharp
 public void ConfigureServices(IServiceCollection services)
 {
@@ -28,7 +28,7 @@ public void ConfigureServices(IServiceCollection services)
 }
 ```
 
-b) Instantiate it directly
+##### b) Instantiate it directly
  ``` csharp
 ...
 // You can use the constructor
@@ -56,7 +56,7 @@ var dgcReader = new DgcReaderService(
 ```
 
 
-#### Available options
+## Available options
 
 - **RefreshInterval**: interval for checking for rules updates from the server. Default value is 24 hours.
 - **MinRefreshInterval**: if specified, prevents that every validation request causes a refresh attempt when the current rules are expired.  
@@ -76,11 +76,11 @@ Default value is 15 days.
 - **IgnoreMinimumSdkVersion**: if true, validates the rules even if the reference SDK version is obsolete.
 
 
-#### Forcing the update of the rules
+## Forcing the update of the rules
 If the application needs to update the rules at a specific time (i.e. by a scheduled task, or when a user press a *"Refresh"* button), you can simply call the `RefreshRulesList` function of the validator.
 This will casue the immediate refresh of the rules from the remote server, regardless of the options specified.
 
-#### The IBlacklistProvider implementation
+## The IBlacklistProvider implementation
 As already mentioned, the DgcItalianRulesValidator implementation implements both the `IBlacklistProvider` and the `IRulesValidator` interface.
 
 When registering the provider as a service, it is automatically registered as a `IBlacklistProvider`, using the same instance for both roles.

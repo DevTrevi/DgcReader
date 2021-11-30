@@ -4,11 +4,11 @@
 
 Implementation of ITrustListProvider that uses the Italian endpoint for downloading the trusted public keys used for signature verification of the Digital Green Certificates.
 
-#### Usage
+## Usage
 
 In order to use the provider, you can register it as a service or you can instantiate it directly, depending on how your application is designed:
 
-a) Registering as a service:
+##### a) Registering as a service:
  ``` csharp
 public void ConfigureServices(IServiceCollection services)
 {
@@ -25,7 +25,7 @@ public void ConfigureServices(IServiceCollection services)
 }
 ```
 
-b) Instantiate it directly
+##### b) Instantiate it directly
  ``` csharp
 ...
 // You can use the constructor
@@ -45,7 +45,7 @@ var trustListProvider = ItalianTrustListProvider.Create(httpClient,
 ```
 
 
-#### Available options
+## Available options
 
 - **RefreshInterval**: interval for checking for an updated trustlist from the server. Default value is 24 hours.
 - **MinRefreshInterval**: if specified, prevents that every validation request causes a refresh attempt when the current trustlist is expired.  
@@ -65,6 +65,6 @@ Default value is 15 days.
 - **SaveCertificate**: if true, the full .cer certificate downloaded is saved into the json file instead of only the public key parameters.  
 This option is disabled by default, and can be activated for diagnostic purposes.
 
-#### Forcing the update of the trustlist
+## Forcing the update of the trustlist
 If the application needs to update the trustlist at a specific time (i.e. by a scheduled task, or when a user press a *"Refresh"* button), you can simply call the `RefreshTrustList` function of the provider.
 This will casue the immediate refresh of the rules from the remote server, regardless of the options specified.

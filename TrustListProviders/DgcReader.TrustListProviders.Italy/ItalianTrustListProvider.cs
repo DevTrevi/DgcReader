@@ -20,10 +20,6 @@ using System.Security.Cryptography.X509Certificates;
 using Microsoft.Extensions.Options;
 #endif
 
-#if NETSTANDARD2_0_OR_GREATER || NET5_0_OR_GREATER || NET47_OR_GREATER
-using Microsoft.Extensions.Logging;
-#endif
-
 #if NET452
 using Org.BouncyCastle.X509;
 using Org.BouncyCastle.Crypto.Parameters;
@@ -74,7 +70,7 @@ namespace DgcReader.TrustListProviders.Italy
         }
 
         /// <summary>
-        /// Factory method for creating an instance of <see cref="ItalianTrustListProvider"/> 
+        /// Factory method for creating an instance of <see cref="ItalianTrustListProvider"/>
         /// whithout using the DI mechanism. Useful for legacy applications
         /// </summary>
         /// <param name="httpClient">The http client instance that will be used for requests to the server</param>
@@ -103,7 +99,7 @@ namespace DgcReader.TrustListProviders.Italy
         }
 
         /// <summary>
-        /// Factory method for creating an instance of <see cref="ItalianTrustListProvider"/> 
+        /// Factory method for creating an instance of <see cref="ItalianTrustListProvider"/>
         /// whithout using the DI mechanism. Useful for legacy applications
         /// </summary>
         /// <param name="httpClient">The http client instance that will be used for requests to the server</param>
@@ -232,7 +228,7 @@ namespace DgcReader.TrustListProviders.Italy
         protected override Task<ITrustList?> LoadCache(CancellationToken cancellationToken = default)
         {
             var filePath = GetTrustListFilePath();
-            TrustList trustList = null;
+            TrustList? trustList = null;
             try
             {
                 if (File.Exists(filePath))
@@ -427,7 +423,7 @@ namespace DgcReader.TrustListProviders.Italy
             return Path.Combine(Options.BasePath, Options.TrustListFileName);
         }
 
-        
+
 #endregion
     }
 }

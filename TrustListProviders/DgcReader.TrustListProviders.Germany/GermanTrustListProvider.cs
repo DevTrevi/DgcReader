@@ -36,7 +36,7 @@ using System.Security.Cryptography.X509Certificates;
 namespace DgcReader.TrustListProviders.Germany
 {
     /// <summary>
-    /// Italian trust list provider for DgcReader
+    /// German trust list provider for DgcReader
     /// </summary>
     public class GermanTrustListProvider : ThreadsafeTrustListProvider<GermanTrustListProviderOptions>
     {
@@ -68,7 +68,7 @@ namespace DgcReader.TrustListProviders.Germany
         }
 
         /// <summary>
-        /// Factory method for creating an instance of <see cref="ItalianTrustListProvider"/>
+        /// Factory method for creating an instance of <see cref="GermanTrustListProvider"/>
         /// whithout using the DI mechanism. Useful for legacy applications
         /// </summary>
         /// <param name="httpClient">The http client instance that will be used for requests to the server</param>
@@ -97,7 +97,7 @@ namespace DgcReader.TrustListProviders.Germany
         }
 
         /// <summary>
-        /// Factory method for creating an instance of <see cref="ItalianTrustListProvider"/>
+        /// Factory method for creating an instance of <see cref="GermanTrustListProvider"/>
         /// whithout using the DI mechanism. Useful for legacy applications
         /// </summary>
         /// <param name="httpClient">The http client instance that will be used for requests to the server</param>

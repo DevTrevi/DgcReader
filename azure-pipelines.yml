@@ -1,11 +1,11 @@
 trigger:
-  branches:
-    include:
-      - master
   paths:
    exclude:
      - README.md
      - '**/*.Test'
+  tags:
+    include:
+      - 'v1.*'
 pr: none
 
 variables:
@@ -30,8 +30,8 @@ steps:
   displayName: 'Install NuGet'
 - script: nuget push $(Build.ArtifactStagingDirectory)\**\*.nupkg -Source $(nugetSource) -ApiKey $(nuget-org-apikey) -SkipDuplicate -NoSymbols
   displayName: 'Push to NuGet.org'
-    
-    
+
+
 - task: PublishBuildArtifacts@1
   inputs:
     PathtoPublish: '$(Build.ArtifactStagingDirectory)'

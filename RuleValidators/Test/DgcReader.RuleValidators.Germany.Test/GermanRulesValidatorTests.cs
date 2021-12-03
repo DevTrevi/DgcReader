@@ -1,0 +1,88 @@
+using System;
+using System.Diagnostics;
+using System.Linq;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+using DgcReader.RuleValidators.Germany;
+using DgcReader;
+using System.Threading.Tasks;
+using System.Collections.Generic;
+using DgcReader.Exceptions;
+using GreenpassReader.Models;
+
+#if NETFRAMEWORK
+using System.Net;
+#endif
+
+#if NET452
+using System.Net.Http;
+#else
+using Microsoft.Extensions.DependencyInjection;
+#endif
+
+namespace DgcReader.RuleValidators.Germany.Test
+{
+    [TestClass]
+    public class GermanRulesValidatorTests : TestBase
+    {
+        DgcGermanRulesValidator Validator { get; set; }
+
+        [TestInitialize]
+        public async Task Initialize()
+        {
+
+#if NET452
+            ServicePointManager.SecurityProtocol |= SecurityProtocolType.Tls12 | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls;
+            var httpClient = new HttpClient();
+            Validator = DgcGermanRulesValidator.Create(httpClient);
+#else
+            Validator = ServiceProvider.GetRequiredService<DgcGermanRulesValidator>();
+
+#endif
+        }
+
+        [TestMethod]
+        public async Task TestGetSupportedCountries()
+        {
+            try
+            {
+                var countries = await Validator.GetSupportedCountries();
+                Assert.IsNotNull(countries);
+                Assert.IsTrue(countries.Contains("DE"));
+            }
+            catch (Exception e)
+            {
+
+                throw;
+            }
+
+        }
+
+
+        [TestMethod]
+        public async Task TestRefreshRulesList()
+        {
+            try
+            {
+                await Validator.RefreshRules();
+            }
+            catch (Exception e)
+            {
+
+                throw;
+            }
+
+        }
+
+
+
+#if !NET452
+        protected override void ConfigureServices(IServiceCollection services)
+        {
+            base.ConfigureServices(services);
+
+            services.AddDgcReader()
+                .AddGermanRulesValidator();
+        }
+#endif
+    }
+}

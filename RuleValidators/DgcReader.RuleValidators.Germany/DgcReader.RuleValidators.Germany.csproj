@@ -9,12 +9,13 @@
 		<Copyright>Copyright © 2021 Davide Trevisan</Copyright>
 		<RepositoryUrl>https://github.com/DevTrevi/DGCReader</RepositoryUrl>
 		<PackageTags>DGC DCC DigitalGreenCertificate DigitalCovidCertificate Greenpass</PackageTags>
-		<Description>Base classes for implementing RuleValidatos providers DgcReaderService</Description>
+		<Description>Unofficial implementation of the German rules for validating a Digital Green Certificate</Description>
 		<Version>1.2.0</Version>
 		<PackageLicenseExpression> Apache-2.0</PackageLicenseExpression>
 		<PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
 		<PackageProjectUrl>https://github.com/DevTrevi/DgcReader</PackageProjectUrl>
+		<PackageReleaseNotes>Aligned rules from official SDK version 1.0.2, check for Sputnik vaccine not from San Marino and UVCI blacklist provider. Implemented standard interfaces IBlacklistProvider and IRulesValidator</PackageReleaseNotes>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -26,6 +27,7 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\..\DgcReader\DgcReader.csproj" />
+		<ProjectReference Include="..\DgcReader.RuleValidators.Abstractions\DgcReader.RuleValidators.Abstractions.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -34,11 +36,16 @@
 
 	<ItemGroup Condition=" '$(TargetFramework)' == 'net452' ">
 		<PackageReference Include="System.Net.Http" Version="4.3.4" />
-		<PackageReference Include="System.ValueTuple" Version="4.5.0" />
 	</ItemGroup>
-
 	<ItemGroup Condition=" '$(TargetFramework)' == 'net47' ">
 		<PackageReference Include="System.Net.Http" Version="4.3.4" />
+		<PackageReference Include="Microsoft.Extensions.Options" Version="5.0.0" />
+		<PackageReference Include="Microsoft.Extensions.Http" Version="5.0.0" />
+	</ItemGroup>
+
+	<ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+		<PackageReference Include="Microsoft.Extensions.Options" Version="5.0.0" />
+		<PackageReference Include="Microsoft.Extensions.Http" Version="5.0.0" />
 	</ItemGroup>
 
 </Project>

@@ -18,8 +18,9 @@ namespace Microsoft.Extensions.DependencyInjection
 
             Services.AddHttpClient();
 
-            Services.RemoveAll<ITrustListProvider>();
-            Services.AddSingleton<ITrustListProvider, GermanTrustListProvider>();
+            Services.AddSingleton<GermanTrustListProvider>();
+            Services.AddSingleton<ITrustListProvider, GermanTrustListProvider>(sp => sp.GetRequiredService<GermanTrustListProvider>());
+
         }
 
         public GermanTrustListProviderBuilder Configure(Action<GermanTrustListProviderOptions> configuration)

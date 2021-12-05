@@ -33,8 +33,8 @@ namespace DgcReader.DgcTestData.Test
             var path = Configuration.GetSection("DgcTestDataRepositoryPath").Value;
             var loader = new CertificatesTestsLoader(path);
             var trustListProvider = new TestTrustListProvider(loader);
-            DgcReader = new DgcReaderService(trustListProvider, null);
-            
+            DgcReader = DgcReaderService.Create(trustListProvider);
+
             TestEntries = await loader.LoadTestEntries();
 #else
             DgcReader = ServiceProvider.GetRequiredService<DgcReaderService>();
@@ -100,7 +100,7 @@ namespace DgcReader.DgcTestData.Test
                     {
                         var clock = entry.TestContext.ValidationClock ?? System.DateTimeOffset.Now;
 
-                        var result = await DgcReader.Verify(entry.PREFIX, clock);
+                        var result = await DgcReader.Verify(entry.PREFIX, null, clock);
 
                         Assert.IsNotNull(result);
                         Assert.IsNotNull(result.Dgc);
@@ -152,7 +152,7 @@ namespace DgcReader.DgcTestData.Test
                     {
                         var clock = entry.TestContext.ValidationClock ?? System.DateTimeOffset.Now;
 
-                        var result = await DgcReader.GetValidationResult(entry.PREFIX, clock);
+                        var result = await DgcReader.GetValidationResult(entry.PREFIX, null, clock);
 
                         Assert.IsNotNull(result);
                         Assert.IsNotNull(result.Dgc);

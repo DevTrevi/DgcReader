@@ -15,11 +15,11 @@ namespace Microsoft.Extensions.DependencyInjection
         public ItalianTrustListProviderBuilder(IServiceCollection services)
         {
             Services = services;
-            
+
             Services.AddHttpClient();
 
-            Services.RemoveAll<ITrustListProvider>();
-            Services.AddSingleton<ITrustListProvider, ItalianTrustListProvider>();
+            Services.AddSingleton<ItalianTrustListProvider>();
+            Services.AddSingleton<ITrustListProvider, ItalianTrustListProvider>(sp => sp.GetRequiredService<ItalianTrustListProvider>());
         }
 
         public ItalianTrustListProviderBuilder Configure(Action<ItalianTrustListProviderOptions> configuration)

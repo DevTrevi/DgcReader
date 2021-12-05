@@ -15,11 +15,11 @@ namespace Microsoft.Extensions.DependencyInjection
         public SwedishTrustListProviderBuilder(IServiceCollection services)
         {
             Services = services;
-            
+
             Services.AddHttpClient();
 
-            Services.RemoveAll<ITrustListProvider>();
-            Services.AddSingleton<ITrustListProvider, SwedishTrustListProvider>();
+            Services.AddSingleton<SwedishTrustListProvider>();
+            Services.AddSingleton<ITrustListProvider, SwedishTrustListProvider>(sp => sp.GetRequiredService<SwedishTrustListProvider>());
         }
 
         public SwedishTrustListProviderBuilder Configure(Action<SwedishTrustListProviderOptions> configuration)

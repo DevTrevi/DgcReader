@@ -26,8 +26,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\DgcReader.Providers.Abstractions\DgcReader.Providers.Abstractions.csproj" />
     <ProjectReference Include="..\..\DgcReader\DgcReader.csproj" />
-    <ProjectReference Include="..\DgcReader.RuleValidators.Abstractions\DgcReader.RuleValidators.Abstractions.csproj" />
   </ItemGroup>
 
   <ItemGroup>

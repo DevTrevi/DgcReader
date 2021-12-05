@@ -1,5 +1,4 @@
-﻿using DgcReader.RuleValidators.Abstractions;
-using System;
+﻿using System;
 using System.IO;
 
 // Copyright (c) 2021 Davide Trevisan
@@ -10,10 +9,26 @@ namespace DgcReader.RuleValidators.Germany
     /// <summary>
     /// Options for the <see cref="DgcGermanRulesValidator"/>
     /// </summary>
-    public class DgcGermanRulesValidatorOptions : RuleValidatorBaseOptions
+    public class DgcGermanRulesValidatorOptions
     {
         /// <summary>
-        /// Base path where the rules file will be stored
+        /// Duration of the stored file before a refresh is requested. Default is 24 hours
+        /// </summary>
+        public TimeSpan RefreshInterval { get; set; } = TimeSpan.FromHours(24);
+
+        /// <summary>
+        /// If true, allows to use the current rules list without waiting for the refresh task to complete.
+        /// Otherwise, if the list is expired, every rules valdation request will wait untill the refresh task completes.
+        /// </summary>
+        public TimeSpan MinRefreshInterval { get; set; } = TimeSpan.FromHours(1);
+
+        /// <summary>
+        /// If specified, prevent that every validation request causes a refresh attempt when the current values are expired.
+        /// </summary>
+        public bool UseAvailableValuesWhileRefreshing { get; set; } = true;
+
+        /// <summary>
+        /// Base path where the rules will be stored
         /// Default <see cref="Directory.GetCurrentDirectory()"/>
         /// </summary>
         public string BasePath { get; set; } = Directory.GetCurrentDirectory();
@@ -21,12 +36,7 @@ namespace DgcReader.RuleValidators.Germany
         /// <summary>
         /// The folder name where rules will be stored, relative to <see cref="BasePath"/>
         /// </summary>
-        public string FolderName { get; set; } = "Dgc-Rules-DE";
-
-        /// <summary>
-        /// The file name used for the rules file name. Default is rules-identifiers.json
-        /// </summary>
-        public string RulesIdentifiersFileName { get; set; } = "rules-identifiers.json";
+        public string FolderName { get; set; } = "RuleValidators\\Germany";
 
         /// <summary>
         /// Maximum duration of the configuration file before is discarded.

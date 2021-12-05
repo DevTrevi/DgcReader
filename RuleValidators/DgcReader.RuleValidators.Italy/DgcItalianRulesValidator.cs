@@ -1,10 +1,6 @@
 ﻿using GreenpassReader.Models;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
 using System;
 using System.Collections.Generic;
-using System.Globalization;
-using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -16,7 +12,7 @@ using DgcReader.RuleValidators.Italy.Exceptions;
 using Microsoft.Extensions.Logging;
 using DgcReader.Interfaces.RulesValidators;
 using DgcReader.Interfaces.BlacklistProviders;
-using DgcReader.RuleValidators.Abstractions;
+using DgcReader.RuleValidators.Italy.Providers;
 
 #if NETSTANDARD2_0_OR_GREATER || NET5_0_OR_GREATER || NET47_OR_GREATER
 using Microsoft.Extensions.Options;
@@ -28,40 +24,19 @@ using Microsoft.Extensions.Options;
 namespace DgcReader.RuleValidators.Italy
 {
 
-
     /// <summary>
     /// Unofficial porting of the Italian rules from https://github.com/ministero-salute/it-dgc-verificac19-sdk-android.
     /// This service is also an implementation of <see cref="IBlacklistProvider"/>
     /// </summary>
-    public class DgcItalianRulesValidator : ThreadsafeRulesValidatorProvider<RulesList, DgcItalianRulesValidatorOptions>, IRulesValidator, IBlacklistProvider
+    public class DgcItalianRulesValidator : IRulesValidator, IBlacklistProvider
     {
         // File containing the business logic on the offical SDK repo:
         // https://github.com/ministero-salute/it-dgc-verificac19-sdk-android/blob/develop/sdk/src/main/java/it/ministerodellasalute/verificaC19sdk/model/VerificationViewModel.kt
 
-        private const string ValidationRulesUrl = "https://get.dgc.gov.it/v1/dgc/settings";
+        private readonly ILogger? Logger;
+        private readonly DgcItalianRulesValidatorOptions Options;
 
-        /// <summary>
-        /// The version of the sdk used as reference for implementing the rules.
-        /// </summary>
-        private const string ReferenceSdkMinVersion = "1.0.2";
-
-        /// <summary>
-        /// The version of the app used as reference for implementing the rules.
-        /// NOTE: this is the version of the android app using the <see cref="ReferenceSdkMinVersion"/> of the SDK. The SDK version is not available in the settings right now.
-        /// </summary>
-        private const string ReferenceAppMinVersion = "1.1.6";
-
-        private readonly HttpClient _httpClient;
-
-        private static readonly JsonSerializerSettings JsonSettings = new JsonSerializerSettings
-        {
-            MetadataPropertyHandling = MetadataPropertyHandling.Ignore,
-            DateParseHandling = DateParseHandling.None,
-            Converters = {
-                new IsoDateTimeConverter { DateTimeStyles = DateTimeStyles.None }
-            },
-        };
-
+        private readonly RulesProvider _rulesProvider;
 
 #if NET452
         /// <summary>
@@ -70,9 +45,11 @@ namespace DgcReader.RuleValidators.Italy
         public DgcItalianRulesValidator(HttpClient httpClient,
             DgcItalianRulesValidatorOptions? options = null,
             ILogger<DgcItalianRulesValidator>? logger = null)
-            : base(options, logger)
         {
-            _httpClient = httpClient;
+            Options = options ?? new DgcItalianRulesValidatorOptions();
+            Logger = logger;
+
+            _rulesProvider = new RulesProvider(httpClient, Options, logger);
         }
 
         /// <summary>
@@ -97,9 +74,11 @@ namespace DgcReader.RuleValidators.Italy
         public DgcItalianRulesValidator(HttpClient httpClient,
             IOptions<DgcItalianRulesValidatorOptions>? options = null,
             ILogger<DgcItalianRulesValidator>? logger = null)
-            : base(options?.Value, logger)
         {
-            _httpClient = httpClient;
+            Options = options?.Value ?? new DgcItalianRulesValidatorOptions();
+            Logger = logger;
+
+            _rulesProvider = new RulesProvider(httpClient, Options, logger);
         }
 
         /// <summary>
@@ -123,7 +102,7 @@ namespace DgcReader.RuleValidators.Italy
         #region Implementation of IRulesValidator
 
         /// <inheritdoc/>
-        public override async Task<IRuleValidationResult> GetRulesValidationResult(EuDGC dgc, DateTimeOffset validationInstant, string countryCode = "IT", CancellationToken cancellationToken = default)
+        public async Task<IRuleValidationResult> GetRulesValidationResult(EuDGC dgc, DateTimeOffset validationInstant, string countryCode = "IT", CancellationToken cancellationToken = default)
         {
             if (!await SupportsCountry(countryCode))
                 throw new DgcRulesValidationException($"Rules validation for country {countryCode} is not supported by this provider");
@@ -142,7 +121,7 @@ namespace DgcReader.RuleValidators.Italy
 
             try
             {
-                var rulesContainer = await GetRules(countryCode, cancellationToken);
+                var rulesContainer = await _rulesProvider.GetValueSet(cancellationToken);
                 if (rulesContainer == null)
                     throw new Exception("Unable to get validation rules");
 
@@ -179,9 +158,22 @@ namespace DgcReader.RuleValidators.Italy
         }
 
         /// <inheritdoc/>
-        public override Task<IEnumerable<string>> GetSupportedCountries(CancellationToken cancellationToken = default)
+        public Task RefreshRules(string? countryCode = null, CancellationToken cancellationToken = default)
+        {
+            return _rulesProvider.RefreshValueSet(cancellationToken);
+        }
+
+        /// <inheritdoc/>
+        public Task<IEnumerable<string>> GetSupportedCountries(CancellationToken cancellationToken = default)
         {
             return Task.FromResult(new[] { "IT" }.AsEnumerable());
+        }
+
+        /// <inheritdoc/>
+        public async Task<bool> SupportsCountry(string countryCode, CancellationToken cancellationToken = default)
+        {
+            var supportedCountries = await GetSupportedCountries();
+            return supportedCountries.Any(r => r.Equals(countryCode, StringComparison.InvariantCultureIgnoreCase));
         }
         #endregion
 
@@ -203,97 +195,16 @@ namespace DgcReader.RuleValidators.Italy
         /// <inheritdoc/>
         public async Task<IEnumerable<string>?> GetBlacklist(CancellationToken cancellationToken = default)
         {
-            var rulesContainer = await GetRules("IT", cancellationToken);
+            var rulesContainer = await _rulesProvider.GetValueSet(cancellationToken);
             return rulesContainer?.Rules?.GetBlackList();
         }
 
         /// <inheritdoc/>
         public async Task<IEnumerable<string>?> RefreshBlacklist(CancellationToken cancellationToken = default)
         {
-            await RefreshRules(null, cancellationToken);
-            var rulesContainer = await GetRules(null, cancellationToken);
-            return rulesContainer?.Rules?.GetBlackList();
+            var rulesSet = await _rulesProvider.RefreshValueSet(cancellationToken);
+            return rulesSet?.Rules?.GetBlackList();
         }
-        #endregion
-
-        #region Implementation of ThreadsafeRulesValidatorProvider
-
-        /// <inheritdoc/>
-        protected override async Task<RulesList> GetRulesFromServer(string countryCode, CancellationToken cancellationToken = default)
-        {
-            Logger?.LogInformation("Refreshing rules from server...");
-            var rulesList = new RulesList()
-            {
-                LastUpdate = DateTime.Now,
-            };
-            var rules = await FetchSettings(cancellationToken);
-
-
-            rulesList.Rules = rules.ToArray();
-
-            // Checking min version:
-            CheckMinSdkVersion(rules);
-
-            return rulesList;
-        }
-
-        /// <summary>
-        /// Load the rules list stored in file
-        /// </summary>
-        /// <param name="cancellationToken"></param>
-        /// <returns></returns>
-        protected override Task<RulesList?> LoadCache(string countryCode, CancellationToken cancellationToken = default)
-        {
-            var filePath = GetRulesListFilePath();
-            RulesList rulesList = null;
-            try
-            {
-                if (File.Exists(filePath))
-                {
-                    Logger?.LogInformation($"Loading rules from file");
-                    var fileContent = File.ReadAllText(filePath);
-                    rulesList = JsonConvert.DeserializeObject<RulesList>(fileContent, JsonSettings);
-                }
-            }
-            catch (Exception e)
-            {
-                Logger?.LogError(e, $"Error reading trustlist from file: {e.Message}");
-            }
-
-            // Check max age and delete file
-            if (rulesList != null &&
-                rulesList.LastUpdate.Add(Options.MaxFileAge) < DateTime.Now)
-            {
-                Logger?.LogInformation($"Rules list expired for MaxFileAge, deleting list and file");
-                // File has passed the max age, removing file
-                try
-                {
-                    if (File.Exists(filePath))
-                        File.Delete(filePath);
-                }
-                catch (Exception e)
-                {
-                    Logger?.LogError(e, $"Error deleting rules list file: {e.Message}");
-                }
-                return Task.FromResult<RulesList?>(null);
-            }
-
-            return Task.FromResult<RulesList?>(rulesList);
-        }
-
-        /// <inheritdoc/>
-        protected override Task UpdateCache(RulesList rules, string countryCode, CancellationToken cancellationToken = default)
-        {
-            var filePath = GetRulesListFilePath();
-            var json = JsonConvert.SerializeObject(rules, JsonSettings);
-
-            File.WriteAllText(filePath, json);
-            return Task.FromResult(0);
-        }
-
-        /// <inheritdoc/>
-        protected override DateTimeOffset GetRulesLastUpdate(RulesList rules) => rules.LastUpdate;
-
         #endregion
 
         #region Public methods
@@ -473,7 +384,7 @@ namespace DgcReader.RuleValidators.Italy
             var sdkMinVersion = rules.GetRule(SettingNames.SdkMinVersion, SettingTypes.AppMinVersion);
             if (sdkMinVersion != null)
             {
-                if (sdkMinVersion.Value.CompareTo(ReferenceSdkMinVersion) > 0)
+                if (sdkMinVersion.Value.CompareTo(SdkConstants.ReferenceSdkMinVersion) > 0)
                 {
                     obsolete = true;
                     message = $"The minimum version of the SDK implementation is {sdkMinVersion.Value}. " +
@@ -486,7 +397,7 @@ namespace DgcReader.RuleValidators.Italy
                 var appMinVersion = rules.GetRule(SettingNames.AndroidAppMinVersion, SettingTypes.AppMinVersion);
                 if (appMinVersion != null)
                 {
-                    if (appMinVersion.Value.CompareTo(ReferenceAppMinVersion) > 0)
+                    if (appMinVersion.Value.CompareTo(SdkConstants.ReferenceAppMinVersion) > 0)
                     {
                         obsolete = true;
                         message = $"The minimum version of the App implementation is {appMinVersion.Value}. " +
@@ -511,43 +422,7 @@ namespace DgcReader.RuleValidators.Italy
 
         }
 
-        #endregion
 
-
-        #region Private
-        private async Task<RuleSetting[]> FetchSettings(CancellationToken cancellationToken = default)
-        {
-            try
-            {
-                var start = DateTime.Now;
-                Logger?.LogDebug("Fetching rules...");
-                var response = await _httpClient.GetAsync(ValidationRulesUrl, cancellationToken);
-                if (response.IsSuccessStatusCode)
-                {
-                    string content = await response.Content.ReadAsStringAsync();
-
-                    var results = JsonConvert.DeserializeObject<RuleSetting[]>(content);
-
-                    if (results == null)
-                        throw new Exception("Error wile deserializing rules from server");
-
-                    Logger?.LogInformation($"{results.Length} rules read in {DateTime.Now - start}");
-                    return results;
-                }
-
-                throw new Exception($"The remote server responded with code {response.StatusCode}: {response.ReasonPhrase}");
-            }
-            catch (Exception ex)
-            {
-                Logger?.LogError(ex, $"Error while getting rules from server: {ex.Message}");
-                throw;
-            }
-        }
-
-        private string GetRulesListFilePath()
-        {
-            return Path.Combine(Options.BasePath, Options.RulesListFileName);
-        }
 
         #endregion
     }

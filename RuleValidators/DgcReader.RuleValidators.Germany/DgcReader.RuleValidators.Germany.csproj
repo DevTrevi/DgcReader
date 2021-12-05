@@ -26,11 +26,12 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<ProjectReference Include="..\..\DgcReader.Providers.Abstractions\DgcReader.Providers.Abstractions.csproj" />
 		<ProjectReference Include="..\..\DgcReader\DgcReader.csproj" />
-		<ProjectReference Include="..\DgcReader.RuleValidators.Abstractions\DgcReader.RuleValidators.Abstractions.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>
+		<!--<PackageReference Include="JsonLogic.Net" Version="1.1.11" />-->
 		<PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
 	</ItemGroup>
 
@@ -46,6 +47,27 @@
 	<ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
 		<PackageReference Include="Microsoft.Extensions.Options" Version="5.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Http" Version="5.0.0" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Reference Include="JsonLogic.Net">
+	    <HintPath>..\..\..\..\JsonLogic.Net\JsonLogic.Net\bin\Debug\netstandard1.0\JsonLogic.Net.dll</HintPath>
+	  </Reference>
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Compile Update="Resources\CovPassSdk.Designer.cs">
+	    <DesignTime>True</DesignTime>
+	    <AutoGen>True</AutoGen>
+	    <DependentUpon>CovPassSdk.resx</DependentUpon>
+	  </Compile>
+	</ItemGroup>
+
+	<ItemGroup>
+	  <EmbeddedResource Update="Resources\CovPassSdk.resx">
+	    <Generator>ResXFileCodeGenerator</Generator>
+	    <LastGenOutput>CovPassSdk.Designer.cs</LastGenOutput>
+	  </EmbeddedResource>
 	</ItemGroup>
 
 </Project>

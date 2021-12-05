@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 using DgcReader.Exceptions;
 using GreenpassReader.Models;
+using DgcReader.Interfaces.RulesValidators;
 
 #if NETFRAMEWORK
 using System.Net;
@@ -76,6 +77,24 @@ namespace DgcReader.RuleValidators.Italy.Test
 
 
 #if !NET452
+
+        [TestMethod]
+        public async Task TestGetDgcItalianRulesValidatorService()
+        {
+            var service = ServiceProvider.GetService<DgcItalianRulesValidator>();
+            Assert.IsNotNull(service);
+        }
+
+        [TestMethod]
+        public async Task TestGetIRulesValidatorSerice()
+        {
+            var interfaceService = ServiceProvider.GetService<IRulesValidator>();
+            Assert.IsNotNull(interfaceService);
+
+            var service = ServiceProvider.GetService<DgcItalianRulesValidator>();
+            Assert.AreSame(service, interfaceService);
+        }
+
         protected override void ConfigureServices(IServiceCollection services)
         {
             base.ConfigureServices(services);

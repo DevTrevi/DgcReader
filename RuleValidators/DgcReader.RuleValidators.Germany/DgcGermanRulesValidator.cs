@@ -1,10 +1,6 @@
 ﻿using GreenpassReader.Models;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
 using System;
 using System.Collections.Generic;
-using System.Globalization;
-using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -12,11 +8,13 @@ using DgcReader.Models;
 using System.Threading;
 using Microsoft.Extensions.Logging;
 using DgcReader.Interfaces.RulesValidators;
-using DgcReader.Interfaces.BlacklistProviders;
-using DgcReader.RuleValidators.Abstractions;
 using DgcReader.Exceptions;
 using DgcReader.RuleValidators.Germany.Models;
-using DgcReader.RuleValidators.Germany.Backend;
+using Newtonsoft.Json.Linq;
+using DgcReader.RuleValidators.Germany.CovpassDgcCertlogic.Data;
+using DgcReader.RuleValidators.Germany.CovpassDgcCertlogic;
+using DgcReader.RuleValidators.Germany.CovpassDgcCertlogic.Domain.Rules;
+using DgcReader.RuleValidators.Germany.Providers;
 
 #if NETSTANDARD2_0_OR_GREATER || NET5_0_OR_GREATER || NET47_OR_GREATER
 using Microsoft.Extensions.Options;
@@ -27,31 +25,22 @@ using Microsoft.Extensions.Options;
 
 namespace DgcReader.RuleValidators.Germany
 {
-
-
     /// <summary>
     /// Unofficial porting of the German rules from https://github.com/Digitaler-Impfnachweis/covpass-android.
-    /// This service is also an implementation of <see cref="IBlacklistProvider"/>
     /// </summary>
-    public class DgcGermanRulesValidator : MultiCountryRulesValidatorProvider<RulesIdentifiers, RulesList, DgcGermanRulesValidatorOptions>, IRulesValidator
+    public class DgcGermanRulesValidator : IRulesValidator
     {
 
-        /// <summary>
-        /// Url used for getting rules and rules identifiers
-        /// </summary>
-        private const string RulesUrl = "https://distribution.dcc-rules.de/rules/";
+        protected readonly ILogger? Logger;
+        private readonly DgcGermanRulesValidatorOptions Options;
 
-        private readonly HttpClient _httpClient;
+        private readonly RuleIdentifiersProvider _ruleIdentifiersProvider;
+        private readonly RulesProvider _rulesProvider;
+        private readonly ValueSetIdentifiersProvider _valueSetIdentifiersProvider;
+        private readonly ValueSetsProvider _valueSetsProvider;
 
-        private static readonly JsonSerializerSettings JsonSettings = new JsonSerializerSettings
-        {
-            MetadataPropertyHandling = MetadataPropertyHandling.Ignore,
-            DateParseHandling = DateParseHandling.None,
-            Converters = {
-                new IsoDateTimeConverter { DateTimeStyles = DateTimeStyles.None }
-            },
-        };
-
+        private readonly DefaultCertLogicEngine _certLogicEngine;
+        private readonly CovPassGetRulesUseCase _rulesUseCase;
 
 #if NET452
         /// <summary>
@@ -60,9 +49,22 @@ namespace DgcReader.RuleValidators.Germany
         public DgcGermanRulesValidator(HttpClient httpClient,
             DgcGermanRulesValidatorOptions? options = null,
             ILogger<DgcGermanRulesValidator>? logger = null)
-            : base(options, logger)
         {
-            _httpClient = httpClient;
+            Options = options ?? new DgcGermanRulesValidatorOptions();
+            Logger = logger;
+
+            // Valueset providers
+            _ruleIdentifiersProvider = new RuleIdentifiersProvider(httpClient, Options, logger);
+            _rulesProvider = new RulesProvider(httpClient, Options, _ruleIdentifiersProvider, logger);
+            _valueSetIdentifiersProvider = new ValueSetIdentifiersProvider(httpClient, Options, logger);
+            _valueSetsProvider = new ValueSetsProvider(httpClient, Options, _valueSetIdentifiersProvider, logger);
+
+            // Validator implemnentations
+            var affectedFieldsDataRetriever = new DefaultAffectedFieldsDataRetriever(Logger);
+            var jsonLogicValidator = new DefaultJsonLogicValidator();
+
+            _certLogicEngine = new DefaultCertLogicEngine(affectedFieldsDataRetriever, jsonLogicValidator, Logger);
+            _rulesUseCase = new CovPassGetRulesUseCase();
         }
 
         /// <summary>
@@ -87,9 +89,22 @@ namespace DgcReader.RuleValidators.Germany
         public DgcGermanRulesValidator(HttpClient httpClient,
             IOptions<DgcGermanRulesValidatorOptions>? options = null,
             ILogger<DgcGermanRulesValidator>? logger = null)
-            : base(options?.Value, logger)
         {
-            _httpClient = httpClient;
+            Options = options?.Value ?? new DgcGermanRulesValidatorOptions();
+
+            // Valueset providers
+            _ruleIdentifiersProvider = new RuleIdentifiersProvider(httpClient, Options, logger);
+            _rulesProvider = new RulesProvider(httpClient, Options, _ruleIdentifiersProvider, logger);
+            _valueSetIdentifiersProvider = new ValueSetIdentifiersProvider(httpClient, Options, logger);
+            _valueSetsProvider = new ValueSetsProvider(httpClient, Options, _valueSetIdentifiersProvider, logger);
+
+
+            // Validator implemnentations
+            var affectedFieldsDataRetriever = new DefaultAffectedFieldsDataRetriever(Logger);
+            var jsonLogicValidator = new DefaultJsonLogicValidator();
+
+            _certLogicEngine = new DefaultCertLogicEngine(affectedFieldsDataRetriever, jsonLogicValidator, Logger);
+            _rulesUseCase = new CovPassGetRulesUseCase();
         }
 
         /// <summary>
@@ -113,7 +128,7 @@ namespace DgcReader.RuleValidators.Germany
         #region Implementation of IRulesValidator
 
         /// <inheritdoc/>
-        public override async Task<IRuleValidationResult> GetRulesValidationResult(EuDGC dgc, DateTimeOffset validationInstant, string countryCode = "IT", CancellationToken cancellationToken = default)
+        public async Task<IRuleValidationResult> GetRulesValidationResult(EuDGC dgc, DateTimeOffset validationInstant, string countryCode = "DE", CancellationToken cancellationToken = default)
         {
             if (!await SupportsCountry(countryCode))
                 throw new DgcException($"Rules validation for country {countryCode} is not supported by this provider");
@@ -132,14 +147,43 @@ namespace DgcReader.RuleValidators.Germany
 
             try
             {
-                var rulesContainer = await GetRules(countryCode, cancellationToken);
-                if (rulesContainer == null)
+                var rulesSet = await _rulesProvider.GetValueSet(countryCode, cancellationToken);
+                if (rulesSet == null)
                     throw new Exception("Unable to get validation rules");
 
-                var rules = rulesContainer.Rules;
 
+                var certEntry = dgc.GetCertificateEntry();
+                var issuerCountryCode = certEntry.Country;
+                var certificateType = dgc.GetCertificateType();
 
-                throw new NotImplementedException("TODO: implement rules validation");
+                var rules = _rulesUseCase.Invoke(rulesSet.Rules,
+                    validationInstant,
+                    countryCode,
+                    issuerCountryCode,
+                    certificateType);
+
+                var valueSets = await GetValueSetsJson();
+
+                var externalParameters = new ExternalParameter
+                {
+                    ValidationClock = validationInstant,
+                    ValueSets = valueSets, // TODO
+                    CountryCode = countryCode,
+                    Expiration = DateTimeOffset.MaxValue,   // Signature validation is done by another module
+                    ValidFrom = DateTimeOffset.MinValue,    // Signature validation is done by another module
+                    IssuerCountryCode = dgc.GetCertificateEntry()?.Country ?? string.Empty,
+                    Kid = "",                               // Signature validation is done by another module
+                    Region = "",
+                };
+
+                var certString = dgc.ToJson();
+
+                var test = _certLogicEngine.Validate(certificateType,
+                    dgc.SchemaVersion,
+                    rules,
+                    externalParameters,
+                    certString).ToArray();
+
             }
             catch (Exception e)
             {
@@ -149,253 +193,58 @@ namespace DgcReader.RuleValidators.Germany
             return result;
         }
 
-        #endregion
-
-        #region Implementation of ThreadsafeRulesValidatorProvider
-
         /// <inheritdoc/>
-        protected override async Task<RulesList> GetRulesFromServer(string? countryCode, CancellationToken cancellationToken = default)
+        public async Task<IEnumerable<string>> GetSupportedCountries(CancellationToken cancellationToken = default)
         {
-            Logger?.LogInformation("Refreshing rules from server...");
-            var rulesList = new RulesList()
-            {
-                LastUpdate = DateTime.Now,
-
-            };
-
-            var identifiersContainer = await GetSupportedCountriesContainer(cancellationToken);
-            if (identifiersContainer == null)
-                throw new DgcException($"Can not get a valid rules identifiers list");
-
-            var identifiers = identifiersContainer.Identifiers
-                .Where(r=>r.Country.Equals(countryCode, StringComparison.InvariantCultureIgnoreCase))
-                .ToArray();
-
-            Logger?.LogDebug($"Getting rules for {identifiers.Count()} identifiers");
-
-            var rules = new List<RuleEntry>();
-            foreach(var identifier in identifiers)
-            {
-                try
-                {
-                    var rule = await FetchRuleEntry(identifier.Country, identifier.Hash, cancellationToken);
-                    rules.Add(rule);
-                }
-                catch (Exception e)
-                {
-                    Logger?.LogError(e, $"Error getting rule for country {countryCode} - hash {identifier.Hash}: {e.Message}. Rule is skipped");
-                }
-            }
-            rulesList.Rules = rules.ToArray();
-
-            return rulesList;
+            var rulesIdentifiersValueSet = await _ruleIdentifiersProvider.GetValueSet(cancellationToken);
+            return rulesIdentifiersValueSet.Identifiers.Select(r => r.Country).Distinct().OrderBy(r => r).ToArray();
         }
 
         /// <inheritdoc/>
-        protected override Task<RulesList?> LoadCache(string? countryCode, CancellationToken cancellationToken = default)
+        public async Task RefreshRules(string? countryCode = null, CancellationToken cancellationToken = default)
         {
-            var filePath = GetRulesFilePath(countryCode);
-            RulesList? rulesList = null;
-            try
+            if (!string.IsNullOrEmpty(countryCode))
             {
-                if (File.Exists(filePath))
-                {
-                    Logger?.LogInformation($"Loading rules for {countryCode} from file");
-                    var fileContent = File.ReadAllText(filePath);
-                    rulesList = JsonConvert.DeserializeObject<RulesList>(fileContent, JsonSettings);
-                }
+                await _rulesProvider.RefreshValueSet(countryCode, cancellationToken);
             }
-            catch (Exception e)
+            else
             {
-                Logger?.LogError(e, $"Error reading trustlist from file: {e.Message}");
-            }
-
-            // Check max age and delete file
-            if (rulesList != null &&
-                rulesList.LastUpdate.Add(Options.MaxFileAge) < DateTime.Now)
-            {
-                Logger?.LogInformation($"Rules list for {countryCode} expired for MaxFileAge, deleting list and file");
-                // File has passed the max age, removing file
-                try
+                var supportedCountries = await GetSupportedCountries();
+                foreach (var country in supportedCountries.Distinct().ToArray())
                 {
-                    if (File.Exists(filePath))
-                        File.Delete(filePath);
+                    await _rulesProvider.RefreshValueSet(country, cancellationToken);
                 }
-                catch (Exception e)
-                {
-                    Logger?.LogError(e, $"Error deleting rules list file for {countryCode}: {e.Message}");
-                }
-                return Task.FromResult<RulesList?>(null);
-            }
-
-            return Task.FromResult<RulesList?>(rulesList);
-        }
-
-        /// <inheritdoc/>
-        protected override Task UpdateCache(RulesList rules, string countryCode, CancellationToken cancellationToken = default)
-        {
-            if (!Directory.Exists(GetCacheFolder()))
-                Directory.CreateDirectory(GetCacheFolder());
-
-            var filePath = GetRulesFilePath(countryCode);
-            var json = JsonConvert.SerializeObject(rules, JsonSettings);
-
-            File.WriteAllText(filePath, json);
-            return Task.FromResult(0);
-        }
-
-        /// <inheritdoc/>
-        protected override DateTimeOffset GetRulesLastUpdate(RulesList rules) => rules.LastUpdate;
-
-        #endregion
-
-        #region Implementation of MultiCountryRulesValidatorProvider
-
-        /// <inheritdoc/>
-        protected override async Task<RulesIdentifiers?> GetSupportedCountriesFromServer(CancellationToken cancellationToken = default)
-        {
-            try
-            {
-                var start = DateTime.Now;
-                Logger?.LogDebug("Fetching rules identifiers...");
-                var response = await _httpClient.GetAsync(RulesUrl, cancellationToken);
-                if (response.IsSuccessStatusCode)
-                {
-                    string content = await response.Content.ReadAsStringAsync();
-
-                    var results = JsonConvert.DeserializeObject<RuleIdentifier[]>(content);
-
-                    if (results == null)
-                        throw new Exception("Error wile deserializing rules from server");
-
-                    Logger?.LogInformation($"{results.Length} rules read in {DateTime.Now - start}");
-                    return new RulesIdentifiers
-                    {
-                        LastUpdate = start,
-                        Identifiers = results
-                    };
-                }
-
-                throw new Exception($"The remote server responded with code {response.StatusCode}: {response.ReasonPhrase}");
-            }
-            catch (Exception ex)
-            {
-                Logger?.LogError(ex, $"Error while getting rules from server: {ex.Message}");
-                throw;
             }
         }
 
         /// <inheritdoc/>
-        protected override DateTimeOffset GetSupportedCountriesLastUpdate(RulesIdentifiers cache)
+        public async Task<bool> SupportsCountry(string countryCode, CancellationToken cancellationToken = default)
         {
-            return cache.LastUpdate;
+            var supportedCountries = await GetSupportedCountries();
+            return supportedCountries.Any(r=>r.Equals(countryCode, StringComparison.InvariantCultureIgnoreCase));
         }
 
-        /// <inheritdoc/>
-        protected override IEnumerable<string> GetCountryCodes(RulesIdentifiers cache)
-        {
-            return cache.Identifiers.Select(r => r.Country)
-                .Distinct().OrderBy(r => r).ToArray();
-        }
-
-        /// <inheritdoc/>
-        protected override Task<RulesIdentifiers?> LoadSupportedCountriesCache(CancellationToken cancellationToken = default)
-        {
-            var filePath = GetRulesIdentifiersFilePath();
-            RulesIdentifiers? rulesList = null;
-            try
-            {
-                if (File.Exists(filePath))
-                {
-                    Logger?.LogInformation($"Loading rules identifiers from file");
-                    var fileContent = File.ReadAllText(filePath);
-                    rulesList = JsonConvert.DeserializeObject<RulesIdentifiers>(fileContent, JsonSettings);
-                }
-            }
-            catch (Exception e)
-            {
-                Logger?.LogError(e, $"Error reading rules identifiers from file: {e.Message}");
-            }
-
-            // Check max age and delete file
-            if (rulesList != null &&
-                rulesList.LastUpdate.Add(Options.MaxFileAge) < DateTime.Now)
-            {
-                Logger?.LogInformation($"Rules identifiers list expired for MaxFileAge, deleting list and file");
-                // File has passed the max age, removing file
-                try
-                {
-                    if (File.Exists(filePath))
-                        File.Delete(filePath);
-                }
-                catch (Exception e)
-                {
-                    Logger?.LogError(e, $"Error deleting rules identifiers file: {e.Message}");
-                }
-                return Task.FromResult<RulesIdentifiers?>(null);
-            }
-
-            return Task.FromResult<RulesIdentifiers?>(rulesList);
-        }
-
-        /// <inheritdoc/>
-        protected override Task UpdateSupportedCountriesCache(RulesIdentifiers countryCodes, CancellationToken cancellationToken = default)
-        {
-            if (!Directory.Exists(GetCacheFolder()))
-                Directory.CreateDirectory(GetCacheFolder());
-
-            var filePath = GetRulesIdentifiersFilePath();
-            var json = JsonConvert.SerializeObject(countryCodes, JsonSettings);
-
-            File.WriteAllText(filePath, json);
-            return Task.FromResult(0);
-        }
         #endregion
 
         #region Private
-        private async Task<RuleEntry> FetchRuleEntry(string countryCode, string hash, CancellationToken cancellationToken = default)
+
+        private async Task<Dictionary<string, JObject>> GetValueSetsJson(CancellationToken cancellationToken = default)
         {
-            try
+            var valueSetsIdentifiers = await _valueSetIdentifiersProvider.GetValueSet(cancellationToken);
+
+            var temp = new Dictionary<string, JObject>();
+
+            if (valueSetsIdentifiers == null)
+                return temp;
+
+            foreach(var identifier in valueSetsIdentifiers.Identifiers)
             {
-                var start = DateTime.Now;
-                Logger?.LogDebug($"Fetching rule for country {countryCode} - hash {hash}");
-                var url = $"{RulesUrl}{countryCode}/{hash}";
-
-                var response = await _httpClient.GetAsync(url, cancellationToken);
-                if (response.IsSuccessStatusCode)
-                {
-                    string content = await response.Content.ReadAsStringAsync();
-
-                    var result = JsonConvert.DeserializeObject<RuleEntry>(content);
-
-                    if (result == null)
-                        throw new Exception("Error wile deserializing rule from server");
-
-                    return result;
-                }
-
-                throw new Exception($"The remote server responded with code {response.StatusCode}: {response.ReasonPhrase}");
+                var values = await _valueSetsProvider.GetValueSet(identifier.Id, cancellationToken);
+                if (values != null)
+                    temp.Add(values.Id, JObject.FromObject(values.Values));
             }
-            catch (Exception ex)
-            {
-                throw;
-            }
+            return temp;
         }
-
-        private string GetCacheFolder() => Path.Combine(Options.BasePath, Options.FolderName);
-        private string GetRulesIdentifiersFilePath()
-        {
-            return Path.Combine(GetCacheFolder(), Options.RulesIdentifiersFileName);
-        }
-
-        private string GetRulesFilePath(string? countryCode)
-        {
-            if (string.IsNullOrEmpty(countryCode))
-                countryCode = "undefined";
-
-            return Path.Combine(GetCacheFolder(), $"rules-{countryCode}.json");
-        }
-
         #endregion
     }
 }

@@ -1,10 +1,12 @@
 ﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
+using System.Linq;
 
 // Copyright (c) 2021 Davide Trevisan
 // Licensed under the Apache License, Version 2.0
 
-namespace DgcReader.RuleValidators.Germany.Backend
+namespace DgcReader.RuleValidators.Germany.CovpassDgcCertlogic.Data
 {
     public class RuleEntry
     {
@@ -12,10 +14,10 @@ namespace DgcReader.RuleValidators.Germany.Backend
         public string Identifier { get; set; }
 
         [JsonProperty("Type")]
-        public string Type { get; set; }
+        public RuleType Type { get; set; }
 
         [JsonProperty("Country")]
-        public string Country { get; set; }
+        public string CountryCode { get; set; }
 
         [JsonProperty("Version")]
         public string Version { get; set; }
@@ -31,10 +33,10 @@ namespace DgcReader.RuleValidators.Germany.Backend
         public string EngineVersion { get; set; }
 
         [JsonProperty("CertificateType")]
-        public string CertificateType { get; set; }
+        public RuleCertificateType CertificateType { get; set; }
 
         [JsonProperty("Description")]
-        public RuleEntryDescription[] Description { get; set; }
+        public RuleEntryDescription[] Descriptions { get; set; }
 
         [JsonProperty("ValidFrom")]
         public DateTimeOffset ValidFrom { get; set; }
@@ -43,9 +45,18 @@ namespace DgcReader.RuleValidators.Germany.Backend
         public DateTimeOffset ValidTo { get; set; }
 
         [JsonProperty("AffectedFields")]
-        public string[] AffectedFields { get; set; }
+        public string[] AffectedString { get; set; }
 
         [JsonProperty("Logic")]
-        public object Logic { get; set; }
+        public JObject Logic { get; set; }
+
+        [JsonProperty("region", NullValueHandling = NullValueHandling.Ignore)]
+        public string? Region { get; set; }
+
+
+        public override string ToString()
+        {
+            return $"({Type}) {Descriptions?.FirstOrDefault()?.Descrption} ({Identifier} v{Version})";
+        }
     }
 }

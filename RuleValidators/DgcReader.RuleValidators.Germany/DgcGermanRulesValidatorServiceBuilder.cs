@@ -1,4 +1,5 @@
 ﻿#if NETSTANDARD2_0_OR_GREATER || NET5_0_OR_GREATER || NET47_OR_GREATER
+using DgcReader.Interfaces.RulesValidators;
 using DgcReader.RuleValidators.Germany;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using System;
@@ -16,7 +17,9 @@ namespace Microsoft.Extensions.DependencyInjection
             Services = services;
 
             Services.AddHttpClient();
+
             Services.TryAddSingleton<DgcGermanRulesValidator>();
+            Services.AddSingleton<IRulesValidator, DgcGermanRulesValidator>(sp => sp.GetRequiredService<DgcGermanRulesValidator>());
         }
 
         public DgcGermanRulesValidatorServiceBuilder Configure(Action<DgcGermanRulesValidatorOptions> configuration)

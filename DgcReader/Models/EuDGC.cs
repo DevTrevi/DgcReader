@@ -316,9 +316,7 @@ namespace GreenpassReader.Models
 
         /// <summary>
         /// Country
-        /// 2-letter ISO3166 code (RECOMMENDED) or a reference to an international
-        /// organisation responsible for carrying out the test which the test
-        /// was carried out (such as UNHCR or WHO)
+        /// 2-letter ISO3166 code (RECOMMENDED) or a reference to an international organisation
         /// </summary>
         string Country { get; }
 
@@ -341,6 +339,8 @@ namespace GreenpassReader.Models
         /// <param name="json"></param>
         /// <returns></returns>
         public static EuDGC? FromJson(string json) => JsonConvert.DeserializeObject<EuDGC>(json, Converter.Settings);
+
+        public string ToJson() => JsonConvert.SerializeObject(this, Converter.Settings);
     }
 
     internal static class Converter

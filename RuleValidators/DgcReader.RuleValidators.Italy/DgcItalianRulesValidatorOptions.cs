@@ -1,5 +1,4 @@
-﻿using DgcReader.RuleValidators.Abstractions;
-using System;
+﻿using System;
 using System.IO;
 
 // Copyright (c) 2021 Davide Trevisan
@@ -10,8 +9,24 @@ namespace DgcReader.RuleValidators.Italy
     /// <summary>
     /// Options for the <see cref="DgcItalianRulesValidator"/>
     /// </summary>
-    public class DgcItalianRulesValidatorOptions : RuleValidatorBaseOptions
+    public class DgcItalianRulesValidatorOptions
     {
+        /// <summary>
+        /// Duration of the stored file before a refresh is requested. Default is 24 hours
+        /// </summary>
+        public TimeSpan RefreshInterval { get; set; } = TimeSpan.FromHours(24);
+
+        /// <summary>
+        /// If true, allows to use the current rules list without waiting for the refresh task to complete.
+        /// Otherwise, if the list is expired, every rules valdation request will wait untill the refresh task completes.
+        /// </summary>
+        public TimeSpan MinRefreshInterval { get; set; } = TimeSpan.FromHours(1);
+
+        /// <summary>
+        /// If specified, prevent that every validation request causes a refresh attempt when the current rules list is expired.
+        /// </summary>
+        public bool UseAvailableRulesWhileRefreshing { get; set; } = true;
+
         /// <summary>
         /// Base path where the rules file will be stored
         /// Default <see cref="Directory.GetCurrentDirectory()"/>

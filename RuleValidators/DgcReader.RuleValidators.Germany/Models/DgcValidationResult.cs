@@ -8,6 +8,7 @@ using System;
 
 namespace DgcReader.RuleValidators.Germany.Models
 {
+
     /// <summary>
     /// Represents a validation result for the german rules
     /// </summary>

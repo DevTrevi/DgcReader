@@ -42,13 +42,13 @@ namespace DgcReader.RuleValidators.Italy
         /// <summary>
         /// The version of the sdk used as reference for implementing the rules.
         /// </summary>
-        private const string ReferenceSdkMinVersion = "1.0.2";
+        private const string ReferenceSdkMinVersion = "1.0.4";
 
         /// <summary>
         /// The version of the app used as reference for implementing the rules.
         /// NOTE: this is the version of the android app using the <see cref="ReferenceSdkMinVersion"/> of the SDK. The SDK version is not available in the settings right now.
         /// </summary>
-        private const string ReferenceAppMinVersion = "1.1.6";
+        private const string ReferenceAppMinVersion = "1.1.8";
 
         private readonly HttpClient _httpClient;
         private readonly ILogger? _logger;
@@ -157,6 +157,25 @@ namespace DgcReader.RuleValidators.Italy
             {
                 result.Status = DgcResultStatus.NotEuDCC;
                 return result;
+            }
+
+            // Validation mode check
+            if (_options.ValidationMode == null)
+            {
+                // Warning if not set excplicitly
+                _logger?.LogWarning($"Validation mode not set. The {ValidationMode.Basic3G} validation mode will be used");
+            }
+
+            // Super Greenpass check
+            if(_options.ValidationMode == ValidationMode.Strict2G)
+            {
+                // If 2G mode is active, Test entries are considered not valid
+                if(dgc.GetCertificateEntry() is TestEntry)
+                {
+                    _logger.LogWarning($"Test entries are considered not valid when validation mode is {ValidationMode.Strict2G}");
+                    result.Status = DgcResultStatus.NotValid;
+                    return result;
+                }
             }
 
             try

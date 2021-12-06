@@ -15,7 +15,7 @@
     <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageProjectUrl>https://github.com/DevTrevi/DgcReader</PackageProjectUrl>
-    <PackageReleaseNotes>Updated options default values, minor fixes</PackageReleaseNotes>
+    <PackageReleaseNotes>Implemented the italian "Super Greenpass" rules</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>

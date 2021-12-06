@@ -13,7 +13,7 @@ namespace DgcReader.Interfaces.RulesValidators
     public interface IRuleValidationResult
     {
         /// <summary>
-        /// If specified, determines the date and time when the certification is considered active.
+        /// If specified, determines the date and time when the certification is considered Valid.
         /// If null, the certification should be considered invalid
         /// Always refer to <see cref="Status"/> for the effective validity for the verifying country
         /// </summary>
@@ -21,7 +21,7 @@ namespace DgcReader.Interfaces.RulesValidators
 
         /// <summary>
         /// If specified, determines the date and time when the certification is considered expired.
-        /// If null, the certification should be considered not valid. 
+        /// If null, the certification should be considered not valid.
         /// Always refer to <see cref="Status"/> for the effective validity for the verifying country
         /// </summary>
         public DateTimeOffset? ValidUntil { get; }
@@ -30,6 +30,11 @@ namespace DgcReader.Interfaces.RulesValidators
         /// Validation status of the business rules
         /// </summary>
         DgcResultStatus Status { get; }
+
+        /// <summary>
+        /// A string message describing the status of the validation (optional)
+        /// </summary>
+        public string StatusMessage { get; }
 
         /// <summary>
         /// Country for which the rules has been verified (2 letter ISO code)

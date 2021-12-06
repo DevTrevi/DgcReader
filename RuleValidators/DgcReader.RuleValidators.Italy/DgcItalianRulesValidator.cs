@@ -97,7 +97,7 @@ namespace DgcReader.RuleValidators.Italy
         }
 
         /// <summary>
-        /// Factory method for creating an instance of <see cref="DgcItalianRulesValidator"/> 
+        /// Factory method for creating an instance of <see cref="DgcItalianRulesValidator"/>
         /// whithout using the DI mechanism. Useful for legacy applications
         /// </summary>
         /// <param name="httpClient">The http client instance that will be used for requests to the server</param>
@@ -125,7 +125,7 @@ namespace DgcReader.RuleValidators.Italy
         }
 
         /// <summary>
-        /// Factory method for creating an instance of <see cref="DgcItalianRulesValidator"/> 
+        /// Factory method for creating an instance of <see cref="DgcItalianRulesValidator"/>
         /// whithout using the DI mechanism. Useful for legacy applications
         /// </summary>
         /// <param name="httpClient">The http client instance that will be used for requests to the server</param>
@@ -136,8 +136,8 @@ namespace DgcReader.RuleValidators.Italy
             DgcItalianRulesValidatorOptions? options = null,
             ILogger<DgcItalianRulesValidator>? logger = null)
         {
-            return new DgcItalianRulesValidator(httpClient, 
-                options == null ? null : Options.Create(options), 
+            return new DgcItalianRulesValidator(httpClient,
+                options == null ? null : Options.Create(options),
                 logger);
         }
 #endif
@@ -334,7 +334,7 @@ namespace DgcReader.RuleValidators.Italy
 
                 // Checking min version:
                 CheckMinSdkVersion(rules);
-                
+
                 _currentRulesList = rulesList;
 
                 try
@@ -396,7 +396,7 @@ namespace DgcReader.RuleValidators.Italy
                 if (vaccination.MedicinalProduct == VaccineProducts.JeJVacineCode &&
                     vaccination.DoseNumber > vaccination.TotalDoseSeries)
                 {
-                    // For J&J booster, in case of more vaccinations than expected, the vaccine is immediately valid 
+                    // For J&J booster, in case of more vaccinations than expected, the vaccine is immediately valid
                     result.ValidFrom = vaccination.Date;
                     result.ValidUntil = vaccination.Date.AddDays(endDay);
                 }
@@ -423,7 +423,7 @@ namespace DgcReader.RuleValidators.Italy
                     result.Status = DgcResultStatus.PartiallyValid;
                 else
                     result.Status = DgcResultStatus.Valid;
-            }            
+            }
         }
 
         /// <summary>
@@ -485,7 +485,7 @@ namespace DgcReader.RuleValidators.Italy
         private void CheckRecoveryStatements(EuDGC dgc, DgcRulesValidationResult result, IEnumerable<RuleSetting> rules)
         {
             var recovery = dgc.Recoveries.Last(r => r.TargetedDiseaseAgent == DiseaseAgents.Covid19);
-            
+
             int startDay, endDay;
 
             startDay = rules.GetRuleInteger(SettingNames.RecoveryCertStartDay);
@@ -555,7 +555,7 @@ namespace DgcReader.RuleValidators.Italy
                     throw new DgcRulesValidationException(message);
                 }
             }
-            
+
         }
 
         #endregion
@@ -599,7 +599,7 @@ namespace DgcReader.RuleValidators.Italy
         private Task<RulesList?> LoadCache(CancellationToken cancellationToken = default)
         {
             var filePath = GetRulesListFilePath();
-            RulesList rulesList = null;
+            RulesList? rulesList = null;
             try
             {
                 if (File.Exists(filePath))

@@ -39,19 +39,19 @@ namespace DgcReader.Models
         public bool HasValidSignature { get; internal set; } = false;
 
         /// <summary>
-        /// True if a blacklist check was performed on the certificate. 
+        /// True if a blacklist check was performed on the certificate.
         /// This is true also if the certificate is blacklisted
         /// </summary>
-        public bool BlaclistVerified { get; internal set; } = false;
+        public bool BlacklistVerified { get; internal set; } = false;
 
         /// <summary>
-        /// The validity status of the certificate. 
+        /// The validity status of the certificate.
         /// Only <see cref="DgcResultStatus.Valid"/> and <see cref="DgcResultStatus.PartiallyValid"/> values should be considered successful
         /// </summary>
         public DgcResultStatus Status { get; internal set; } = DgcResultStatus.NotEuDCC;
 
         /// <summary>
-        /// If specified, determines the date and time when the certification is considered active.
+        /// If specified, determines the date and time when the certification is considered Valid.
         /// If null, the certification should be considered invalid
         /// Always refer to <see cref="Status"/> for the effective validity for the verifying country
         /// </summary>
@@ -59,20 +59,25 @@ namespace DgcReader.Models
 
         /// <summary>
         /// If specified, determines the date and time when the certification is considered expired.
-        /// If null, the certification should be considered not valid. 
+        /// If null, the certification should be considered not valid.
         /// Always refer to <see cref="Status"/> for the effective validity for the verifying country
         /// </summary>
         public DateTimeOffset? ValidUntil { get; internal set; }
 
         /// <summary>
-        /// The validation instant when checks where performed on the certificate
+        /// The date and time for which the certificate was verified
         /// </summary>
         public DateTimeOffset ValidationInstant { get; internal set; }
 
         /// <summary>
-        /// Country for which the rules has been verified (2 letter ISO code)
+        /// Country for which the rules has been verified (2-letter ISO code)
         /// </summary>
         public string? RulesVerificationCountry { get; internal set; }
+
+        /// <summary>
+        /// A string message describing the status of the validation result
+        /// </summary>
+        public string StatusMessage { get; internal set; }
 
     }
 

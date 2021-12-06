@@ -23,7 +23,7 @@ namespace DgcReader
     /// </summary>
     public class DgcReaderService
     {
-        private readonly ITrustListProvider TrustListProvider;
+        private readonly ITrustListProvider? TrustListProvider;
         private readonly IBlacklistProvider? BlackListProvider;
         private readonly IRulesValidator? RulesValidator;
         private readonly ILogger? Logger;
@@ -35,7 +35,7 @@ namespace DgcReader
         /// <param name="blackListProvider">The provider used to check if a certificate is blacklisted</param>
         /// <param name="rulesValidator">The service used to validate the rules for a specific country</param>
         /// <param name="logger"></param>
-        public DgcReaderService(ITrustListProvider trustListProvider = null,
+        public DgcReaderService(ITrustListProvider? trustListProvider = null,
             IBlacklistProvider? blackListProvider = null,
             IRulesValidator? rulesValidator = null,
             ILogger<DgcReaderService>? logger = null)
@@ -45,7 +45,6 @@ namespace DgcReader
             RulesValidator = rulesValidator;
             Logger = logger;
         }
-
 
         /// <summary>
         /// Decodes the DGC data, trowing exceptions only if data is in invalid format
@@ -63,7 +62,7 @@ namespace DgcReader
         /// Informations about signature validity and expiration can be found in the returned result
         /// </summary>
         /// <param name="qrCodeData">DGC raw data from the QRCode</param>
-        /// <param name="validationInstant"></param>
+        /// <param name="validationInstant">The instant of validation of the object </param>
         /// <returns></returns>
         public async Task<SignedDgc> Decode(string qrCodeData, DateTimeOffset validationInstant)
         {
@@ -99,26 +98,23 @@ namespace DgcReader
             }
         }
 
-
         /// <summary>
         /// Decodes the DGC data, verifying signature, blacklist and rules if a provider is available.
         /// </summary>
         /// <param name="qrCodeData">The QRCode data of the DGC</param>
         /// <param name="throwOnError">If true, throw an exception if the validation fails</param>
         /// <returns></returns>
-        /// 
         public Task<DgcValidationResult> Verify(string qrCodeData, bool throwOnError = true)
         {
             return Verify(qrCodeData, DateTimeOffset.Now, throwOnError);
         }
-
 
         /// <summary>
         /// Decodes the DGC data, verifying signature, blacklist and rules if a provider is available.
         /// This overload is intended for testing purposes only
         /// </summary>
         /// <param name="qrCodeData">The QRCode data of the DGC</param>
-        /// <param name="validationInstant">The instant for the validation of the object (for testing purposes)</param>
+        /// <param name="validationInstant">The instant of validation of the object </param>
         /// <param name="throwOnError">If true, throw an exception if the validation fails</param>
         /// <returns></returns>
         /// <exception cref="DgcException"></exception>
@@ -146,10 +142,6 @@ namespace DgcReader
                     result.Dgc = signedDgc.Dgc;
 
                     // Step 2: check signature
-                    if (TrustListProvider == null)
-                    {
-                        throw new DgcSignatureValidationException($"No trustlist provider is registered for signature validation");
-                    }
                     // Checking signature first, throwing exceptions if not valid
                     await VerifySignature(cose, validationInstant);
 
@@ -164,7 +156,7 @@ namespace DgcReader
                         var blacklisted = await BlackListProvider.IsBlacklisted(certEntry.CertificateIdentifier);
 
                         // Check performed
-                        result.BlaclistVerified = true;
+                        result.BlacklistVerified = true;
                         if (blacklisted)
                         {
                             throw new DgcBlackListException($"The certificate is blacklisted", certEntry.CertificateIdentifier);
@@ -189,7 +181,11 @@ namespace DgcReader
                             if (rulesResult.Status != DgcResultStatus.Valid &&
                                 rulesResult.Status != DgcResultStatus.PartiallyValid)
                             {
-                                throw new DgcRulesValidationException(GetDgcResultStatusDescription(rulesResult.Status), rulesResult);
+                                var message = rulesResult.StatusMessage;
+                                if (string.IsNullOrEmpty(message))
+                                    message = GetDgcResultStatusDescription(rulesResult.Status);
+
+                                throw new DgcRulesValidationException(message, rulesResult);
                             }
                         }
                     }
@@ -231,6 +227,7 @@ namespace DgcReader
             }
             catch (DgcException e)
             {
+                result.StatusMessage = e.Message;
                 if (throwOnError)
                 {
                     Logger?.LogError($"Validation failed: {e.Message}");
@@ -238,18 +235,21 @@ namespace DgcReader
                 }
             }
 
+            // Fallback message if not specified before
+            if (string.IsNullOrEmpty(result.StatusMessage))
+                result.StatusMessage = GetDgcResultStatusDescription(result.Status);
+
             if (result.Status == DgcResultStatus.Valid)
-                Logger?.LogInformation($"Validation succeded: {GetDgcResultStatusDescription(result.Status)}");
+                Logger?.LogInformation($"Validation succeded: {result.StatusMessage}");
             else if (result.Status == DgcResultStatus.PartiallyValid)
-                Logger?.LogWarning($"Validation succeded: {GetDgcResultStatusDescription(result.Status)}");
+                Logger?.LogWarning($"Validation succeded: {result.StatusMessage}");
             else if (result.Status == DgcResultStatus.NeedRulesVerification && RulesValidator == null)
-                Logger?.LogWarning($"Validation succeded: {GetDgcResultStatusDescription(result.Status)}");
+                Logger?.LogWarning($"Validation succeded: {result.StatusMessage}");
             else
-                Logger?.LogError($"Validation failed: {GetDgcResultStatusDescription(result.Status)}");
+                Logger?.LogError($"Validation failed: {result.StatusMessage}");
 
             return result;
         }
-
 
         /// <summary>
         /// Decodes the DGC data, verifying signature, blacklist and rules if a provider is available.
@@ -267,13 +267,13 @@ namespace DgcReader
         /// A result is always returned
         /// </summary>
         /// <param name="qrCodeData">The QRCode data of the DGC</param>
-        /// <param name="validationInstant">The instant for the validation of the object (for testing purposes)</param>
+        /// <param name="validationInstant">The instant of validation of the object </param>
         /// <returns></returns>
         public Task<DgcValidationResult> GetValidationResult(string qrCodeData, DateTimeOffset validationInstant)
         {
             return Verify(qrCodeData, validationInstant, false);
         }
-        
+
         #region Private
 
         /// <summary>
@@ -308,10 +308,15 @@ namespace DgcReader
         /// Verify the signature of the COSE object
         /// </summary>
         /// <param name="cose"></param>
+        /// <param name="validationInstant">The instant of validation of the object </param>
         /// <returns></returns>
         /// <exception cref="DgcSignatureValidationException"></exception>
         private async Task VerifySignature(CoseSign1_Object cose, DateTimeOffset validationInstant)
         {
+            if (TrustListProvider == null)
+            {
+                throw new DgcSignatureValidationException($"No trustlist provider is registered for signature validation");
+            }
             try
             {
                 var cwt = cose.GetCwt();

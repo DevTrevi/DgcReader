@@ -69,7 +69,7 @@ namespace DgcReader.TrustListProviders.Sweden
         }
 
         /// <summary>
-        /// Factory method for creating an instance of <see cref="SwedishTrustListProvider"/> 
+        /// Factory method for creating an instance of <see cref="SwedishTrustListProvider"/>
         /// whithout using the DI mechanism. Useful for legacy applications
         /// </summary>
         /// <param name="httpClient">The http client instance that will be used for requests to the server</param>
@@ -98,7 +98,7 @@ namespace DgcReader.TrustListProviders.Sweden
         }
 
         /// <summary>
-        /// Factory method for creating an instance of <see cref="SwedishTrustListProvider"/> 
+        /// Factory method for creating an instance of <see cref="SwedishTrustListProvider"/>
         /// whithout using the DI mechanism. Useful for legacy applications
         /// </summary>
         /// <param name="httpClient">The http client instance that will be used for requests to the server</param>
@@ -191,7 +191,7 @@ namespace DgcReader.TrustListProviders.Sweden
                         .ToArray();
                 }
 
-                
+
                 return trustList;
             }
             catch (Exception e)
@@ -205,7 +205,7 @@ namespace DgcReader.TrustListProviders.Sweden
         protected override Task<ITrustList?> LoadCache(CancellationToken cancellationToken = default)
         {
             var filePath = GetTrustListFilePath();
-            TrustList trustList = null;
+            TrustList? trustList = null;
             try
             {
                 if (File.Exists(filePath))
@@ -239,7 +239,7 @@ namespace DgcReader.TrustListProviders.Sweden
                     }
                     return Task.FromResult<ITrustList?>(null);
                 }
-               
+
             }
 
             return Task.FromResult<ITrustList?>(trustList);
@@ -359,7 +359,7 @@ namespace DgcReader.TrustListProviders.Sweden
         }
 
 
-        
+
         private static DateTimeOffset FromUnixTimeSeconds(long seconds)
         {
 #if NET452

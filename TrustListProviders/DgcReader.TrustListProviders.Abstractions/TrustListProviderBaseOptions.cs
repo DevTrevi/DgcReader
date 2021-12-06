@@ -7,7 +7,7 @@ using System;
 namespace DgcReader.TrustListProviders.Abstractions
 {
     /// <inheritdoc cref="ITrustListProviderBaseOptions"/>
-    public class TrustListProviderBaseOptions : ITrustListProviderBaseOptions
+    public abstract class TrustListProviderBaseOptions : ITrustListProviderBaseOptions
     {
         /// <inheritdoc />
         public bool UseAvailableListWhileRefreshing { get; set; } = true;

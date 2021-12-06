@@ -618,7 +618,7 @@ namespace DgcReader.RuleValidators.Italy
         private Task<RulesList?> LoadCache(CancellationToken cancellationToken = default)
         {
             var filePath = GetRulesListFilePath();
-            RulesList rulesList = null;
+            RulesList? rulesList = null;
             try
             {
                 if (File.Exists(filePath))

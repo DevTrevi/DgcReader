@@ -3,7 +3,7 @@
 
 ### An extensible, unofficial library for decoding and validate the European Digital Green Certificate
 
-[![Build Status](https://dev.azure.com/devTrevi/DGCReader/_apis/build/status/DevTrevi.DgcReader?branchName=dev)](https://dev.azure.com/devTrevi/DGCReader/_build/latest?definitionId=9&branchName=dev) [![NuGet version (DgcReader)](https://img.shields.io/nuget/vpre/DgcReader?label=DgcReader)](https://www.nuget.org/packages/DgcReader/)
+[![Build Status](https://dev.azure.com/devTrevi/DGCReader/_apis/build/status/DevTrevi.DgcReader)](https://dev.azure.com/devTrevi/DGCReader/_build/latest?definitionId=9&branchName=dev) [![NuGet version (DgcReader)](https://img.shields.io/nuget/vpre/DgcReader?label=DgcReader)](https://www.nuget.org/packages/DgcReader/)
 
 
 #### Summary

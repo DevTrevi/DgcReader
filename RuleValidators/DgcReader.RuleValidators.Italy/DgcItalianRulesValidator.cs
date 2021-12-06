@@ -120,19 +120,19 @@ namespace DgcReader.RuleValidators.Italy
             }
 
             // Validation mode check
-            if (_options.ValidationMode == null)
+            if (Options.ValidationMode == null)
             {
                 // Warning if not set excplicitly
-                _logger?.LogWarning($"Validation mode not set. The {ValidationMode.Basic3G} validation mode will be used");
+                Logger?.LogWarning($"Validation mode not set. The {ValidationMode.Basic3G} validation mode will be used");
             }
 
             // Super Greenpass check
-            if(_options.ValidationMode == ValidationMode.Strict2G)
+            if(Options.ValidationMode == ValidationMode.Strict2G)
             {
                 // If 2G mode is active, Test entries are considered not valid
                 if(dgc.GetCertificateEntry() is TestEntry)
                 {
-                    _logger.LogWarning($"Test entries are considered not valid when validation mode is {ValidationMode.Strict2G}");
+                    Logger.LogWarning($"Test entries are considered not valid when validation mode is {ValidationMode.Strict2G}");
                     result.Status = DgcResultStatus.NotValid;
                     return result;
                 }

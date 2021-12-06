@@ -17,13 +17,13 @@ namespace DgcReader.RuleValidators.Germany
         public TimeSpan RefreshInterval { get; set; } = TimeSpan.FromHours(24);
 
         /// <summary>
-        /// If true, allows to use the current rules list without waiting for the refresh task to complete.
-        /// Otherwise, if the list is expired, every rules valdation request will wait untill the refresh task completes.
+        /// If specified, prevent that every validation request causes a refresh attempt when the current rules list is expired.
         /// </summary>
         public TimeSpan MinRefreshInterval { get; set; } = TimeSpan.FromHours(1);
 
         /// <summary>
-        /// If specified, prevent that every validation request causes a refresh attempt when the current values are expired.
+        /// If true, allows to use the current rules list without waiting for the refresh task to complete.
+        /// Otherwise, if the list is expired, every rules valdation request will wait untill the refresh task completes.
         /// </summary>
         public bool UseAvailableValuesWhileRefreshing { get; set; } = true;
 

@@ -117,6 +117,7 @@ namespace DgcReader
         /// This overload is intended for testing purposes only
         /// </summary>
         /// <param name="qrCodeData">The QRCode data of the DGC</param>
+        /// <param name="acceptanceCountryCode">The 2-letter ISO country of the acceptance country. This information is mandatory in order to perform the rules validation</param>
         /// <param name="validationInstant">The validation instant of the DGC</param>
         /// <param name="throwOnError">If true, throw an exception if the validation fails</param>
         /// <returns></returns>
@@ -145,7 +146,7 @@ namespace DgcReader
                     result.Dgc = signedDgc.Dgc;
 
                     // Step 2: check signature
-                    if (TrustListProvider == null)
+                    if (TrustListProviders?.Any() != true)
                     {
                         throw new DgcSignatureValidationException($"No trustlist provider is registered for signature validation");
                     }
@@ -160,15 +161,16 @@ namespace DgcReader
                     if (BlackListProviders?.Any() == true)
                     {
                         var certEntry = result.Dgc.GetCertificateEntry();
-                        foreach(var blacklistProvider in BlackListProviders)
+                        foreach (var blacklistProvider in BlackListProviders)
                         {
                             var blacklisted = await blacklistProvider.IsBlacklisted(certEntry.CertificateIdentifier);
 
-                        // Check performed
-                        result.BlacklistVerified = true;
-                        if (blacklisted)
-                        {
-                            throw new DgcBlackListException($"The certificate is blacklisted", certEntry.CertificateIdentifier);
+                            // Check performed
+                            result.BlacklistVerified = true;
+                            if (blacklisted)
+                            {
+                                throw new DgcBlackListException($"The certificate is blacklisted", certEntry.CertificateIdentifier);
+                            }
                         }
                     }
                     else
@@ -286,6 +288,7 @@ namespace DgcReader
         /// A result is always returned
         /// </summary>
         /// <param name="qrCodeData">The QRCode data of the DGC</param>
+        /// <param name="acceptanceCountryCode">The 2-letter ISO country of the acceptance country. This information is mandatory in order to perform the rules validation</param>
         /// <param name="validationInstant">The validation instant of the DGC</param>
         /// <returns></returns>
         public Task<DgcValidationResult> GetValidationResult(string qrCodeData, string? acceptanceCountryCode, DateTimeOffset validationInstant)
@@ -353,7 +356,7 @@ namespace DgcReader
         /// Verify the signature of the COSE object
         /// </summary>
         /// <param name="cose"></param>
-        /// <param name="validationInstant">The instant of validation of the object </param>
+        /// <param name="validationInstant">The validation instant of the DGC</param>
         /// <returns></returns>
         /// <exception cref="DgcSignatureValidationException"></exception>
         private async Task VerifySignature(CoseSign1_Object cose, DateTimeOffset validationInstant)

@@ -17,7 +17,7 @@ namespace DgcReader.RuleValidators.Germany.Models
         /// <summary>
         /// The validated Dgc
         /// </summary>
-        public EuDGC Dgc {  get; internal set; }
+        public EuDGC Dgc { get; internal set; }
 
         /// <summary>
         /// The instant when the certificate was validated against the business rules.
@@ -35,6 +35,8 @@ namespace DgcReader.RuleValidators.Germany.Models
         /// </summary>
         public DgcResultStatus Status { get; internal set; } = DgcResultStatus.NotValid;
 
+        /// <inheritdoc/>
+        public string StatusMessage { get; internal set; }
 
         /// <inheritdoc/>
         public string RulesVerificationCountry { get; internal set; }

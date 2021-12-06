@@ -17,15 +17,15 @@ namespace DgcReader.RuleValidators.Italy
         public TimeSpan RefreshInterval { get; set; } = TimeSpan.FromHours(24);
 
         /// <summary>
-        /// If true, allows to use the current rules list without waiting for the refresh task to complete.
-        /// Otherwise, if the list is expired, every rules valdation request will wait untill the refresh task completes.
+        /// If specified, prevent that every validation request causes a refresh attempt when the current rules list is expired.
         /// </summary>
         public TimeSpan MinRefreshInterval { get; set; } = TimeSpan.FromHours(1);
 
         /// <summary>
-        /// If specified, prevent that every validation request causes a refresh attempt when the current rules list is expired.
+        /// If true, allows to use the current rules list without waiting for the refresh task to complete.
+        /// Otherwise, if the list is expired, every rules valdation request will wait untill the refresh task completes.
         /// </summary>
-        public bool UseAvailableRulesWhileRefreshing { get; set; } = true;
+        public bool UseAvailableValuesWhileRefreshing { get; set; } = true;
 
         /// <summary>
         /// Base path where the rules file will be stored
@@ -49,9 +49,6 @@ namespace DgcReader.RuleValidators.Italy
         /// If true, validates the rules even if the reference SDK version is obsolete
         /// </summary>
         public bool IgnoreMinimumSdkVersion { get; set; } = false;
-
-        /// <inheritdoc />
-        public bool UseAvailableListWhileRefreshing { get; set; } = true;
 
         /// <summary>
         /// The verification mode used in order to validate the DGC.

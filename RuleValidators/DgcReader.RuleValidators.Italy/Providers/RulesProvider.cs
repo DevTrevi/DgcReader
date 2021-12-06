@@ -103,6 +103,10 @@ namespace DgcReader.RuleValidators.Italy.Providers
             return Task.FromResult(0);
         }
 
+        public override TimeSpan RefreshInterval => Options.RefreshInterval;
+        public override TimeSpan MinRefreshInterval => Options.MinRefreshInterval;
+        public override bool UseAvailableValuesWhileRefreshing => Options.UseAvailableValuesWhileRefreshing;
+
         private async Task<RuleSetting[]> FetchSettings(CancellationToken cancellationToken = default)
         {
             try

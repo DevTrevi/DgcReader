@@ -46,5 +46,26 @@ namespace DgcReader.RuleValidators.Italy
 
         /// <inheritdoc />
         public bool UseAvailableListWhileRefreshing { get; set; } = true;
+
+        /// <summary>
+        /// The verification mode used in order to validate the DGC.
+        /// If not specified, defaults to <see cref="ValidationMode.Basic3G"/>
+        /// </summary>
+        public ValidationMode? ValidationMode { get; set; } = null;
+    }
+
+
+    public enum ValidationMode
+    {
+        /// <summary>
+        /// Allows validation of vaccinations, recovery certificates and test results
+        /// </summary>
+        Basic3G,
+
+        /// <summary>
+        /// Enables the "Super Greenpass" check, restricting the validation to vaccinations and recovery certificates only.
+        /// Test results are not considered valid in this mode.
+        /// </summary>
+        Strict2G,
     }
 }

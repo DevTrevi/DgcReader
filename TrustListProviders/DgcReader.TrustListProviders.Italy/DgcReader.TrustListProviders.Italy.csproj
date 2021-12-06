@@ -21,7 +21,7 @@
     <ProjectReference Include="..\DgcReader.TrustListProviders.Abstractions\DgcReader.TrustListProviders.Abstractions.csproj" />
     <ProjectReference Include="..\..\DgcReader\DgcReader.csproj" />
   </ItemGroup>
-  
+
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
   </ItemGroup>
@@ -43,7 +43,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="README.md">
+    <None Include="README.md">
       <Pack>True</Pack>
       <PackagePath>\</PackagePath>
     </None>

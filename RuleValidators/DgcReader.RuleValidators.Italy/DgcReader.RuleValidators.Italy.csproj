@@ -10,12 +10,12 @@
     <RepositoryUrl>https://github.com/DevTrevi/DGCReader</RepositoryUrl>
     <PackageTags>DGC DCC DigitalGreenCertificate DigitalCovidCertificate Greenpass</PackageTags>
     <Description>Unofficial implementation of the Italian rules for validating a Digital Green Certificate</Description>
-    <Version>1.2.1</Version>
+    <Version>1.3.0</Version>
     <PackageLicenseExpression> Apache-2.0</PackageLicenseExpression>
     <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageProjectUrl>https://github.com/DevTrevi/DgcReader</PackageProjectUrl>
-    <PackageReleaseNotes>Updated options default values, minor fixes</PackageReleaseNotes>
+    <PackageReleaseNotes>Implemented the italian "Super Greenpass" rules</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>
@@ -41,7 +41,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="README.md">
+    <None Include="README.md">
       <Pack>True</Pack>
       <PackagePath>\</PackagePath>
     </None>

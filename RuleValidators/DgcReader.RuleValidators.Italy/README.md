@@ -74,6 +74,9 @@ If a refresh is not possible when the refresh interval expires, the current file
 This allows the application to continue to operate even if the backend is temporary unavailable for any reason.
 Default value is 15 days.
 - **IgnoreMinimumSdkVersion**: if true, validates the rules even if the reference SDK version is obsolete.
+- **ValidationMode**: The verification mode used in order to validate the DGC. If not specified, defaults to `Basic3G`.  
+  - In `Basic3G` mode, all kind of certificates can be validated (vaccinations, recovery certificates and negative tests).
+  - In `Strict2G` mode, also known as *"Super Greenpass"*, test results are always considered not valid.
 
 
 ## Forcing the update of the rules

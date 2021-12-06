@@ -2,8 +2,7 @@
 
 
 ### An extensible, unofficial library for decoding and validate the European Digital Green Certificate
-
-[![Build Status](https://dev.azure.com/devTrevi/DGCReader/_apis/build/status/DevTrevi.DgcReader?branchName=dev)](https://dev.azure.com/devTrevi/DGCReader/_build/latest?definitionId=9&branchName=dev) [![NuGet version (DgcReader)](https://img.shields.io/nuget/vpre/DgcReader?label=DgcReader)](https://www.nuget.org/packages/DgcReader/)
+[![NuGet version (DgcReader)](https://img.shields.io/nuget/vpre/DgcReader?label=DgcReader)](https://www.nuget.org/packages/DgcReader/)
 
 
 #### Summary
@@ -143,6 +142,11 @@ You can use the implementations in the repository as an example, or you can code
 If you are implementing a TrustList provider, the `DgcReader.TrustListProviders.Abstractions` package can results useful to simply implement a service optimized for multiple concurrent requests like a web application.  
 Any suggestion will be appreciated!
 
+#### Requirements
+
+In order to compile and run the solution, you will need the following tools:
+- Microsoft Visual Studio 2019 with the latest updates installed (16.11.7 at the moment of writing), or Microsoft Visual Studio 2022
+- Because some projects supports multiple version of the .NET framework, you should have installed the related targeting packs. At the moment, .NET Framework 4.5.2, .NET Framework 4.7 and .NET Standard 2.0 are supported
 
 #### Disclaimer
 This library is **not** an official implementation, therefore its use may be subject to restrictions by some countries regulations.  

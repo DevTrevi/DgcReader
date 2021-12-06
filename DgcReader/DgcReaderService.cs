@@ -48,7 +48,6 @@ namespace DgcReader
             Logger = logger;
         }
 
-
         /// <summary>
         /// Decodes the DGC data, trowing exceptions only if data is in invalid format
         /// Informations about signature validity and expiration can be found in the returned result
@@ -65,7 +64,7 @@ namespace DgcReader
         /// Informations about signature validity and expiration can be found in the returned result
         /// </summary>
         /// <param name="qrCodeData">DGC raw data from the QRCode</param>
-        /// <param name="validationInstant"></param>
+        /// <param name="validationInstant">The validation instant of the DGC</param>
         /// <returns></returns>
         public async Task<SignedDgc> Decode(string qrCodeData, DateTimeOffset validationInstant)
         {
@@ -108,7 +107,6 @@ namespace DgcReader
         /// <param name="acceptanceCountryCode">The 2-letter ISO country of the acceptance country. This information is mandatory in order to perform the rules validation</param>
         /// <param name="throwOnError">If true, throw an exception if the validation fails</param>
         /// <returns></returns>
-        ///
         public Task<DgcValidationResult> Verify(string qrCodeData, string? acceptanceCountryCode, bool throwOnError = true)
         {
             return Verify(qrCodeData, acceptanceCountryCode, DateTimeOffset.Now, throwOnError);
@@ -119,8 +117,7 @@ namespace DgcReader
         /// This overload is intended for testing purposes only
         /// </summary>
         /// <param name="qrCodeData">The QRCode data of the DGC</param>
-        /// <param name="acceptanceCountryCode">The 2-letter ISO country of the acceptance country. This information is mandatory in order to perform the rules validation</param>
-        /// <param name="validationInstant">The instant for the validation of the object (for testing purposes)</param>
+        /// <param name="validationInstant">The validation instant of the DGC</param>
         /// <param name="throwOnError">If true, throw an exception if the validation fails</param>
         /// <returns></returns>
         /// <exception cref="DgcException"></exception>
@@ -148,7 +145,7 @@ namespace DgcReader
                     result.Dgc = signedDgc.Dgc;
 
                     // Step 2: check signature
-                    if (TrustListProviders?.Any() != true)
+                    if (TrustListProvider == null)
                     {
                         throw new DgcSignatureValidationException($"No trustlist provider is registered for signature validation");
                     }
@@ -167,12 +164,11 @@ namespace DgcReader
                         {
                             var blacklisted = await blacklistProvider.IsBlacklisted(certEntry.CertificateIdentifier);
 
-                            // Check performed
-                            result.BlaclistVerified = true;
-                            if (blacklisted)
-                            {
-                                throw new DgcBlackListException($"The certificate is blacklisted", certEntry.CertificateIdentifier);
-                            }
+                        // Check performed
+                        result.BlacklistVerified = true;
+                        if (blacklisted)
+                        {
+                            throw new DgcBlackListException($"The certificate is blacklisted", certEntry.CertificateIdentifier);
                         }
                     }
                     else
@@ -199,12 +195,16 @@ namespace DgcReader
                             result.RulesVerificationCountry = rulesResult.RulesVerificationCountry;
                             result.Status = rulesResult.Status;
 
-                            if (throwOnError)
+                        if (throwOnError)
                             {
                                 if (rulesResult.Status != DgcResultStatus.Valid &&
                                     rulesResult.Status != DgcResultStatus.PartiallyValid)
                                 {
-                                    throw new DgcRulesValidationException(GetDgcResultStatusDescription(rulesResult.Status), rulesResult);
+                                    var message = rulesResult.StatusMessage;
+                                    if (string.IsNullOrEmpty(message))
+                                        message = GetDgcResultStatusDescription(rulesResult.Status);
+
+                                    throw new DgcRulesValidationException(message, rulesResult);
                                 }
                             }
                         }
@@ -245,6 +245,7 @@ namespace DgcReader
             }
             catch (DgcException e)
             {
+                result.StatusMessage = e.Message;
                 if (throwOnError)
                 {
                     Logger?.LogError($"Validation failed: {e.Message}");
@@ -252,14 +253,18 @@ namespace DgcReader
                 }
             }
 
+            // Fallback message if not specified before
+            if (string.IsNullOrEmpty(result.StatusMessage))
+                result.StatusMessage = GetDgcResultStatusDescription(result.Status);
+
             if (result.Status == DgcResultStatus.Valid)
-                Logger?.LogInformation($"Validation succeded: {GetDgcResultStatusDescription(result.Status)}");
+                Logger?.LogInformation($"Validation succeded: {result.StatusMessage}");
             else if (result.Status == DgcResultStatus.PartiallyValid)
                 Logger?.LogWarning($"Validation succeded: {GetDgcResultStatusDescription(result.Status)}");
             else if (result.Status == DgcResultStatus.NeedRulesVerification)
-                Logger?.LogWarning($"Validation succeded without rules verification: {GetDgcResultStatusDescription(result.Status)}");
+                Logger?.LogWarning($"Validation succeded without rules verification: {result.StatusMessage}");
             else
-                Logger?.LogError($"Validation failed: {GetDgcResultStatusDescription(result.Status)}");
+                Logger?.LogError($"Validation failed: {result.StatusMessage}");
 
             return result;
         }
@@ -281,8 +286,7 @@ namespace DgcReader
         /// A result is always returned
         /// </summary>
         /// <param name="qrCodeData">The QRCode data of the DGC</param>
-        /// <param name="acceptanceCountryCode">The 2-letter ISO country of the acceptance country. This information is mandatory in order to perform the rules validation</param>
-        /// <param name="validationInstant">The instant for the validation of the object (for testing purposes)</param>
+        /// <param name="validationInstant">The validation instant of the DGC</param>
         /// <returns></returns>
         public Task<DgcValidationResult> GetValidationResult(string qrCodeData, string? acceptanceCountryCode, DateTimeOffset validationInstant)
         {
@@ -349,6 +353,7 @@ namespace DgcReader
         /// Verify the signature of the COSE object
         /// </summary>
         /// <param name="cose"></param>
+        /// <param name="validationInstant">The instant of validation of the object </param>
         /// <returns></returns>
         /// <exception cref="DgcSignatureValidationException"></exception>
         private async Task VerifySignature(CoseSign1_Object cose, DateTimeOffset validationInstant)

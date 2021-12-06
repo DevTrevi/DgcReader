@@ -119,6 +119,25 @@ namespace DgcReader.RuleValidators.Italy
                 return result;
             }
 
+            // Validation mode check
+            if (_options.ValidationMode == null)
+            {
+                // Warning if not set excplicitly
+                _logger?.LogWarning($"Validation mode not set. The {ValidationMode.Basic3G} validation mode will be used");
+            }
+
+            // Super Greenpass check
+            if(_options.ValidationMode == ValidationMode.Strict2G)
+            {
+                // If 2G mode is active, Test entries are considered not valid
+                if(dgc.GetCertificateEntry() is TestEntry)
+                {
+                    _logger.LogWarning($"Test entries are considered not valid when validation mode is {ValidationMode.Strict2G}");
+                    result.Status = DgcResultStatus.NotValid;
+                    return result;
+                }
+            }
+
             try
             {
                 var rulesContainer = await _rulesProvider.GetValueSet(cancellationToken);

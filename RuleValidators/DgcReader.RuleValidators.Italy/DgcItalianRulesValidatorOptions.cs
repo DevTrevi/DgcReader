@@ -41,13 +41,37 @@ namespace DgcReader.RuleValidators.Italy
         /// <summary>
         /// Maximum duration of the configuration file before is discarded.
         /// If a refresh is not possible when the refresh interval expires, the current file can be used until
-        /// it passes the specified period. Default is 30 days
+        /// it passes the specified period. Default is 15 days
         /// </summary>
-        public TimeSpan MaxFileAge { get; set; } = TimeSpan.FromDays(30);
+        public TimeSpan MaxFileAge { get; set; } = TimeSpan.FromDays(15);
 
         /// <summary>
         /// If true, validates the rules even if the reference SDK version is obsolete
         /// </summary>
         public bool IgnoreMinimumSdkVersion { get; set; } = false;
+
+        /// <inheritdoc />
+        public bool UseAvailableListWhileRefreshing { get; set; } = true;
+
+        /// <summary>
+        /// The verification mode used in order to validate the DGC.
+        /// If not specified, defaults to <see cref="ValidationMode.Basic3G"/>
+        /// </summary>
+        public ValidationMode? ValidationMode { get; set; } = null;
+    }
+
+
+    public enum ValidationMode
+    {
+        /// <summary>
+        /// Allows validation of vaccinations, recovery certificates and test results
+        /// </summary>
+        Basic3G,
+
+        /// <summary>
+        /// Enables the "Super Greenpass" check, restricting the validation to vaccinations and recovery certificates only.
+        /// Test results are not considered valid in this mode.
+        /// </summary>
+        Strict2G,
     }
 }

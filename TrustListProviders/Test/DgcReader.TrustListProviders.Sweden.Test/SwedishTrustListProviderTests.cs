@@ -2,19 +2,17 @@ using System;
 using System.Diagnostics;
 using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using DgcReader.TrustListProviders.Sweden;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using DgcReader.Interfaces.TrustListProviders;
+using System.Net.Http;
 
 #if NETFRAMEWORK
-using System.Net;
 using DgcReader.Interfaces.TrustListProviders;
+using System.Net;
 #endif
 
-#if NET452
-using System.Net.Http;
-#else
+#if !NET452
 using Microsoft.Extensions.DependencyInjection;
 #endif
 
@@ -102,7 +100,7 @@ namespace DgcReader.TrustListProviders.Sweden.Test
         [TestMethod]
         public void TestConstructor()
         {
-            var httpClient = new System.Net.Http.HttpClient();
+            var httpClient = new HttpClient();
 
 #if NET452
             var instance = new SwedishTrustListProvider(httpClient, Options, null);
@@ -117,13 +115,35 @@ namespace DgcReader.TrustListProviders.Sweden.Test
         [TestMethod]
         public void TestFactory()
         {
-            var httpClient = new System.Net.Http.HttpClient();
+            var httpClient = new HttpClient();
 
-#if NET452
             var instance = SwedishTrustListProvider.Create(httpClient, Options, null);
-#else
-            var instance = SwedishTrustListProvider.Create(httpClient, Options, null);
-#endif
+
+            Assert.IsNotNull(instance);
+        }
+
+        [TestMethod]
+        public async Task TestConstructorWithoutOptions()
+        {
+            // Verify that an instance can be created without specifiyng custom options
+            var httpClient = new HttpClient();
+
+            var instance = new SwedishTrustListProvider(httpClient);
+
+            await instance.RefreshTrustList();
+
+            Assert.IsNotNull(instance);
+        }
+
+        [TestMethod]
+        public async Task TestFactoryWithoutOptions()
+        {
+            // Verify that an instance can be created without specifiyng custom options
+            var httpClient = new HttpClient();
+
+            var instance = new SwedishTrustListProvider(httpClient);
+
+            await instance.RefreshTrustList();
 
             Assert.IsNotNull(instance);
         }

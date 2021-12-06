@@ -15,19 +15,12 @@
     <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageProjectUrl>https://github.com/DevTrevi/DgcReader</PackageProjectUrl>
-    <PackageReleaseNotes>Aligned rules from official SDK version 1.0.2, check for Sputnik vaccine not from San Marino and UVCI blacklist provider. Implemented standard interfaces IBlacklistProvider and IRulesValidator</PackageReleaseNotes>
+    <PackageReleaseNotes>Implemented the italian "Super Greenpass" rules</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>
-    <None Include="..\..\README.md">
-      <Pack>True</Pack>
-      <PackagePath>\</PackagePath>
-    </None>
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\..\DgcReader.Providers.Abstractions\DgcReader.Providers.Abstractions.csproj" />
-    <ProjectReference Include="..\..\DgcReader\DgcReader.csproj" />
+	  <ProjectReference Include="..\..\DgcReader.Providers.Abstractions\DgcReader.Providers.Abstractions.csproj" />
+	  <ProjectReference Include="..\..\DgcReader\DgcReader.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -46,6 +39,13 @@
   <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
     <PackageReference Include="Microsoft.Extensions.Options" Version="5.0.0" />
     <PackageReference Include="Microsoft.Extensions.Http" Version="5.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="README.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
   </ItemGroup>
 
 

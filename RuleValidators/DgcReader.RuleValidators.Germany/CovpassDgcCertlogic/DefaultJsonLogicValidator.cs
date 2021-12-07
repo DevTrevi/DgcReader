@@ -18,7 +18,7 @@ namespace DgcReader.RuleValidators.Germany.CovpassDgcCertlogic
 
         public DefaultJsonLogicValidator()
         {
-            this.evaluator = new JsonLogicEvaluator(EvaluateOperators.Default);
+            this.evaluator = new JsonLogicEvaluator(CertLogicOperators.GetOperators());
         }
 
         public bool IsDataValid(JObject rule, JObject data)

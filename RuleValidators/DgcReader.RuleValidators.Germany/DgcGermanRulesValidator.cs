@@ -15,6 +15,7 @@ using DgcReader.RuleValidators.Germany.CovpassDgcCertlogic.Data;
 using DgcReader.RuleValidators.Germany.CovpassDgcCertlogic;
 using DgcReader.RuleValidators.Germany.CovpassDgcCertlogic.Domain.Rules;
 using DgcReader.RuleValidators.Germany.Providers;
+using Newtonsoft.Json;
 
 #if NETSTANDARD2_0_OR_GREATER || NET5_0_OR_GREATER || NET47_OR_GREATER
 using Microsoft.Extensions.Options;
@@ -176,7 +177,7 @@ namespace DgcReader.RuleValidators.Germany
                     Region = "",
                 };
 
-                var certString = dgc.ToJson();
+                var certString = JsonConvert.SerializeObject(dgc);
 
                 var test = _certLogicEngine.Validate(certificateType,
                     dgc.SchemaVersion,

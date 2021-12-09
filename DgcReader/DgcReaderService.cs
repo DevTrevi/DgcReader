@@ -79,8 +79,8 @@ namespace DgcReader
                 // Step 2: check signature
                 try
                 {
-                    await VerifySignature(cose, validationInstant);
-                    result.HasValidSignature = true;
+                    var signatureValidation = await GetSignatureValidationResult(cose, validationInstant, false);
+                    result.HasValidSignature = signatureValidation.HasValidSignature;
                 }
                 catch (Exception e)
                 {
@@ -107,7 +107,7 @@ namespace DgcReader
         /// <param name="acceptanceCountryCode">The 2-letter ISO country of the acceptance country. This information is mandatory in order to perform the rules validation</param>
         /// <param name="throwOnError">If true, throw an exception if the validation fails</param>
         /// <returns></returns>
-        public Task<DgcValidationResult> Verify(string qrCodeData, string? acceptanceCountryCode, bool throwOnError = true)
+        public Task<DgcValidationResult> Verify(string qrCodeData, string acceptanceCountryCode, bool throwOnError = true)
         {
             return Verify(qrCodeData, acceptanceCountryCode, DateTimeOffset.Now, throwOnError);
         }
@@ -122,12 +122,12 @@ namespace DgcReader
         /// <param name="throwOnError">If true, throw an exception if the validation fails</param>
         /// <returns></returns>
         /// <exception cref="DgcException"></exception>
-        public async Task<DgcValidationResult> Verify(string qrCodeData, string? acceptanceCountryCode, DateTimeOffset validationInstant, bool throwOnError = true)
+        public async Task<DgcValidationResult> Verify(string qrCodeData, string acceptanceCountryCode, DateTimeOffset validationInstant, bool throwOnError = true)
         {
             var result = new DgcValidationResult()
             {
                 ValidationInstant = validationInstant,
-                Status = DgcResultStatus.NotEuDCC,
+                AcceptanceCountry = acceptanceCountryCode,
             };
 
             try
@@ -140,108 +140,23 @@ namespace DgcReader
                     // Step 1: Decoding data
                     var signedDgc = GetSignedDgc(cose);
 
-                    result.Issuer = signedDgc.Issuer;
-                    result.IssuedDate = signedDgc.IssuedDate;
-                    result.SignatureExpiration = signedDgc.ExpirationDate;
                     result.Dgc = signedDgc.Dgc;
 
                     // Step 2: check signature
-                    if (TrustListProviders?.Any() != true)
-                    {
-                        throw new DgcSignatureValidationException($"No trustlist provider is registered for signature validation");
-                    }
-                    // Checking signature first, throwing exceptions if not valid
-                    await VerifySignature(cose, validationInstant);
-
-                    // Signature already checked
-                    result.HasValidSignature = true;
-                    result.Status = DgcResultStatus.NeedRulesVerification;
+                    result.Signature = await GetSignatureValidationResult(cose, validationInstant, throwOnError);
 
                     // Step 3: check blacklist
-                    if (BlackListProviders?.Any() == true)
-                    {
-                        var certEntry = result.Dgc.GetCertificateEntry();
-                        foreach (var blacklistProvider in BlackListProviders)
-                        {
-                            var blacklisted = await blacklistProvider.IsBlacklisted(certEntry.CertificateIdentifier);
-
-                            // Check performed
-                            result.BlacklistVerified = true;
-                            if (blacklisted)
-                            {
-                                throw new DgcBlackListException($"The certificate is blacklisted", certEntry.CertificateIdentifier);
-                            }
-                        }
-                    }
-                    else
-                    {
-                        Logger?.LogWarning($"No blacklist provider is registered, blacklist validation is skipped");
-                    }
+                    result.Blacklist = await GetBlacklistValidationResult(result.Dgc, throwOnError);
 
                     // Step 4: check country rules
-                    result.Status = DgcResultStatus.NeedRulesVerification;
-
-                    if (string.IsNullOrEmpty(acceptanceCountryCode))
-                    {
-                        Logger?.LogWarning($"No acceptance country code specified, rules validation is skipped");
-
-                    }
-                    else
-                    {
-                        var rulesValidator = await GetRulesValidator(acceptanceCountryCode);
-                        if (rulesValidator != null)
-                        {
-                            var rulesResult = await rulesValidator.GetRulesValidationResult(result.Dgc, result.ValidationInstant, acceptanceCountryCode);
-                            result.ValidFrom = rulesResult.ValidFrom;
-                            result.ValidUntil = rulesResult.ValidUntil;
-                            result.RulesVerificationCountry = rulesResult.RulesVerificationCountry;
-                            result.Status = rulesResult.Status;
-
-                        if (throwOnError)
-                            {
-                                if (rulesResult.Status != DgcResultStatus.Valid &&
-                                    rulesResult.Status != DgcResultStatus.PartiallyValid)
-                                {
-                                    var message = rulesResult.StatusMessage;
-                                    if (string.IsNullOrEmpty(message))
-                                        message = GetDgcResultStatusDescription(rulesResult.Status);
-
-                                    throw new DgcRulesValidationException(message, rulesResult);
-                                }
-                            }
-                        }
-                        else
-                        {
-                            Logger?.LogWarning($"No rules validator is registered for acceptance country {acceptanceCountryCode}, rules validation is skipped");
-                        }
-                    }
-                }
-                catch (DgcSignatureValidationException)
-                {
-                    result.Status = DgcResultStatus.InvalidSignature;
-                    throw;
-                }
-                catch (DgcBlackListException)
-                {
-                    result.Status = DgcResultStatus.Blacklisted;
-                    throw;
-                }
-                catch (DgcRulesValidationException e)
-                {
-                    result.ValidFrom = e.ValidFrom;
-                    result.ValidUntil = e.ValidUntil;
-                    result.RulesVerificationCountry = e.RulesVerificationCountry;
-                    result.Status = e.Status;
-                    throw;
+                    result.RulesValidation = await GetRulesValidationResult(result.Dgc, acceptanceCountryCode, validationInstant, throwOnError);
                 }
                 catch (DgcException)
                 {
-                    result.Status = DgcResultStatus.NotValid;
                     throw;
                 }
                 catch (Exception e)
                 {
-                    result.Status = DgcResultStatus.NotValid;
                     throw new DgcException(e.Message, e);
                 }
             }
@@ -261,8 +176,6 @@ namespace DgcReader
 
             if (result.Status == DgcResultStatus.Valid)
                 Logger?.LogInformation($"Validation succeded: {result.StatusMessage}");
-            else if (result.Status == DgcResultStatus.PartiallyValid)
-                Logger?.LogWarning($"Validation succeded: {GetDgcResultStatusDescription(result.Status)}");
             else if (result.Status == DgcResultStatus.NeedRulesVerification)
                 Logger?.LogWarning($"Validation succeded without rules verification: {result.StatusMessage}");
             else
@@ -312,7 +225,7 @@ namespace DgcReader
                 try
                 {
                     var countryCodes = await ruleValidator.GetSupportedCountries();
-                    temp.AddRange(countryCodes.Select(r=>r.ToUpperInvariant()));
+                    temp.AddRange(countryCodes.Select(r => r.ToUpperInvariant()));
                 }
                 catch (Exception e)
                 {
@@ -322,6 +235,7 @@ namespace DgcReader
 
             return temp.Where(r => !string.IsNullOrEmpty(r)).OrderBy(r => r).ToArray();
         }
+
         #region Private
 
         /// <summary>
@@ -357,10 +271,12 @@ namespace DgcReader
         /// </summary>
         /// <param name="cose"></param>
         /// <param name="validationInstant">The validation instant of the DGC</param>
+        /// <param name="throwOnError">If true, throw an exception if the validation fails</param>
         /// <returns></returns>
         /// <exception cref="DgcSignatureValidationException"></exception>
-        private async Task VerifySignature(CoseSign1_Object cose, DateTimeOffset validationInstant)
+        private async Task<SignatureValidationResult> GetSignatureValidationResult(CoseSign1_Object cose, DateTimeOffset validationInstant, bool throwOnError)
         {
+            var context = new SignatureValidationResult();
             try
             {
                 var cwt = cose.GetCwt();
@@ -368,66 +284,156 @@ namespace DgcReader
                 if (cwt == null)
                     throw new DgcSignatureValidationException($"Unable to get Cwt object");
 
-                var issuer = cwt.GetIssuer();
-                var issueDate = cwt.GetIssuedAt();
-                var expiration = cwt.GetExpiration();
+                context.Issuer = cwt.GetIssuer();
+                context.IssuedDate = cwt.GetIssuedAt();
+                context.SignatureExpiration = cwt.GetExpiration();
 
                 var kid = cose.GetKeyIdentifier();
                 if (kid == null)
                 {
-                    throw new DgcSignatureValidationException("Signed DGC does not contain kid - cannot find certificate",
-                        issuer: issuer, issueDate: issueDate, expirationDate: expiration);
+                    throw new DgcSignatureValidationException("Signed DGC does not contain kid - cannot find certificate", result: context);
                 }
                 string kidStr = Convert.ToBase64String(kid);
+                context.CertificateKid = kidStr;
 
                 // Search for the public key from the registered TrustList providers
-                var publicKeyData = await GetSignaturePublicKey(kidStr, issuer);
+                if (TrustListProviders?.Any() != true)
+                {
+                    throw new DgcException($"No trustlist provider is registered for signature validation");
+                }
+                var publicKeyData = await GetSignaturePublicKey(kidStr, context.Issuer);
                 if (publicKeyData == null)
-                    throw new DgcUnknownSignerException($"No signer certificate could be found for kid {kidStr}", kidStr,
-                        issuer, issueDate, expiration);
+                    throw new DgcUnknownSignerException($"No signer certificate could be found for kid {kidStr}", result: context);
 
-                try
+                context.PublicKeyData = publicKeyData;
+
+                // Checking signature
+                cose.VerifySignature(publicKeyData);
+
+                // Check signature validity dates
+                if (context.IssuedDate != null && context.IssuedDate > validationInstant)
                 {
-                    // Checking signature
-                    cose.VerifySignature(publicKeyData);
-
-                    // Check signature validity dates
-                    if (issueDate != null && issueDate > validationInstant)
-                    {
-                        throw new DgcSignatureExpiredException($"The signed object is not valid yet",
-                            publicKeyData, issuer, issueDate, expiration);
-                    }
-                    if (expiration == null)
-                    {
-                        Logger?.LogWarning($"Expiration is not set, assuming is not expired");
-                    }
-                    else if (expiration < validationInstant)
-                    {
-                        throw new DgcSignatureExpiredException($"The signed object has expired on {expiration}",
-                            publicKeyData, issuer, issueDate, expiration);
-                    }
-
-                    Logger?.LogDebug($"HCERT signature verification succeeded using certificate {publicKeyData.Kid}");
+                    throw new DgcSignatureExpiredException($"The signed object is not valid yet", result: context);
                 }
-                catch (DgcSignatureValidationException e)
+                if (context.SignatureExpiration == null)
                 {
-                    // Add context information if missing
-                    e.Issuer = issuer;
-                    e.IssueDate = issueDate;
-                    e.ExpirationDate = expiration;
-
-                    Logger?.LogWarning($"HCERT signature verification failed using certificate {publicKeyData.Kid} - {e.Message}");
-                    // throw the original exception
-                    throw;
+                    Logger?.LogWarning($"Expiration is not set, assuming is not expired");
                 }
+                else if (context.SignatureExpiration < validationInstant)
+                {
+                    throw new DgcSignatureExpiredException($"The signed object has expired on {context.SignatureExpiration}", context);
+                }
+
+                Logger?.LogDebug($"HCERT signature verification succeeded using certificate {publicKeyData.Kid}");
+                context.HasValidSignature = true;
             }
-            catch (DgcSignatureValidationException) { throw; }
             catch (Exception e)
             {
                 // Wrap unmanaged exceptions as DgcSignatureValidationException
                 Logger?.LogWarning($"HCERT signature verification failed: {e.Message}");
-                throw new DgcSignatureValidationException(e.Message, e);
+                if (throwOnError)
+                    throw new DgcSignatureValidationException(e.Message, e, context);
             }
+
+            return context;
+        }
+
+        /// <summary>
+        /// Verify if te certificate is included in a blacklist. If true, throws an exception
+        /// </summary>
+        /// <param name="dgc">The DGC</param>
+        /// <param name="throwOnError">If true, throw an exception if the validation fails</param>
+        /// <returns></returns>
+        /// <exception cref="DgcBlackListException"></exception>
+        private async Task<BlacklistValidationResult> GetBlacklistValidationResult(EuDGC dgc, bool throwOnError)
+        {
+            var context = new BlacklistValidationResult()
+            {
+                BlacklistVerified = false,
+                IsBlacklisted = null,
+            };
+
+            if (BlackListProviders?.Any() == true)
+            {
+                var certEntry = dgc.GetCertificateEntry();
+
+                // Tracking the validated CertificateIdentifier
+                context.CertificateIdentifier = certEntry.CertificateIdentifier;
+
+                foreach (var blacklistProvider in BlackListProviders)
+                {
+                    var blacklisted = await blacklistProvider.IsBlacklisted(certEntry.CertificateIdentifier);
+
+                    // At least one check performed
+                    context.BlacklistVerified = true;
+
+                    if (blacklisted)
+                    {
+                        context.IsBlacklisted = true;
+                        context.BlacklistProviderType = blacklistProvider.GetType();
+
+                        Logger?.LogWarning($"The certificate is blacklisted");
+                        if (throwOnError)
+                            throw new DgcBlackListException($"The certificate is blacklisted", context);
+
+                        return context;
+                    }
+                }
+            }
+            else
+            {
+                context.BlacklistVerified = false;
+                context.IsBlacklisted = null;
+                Logger?.LogWarning($"No blacklist provider is registered, blacklist validation is skipped");
+            }
+
+            return context;
+        }
+
+        /// <summary>
+        /// Validates the rules for the specified acceptance country.
+        /// </summary>
+        /// <param name="dgc">The DGC</param>
+        /// <param name="acceptanceCountryCode">The 2-letter iso code of the acceptance country</param>
+        /// <param name="validationInstant">The validation instant of the DGC</param>
+        /// <param name="throwOnError">If true, throw an exception if the validation fails</param>
+        /// <returns></returns>
+        /// <exception cref="DgcRulesValidationException"></exception>
+        private async Task<IRulesValidationResult?> GetRulesValidationResult(EuDGC dgc, string acceptanceCountryCode, DateTimeOffset validationInstant, bool throwOnError)
+        {
+            if (string.IsNullOrEmpty(acceptanceCountryCode))
+            {
+                Logger?.LogWarning($"No acceptance country code specified, rules validation is skipped");
+
+            }
+            else
+            {
+                var rulesValidator = await GetRulesValidator(acceptanceCountryCode);
+                if (rulesValidator != null)
+                {
+                    var rulesResult = await rulesValidator.GetRulesValidationResult(dgc, validationInstant, acceptanceCountryCode);
+
+                    if (throwOnError)
+                    {
+                        if (rulesResult.Status != DgcResultStatus.Valid)
+                        {
+                            var message = rulesResult.StatusMessage;
+                            if (string.IsNullOrEmpty(message))
+                                message = GetDgcResultStatusDescription(rulesResult.Status);
+
+                            throw new DgcRulesValidationException(message, rulesResult);
+                        }
+                    }
+
+                    return rulesResult;
+                }
+                else
+                {
+                    Logger?.LogWarning($"No rules validator is registered for acceptance country {acceptanceCountryCode}, rules validation is skipped");
+                }
+            }
+
+            return null;
         }
 
         /// <summary>
@@ -515,12 +521,14 @@ namespace DgcReader
                     return "Certificate is blacklisted";
                 case DgcResultStatus.NeedRulesVerification:
                     return "Country rules has not been verified for the certificate";
+                case DgcResultStatus.OpenResult:
+                    return "Validation could determine a definitive result";
                 case DgcResultStatus.NotValid:
                     return "Certificate is not valid";
-                case DgcResultStatus.NotValidYet:
-                    return $"Certificate is not valid yet";
-                case DgcResultStatus.PartiallyValid:
-                    return "Certificate is valid in the country of verification, but may be not valid in other countries";
+                //case DgcResultStatus.NotValidYet:
+                //    return $"Certificate is not valid yet";
+                //case DgcResultStatus.PartiallyValid:
+                //    return "Certificate is valid in the country of verification, but may be not valid in other countries";
                 case DgcResultStatus.Valid:
                     return "Certificate is valid";
                 default:
@@ -572,7 +580,7 @@ namespace DgcReader
             if (RulesValidators == null)
                 return null;
 
-            foreach(var validator in RulesValidators)
+            foreach (var validator in RulesValidators)
             {
                 if (await validator.SupportsCountry(acceptanceCountryCode))
                     return validator;

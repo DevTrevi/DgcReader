@@ -1,7 +1,6 @@
 ﻿using System;
 using PeterO.Cbor;
 using System.Security.Cryptography;
-using DgcReader.Exceptions;
 using DgcReader.Interfaces.TrustListProviders;
 
 #if NET5_0_OR_GREATER
@@ -16,7 +15,6 @@ using Org.BouncyCastle.Math;
 using Org.BouncyCastle.Security;
 using System.Collections.Generic;
 using System.Linq;
-using DgcReader.Interfaces.TrustListProviders;
 #endif
 
 // Copyright (c) 2021 Davide Trevisan
@@ -261,13 +259,13 @@ namespace DgcReader.Cwt.Cose
         /// </summary>
         /// <returns></returns>
         /// <exception cref="DgcSignatureValidationException"></exception>
-        public CoseSignatureAlgorithm GetSignatureAlgorithm()
+        private CoseSignatureAlgorithm GetSignatureAlgorithm()
         {
             // First find out which algorithm to use by searching for the algorithm ID in the protected attributes.
             CBORObject registeredAlgorithmCbor = ProtectedAttributes[HeaderParameterKey.ALG];
             if (registeredAlgorithmCbor == null)
             {
-                throw new DgcSignatureValidationException("No algorithm ID stored in protected attributes - cannot sign");
+                throw new Exception("No algorithm ID stored in protected attributes - cannot sign");
             }
 
             var registeredAlgorithm = CoseSignatureAlgorithmParser.GetAlgorithm(registeredAlgorithmCbor);
@@ -291,87 +289,72 @@ namespace DgcReader.Cwt.Cose
         /// </summary>
         /// <param name="publicKeyData">the key to use when verifying the signature</param>
         /// <returns></returns>
-        /// <exception cref="DgcSignatureValidationException">for signature verification errors</exception>
+        /// <exception cref="Exception">for signature verification errors</exception>
         public void VerifySignature(ITrustedCertificateData publicKeyData)
         {
-            try
+            var signedData = GetSignedData();
+            var signature = GetSignature();
+            var signatureAlgorithm = GetSignatureAlgorithm();
+
+            if (signature == null)
             {
-                var signedData = GetSignedData();
-                var signature = GetSignature();
-                var signatureAlgorithm = GetSignatureAlgorithm();
-
-                if (signature == null)
-                {
-                    throw new DgcSignatureValidationException("Object is not signed");
-                }
-                
-
-
-                // Signature check
-                if (signatureAlgorithm.IsECDsaAlgorithm())
-                {
-                    var ec = publicKeyData.GetECParameters();
-                    if (ec == null)
-                        throw new DgcSignatureValidationException($"Certificate {publicKeyData.Kid} does not have a ECDsa Public Key parameters", publicKeyData);
-
-                    var oids = ECNamedCurveTable.Names.Cast<string>()
-                        .Select(r => ECNamedCurveTable.GetOid(r));
-
-                    var curveName = oids.FirstOrDefault(r => r.Id == ec.Curve);
-
-                    var x9 = ECNamedCurveTable.GetByOid(curveName);
-                    var point = x9.Curve.CreatePoint(new BigInteger(1, ec.X), new BigInteger(1, ec.Y));
-                    var dParams = new ECDomainParameters(x9);
-                    var pubKeyParameters = new ECPublicKeyParameters(point, dParams);
-
-                    var keyBytes = SubjectPublicKeyInfoFactory.CreateSubjectPublicKeyInfo(pubKeyParameters).GetEncoded();
-                    var pubkey = PublicKeyFactory.CreateKey(keyBytes);
-
-                    // If ECDSA, convert signature in DER format
-                    signature = ToDerSignature(signature);
-
-                    // Check signature
-                    var verifier = SignerUtilities.GetSigner(signatureAlgorithm.GetAlgorithmName());
-                    verifier.Init(false, pubkey);
-                    verifier.BlockUpdate(signedData, 0, signedData.Length);
-                    var result = verifier.VerifySignature(signature);
-
-                    if (!result)
-                        throw new DgcSignatureValidationException($"Signature validation failed", publicKeyData);
-                }
-                else if (signatureAlgorithm.IsRsaAlgorithm())
-                {
-                    var rsaParameters = publicKeyData.GetRSAParameters();
-                    if (rsaParameters == null)
-                        throw new DgcSignatureValidationException($"Certificate {publicKeyData.Kid} does not have a RSA Public Key parameters", publicKeyData);
-
-                    var pubKeyParameters = new RsaKeyParameters(false, new BigInteger(1, rsaParameters.Modulus), new BigInteger(1, rsaParameters.Exponent));
-                    var keyBytes = SubjectPublicKeyInfoFactory.CreateSubjectPublicKeyInfo(pubKeyParameters).GetEncoded();
-                    var pubkey = PublicKeyFactory.CreateKey(keyBytes);
-
-                    // Check signature
-                    var verifier = SignerUtilities.GetSigner(signatureAlgorithm.GetAlgorithmName());
-                    verifier.Init(false, pubkey);
-                    verifier.BlockUpdate(signedData, 0, signedData.Length);
-                    var result = verifier.VerifySignature(signature);
-
-                    if (!result)
-                        throw new DgcSignatureValidationException($"Signature validation failed", publicKeyData);
-                }
-                else
-                {
-                    throw new NotSupportedException($"Signature algorithm not supported (CBOR value: {signatureAlgorithm})");
-                }
+                throw new Exception("Object is not signed");
             }
-            catch (DgcSignatureValidationException)
+
+            // Signature check
+            if (signatureAlgorithm.IsECDsaAlgorithm())
             {
-                // Rethrow managed exceptions
-                throw;
+                var ec = publicKeyData.GetECParameters();
+                if (ec == null)
+                    throw new Exception($"Certificate {publicKeyData.Kid} does not have ECDsa Public Key parameters");
+
+                var oids = ECNamedCurveTable.Names.Cast<string>()
+                    .Select(r => ECNamedCurveTable.GetOid(r));
+
+                var curveName = oids.FirstOrDefault(r => r.Id == ec.Curve);
+
+                var x9 = ECNamedCurveTable.GetByOid(curveName);
+                var point = x9.Curve.CreatePoint(new BigInteger(1, ec.X), new BigInteger(1, ec.Y));
+                var dParams = new ECDomainParameters(x9);
+                var pubKeyParameters = new ECPublicKeyParameters(point, dParams);
+
+                var keyBytes = SubjectPublicKeyInfoFactory.CreateSubjectPublicKeyInfo(pubKeyParameters).GetEncoded();
+                var pubkey = PublicKeyFactory.CreateKey(keyBytes);
+
+                // If ECDSA, convert signature in DER format
+                signature = ToDerSignature(signature);
+
+                // Check signature
+                var verifier = SignerUtilities.GetSigner(signatureAlgorithm.GetAlgorithmName());
+                verifier.Init(false, pubkey);
+                verifier.BlockUpdate(signedData, 0, signedData.Length);
+                var result = verifier.VerifySignature(signature);
+
+                if (!result)
+                    throw new Exception($"Signature validation failed");
             }
-            catch (Exception ex)
+            else if (signatureAlgorithm.IsRsaAlgorithm())
             {
-                // Catch generic exceptions and rethrow as DgcSignatureValidationException
-                throw new DgcSignatureValidationException($"Error while validating signature: {ex.Message}", ex, publicKeyData);
+                var rsaParameters = publicKeyData.GetRSAParameters();
+                if (rsaParameters == null)
+                    throw new Exception($"Certificate {publicKeyData.Kid} does not have RSA Public Key parameters");
+
+                var pubKeyParameters = new RsaKeyParameters(false, new BigInteger(1, rsaParameters.Modulus), new BigInteger(1, rsaParameters.Exponent));
+                var keyBytes = SubjectPublicKeyInfoFactory.CreateSubjectPublicKeyInfo(pubKeyParameters).GetEncoded();
+                var pubkey = PublicKeyFactory.CreateKey(keyBytes);
+
+                // Check signature
+                var verifier = SignerUtilities.GetSigner(signatureAlgorithm.GetAlgorithmName());
+                verifier.Init(false, pubkey);
+                verifier.BlockUpdate(signedData, 0, signedData.Length);
+                var result = verifier.VerifySignature(signature);
+
+                if (!result)
+                    throw new Exception($"Signature validation failed");
+            }
+            else
+            {
+                throw new NotSupportedException($"Signature algorithm not supported (CBOR value: {signatureAlgorithm})");
             }
         }
 #else
@@ -384,34 +367,33 @@ namespace DgcReader.Cwt.Cose
         /// <exception cref="DgcSignatureValidationException">for signature verification errors</exception>
         public void VerifySignature(ITrustedCertificateData publicKeyData)
         {
-            try
+
+            var signedData = GetSignedData();
+            var signature = GetSignature();
+            var signatureAlgorithm = GetSignatureAlgorithm();
+
+            if (signature == null)
             {
-                var signedData = GetSignedData();
-                var signature = GetSignature();
-                var signatureAlgorithm = GetSignatureAlgorithm();
+                throw new Exception("Object is not signed");
+            }
 
-                if (signature == null)
+            // Signature check
+            if (signatureAlgorithm.IsECDsaAlgorithm())
+            {
+                var ec = publicKeyData.GetECParameters();
+                if (ec == null)
+                    throw new Exception($"Certificate {publicKeyData.Kid} does not have ECDsa Public Key parameters");
+
+                var parameters = new ECParameters
                 {
-                    throw new DgcSignatureValidationException("Object is not signed");
-                }
+                    Curve = string.IsNullOrEmpty(ec.Curve) ?
+                        ECCurve.CreateFromFriendlyName(ec.CurveFriendlyName) :
+                        ECCurve.CreateFromValue(ec.Curve),
+                    Q = new ECPoint() { X = ec.X, Y = ec.Y }
+                };
 
-                // Signature check
-                if (signatureAlgorithm.IsECDsaAlgorithm())
-                {
-                    var ec = publicKeyData.GetECParameters();
-                    if (ec == null)
-                        throw new DgcSignatureValidationException($"Certificate {publicKeyData.Kid} does not have a ECDsa Public Key parameters", publicKeyData);
+                var ecdsa = ECDsa.Create(parameters);
 
-                    var parameters = new ECParameters
-                    {
-                        Curve = string.IsNullOrEmpty(ec.Curve) ?
-                            ECCurve.CreateFromFriendlyName(ec.CurveFriendlyName) :
-                            ECCurve.CreateFromValue(ec.Curve),
-                        Q = new ECPoint() { X = ec.X, Y = ec.Y }
-                    };
-
-                    var ecdsa = ECDsa.Create(parameters);
-                    
 
 #if NET5_0_OR_GREATER
 
@@ -423,58 +405,48 @@ namespace DgcReader.Cwt.Cose
                         signatureAlgorithm.GetHashAlgorithmName(),
                         DSASignatureFormat.Rfc3279DerSequence);
 #else
-                    // Using the signature as is for netstandard2.0
-                    // There is no overload for verify DER encoded signatures
+                // Using the signature as is for netstandard2.0
+                // There is no overload for verify DER encoded signatures
 
-                    var result = ecdsa.VerifyData(signedData, signature,
-                        signatureAlgorithm.GetHashAlgorithmName());
+                var result = ecdsa.VerifyData(signedData, signature,
+                    signatureAlgorithm.GetHashAlgorithmName());
 #endif
 
 
-                    if (!result)
-                        throw new DgcSignatureValidationException($"Signature validation failed", publicKeyData);
-                }
-                else if (signatureAlgorithm.IsRsaAlgorithm())
-                {
-                    var rsaParameters = publicKeyData.GetRSAParameters();
-                    if (rsaParameters == null)
-                        throw new DgcSignatureValidationException($"Certificate {publicKeyData.Kid} does not have a RSA Public Key parameters", publicKeyData);
+                if (!result)
+                    throw new Exception($"Signature validation failed");
+            }
+            else if (signatureAlgorithm.IsRsaAlgorithm())
+            {
+                var rsaParameters = publicKeyData.GetRSAParameters();
+                if (rsaParameters == null)
+                    throw new Exception($"Certificate {publicKeyData.Kid} does not have RSA Public Key parameters");
 
-                    var parameters = new RSAParameters
-                    {
-                        Exponent = rsaParameters.Exponent,
-                        Modulus = rsaParameters.Modulus,
-                    };
+                var parameters = new RSAParameters
+                {
+                    Exponent = rsaParameters.Exponent,
+                    Modulus = rsaParameters.Modulus,
+                };
 
 
 #if NET5_0_OR_GREATER
                     var rsa = RSA.Create(parameters);
 #else
-                    // The default RSA class in .net framework (legacy) does not support PSS padding
-                    var rsa = new RSACng();
-                    rsa.ImportParameters(parameters);
+                // The default RSA class in .net framework (legacy) does not support PSS padding
+                var rsa = new RSACng();
+                rsa.ImportParameters(parameters);
 #endif
-                    var result = rsa.VerifyData(signedData, signature,
-                        signatureAlgorithm.GetHashAlgorithmName(), RSASignaturePadding.Pss);
+                var result = rsa.VerifyData(signedData, signature,
+                    signatureAlgorithm.GetHashAlgorithmName(), RSASignaturePadding.Pss);
 
-                    if (!result)
-                        throw new DgcSignatureValidationException($"Signature validation failed", publicKeyData);
-                }
-                else
-                {
-                    throw new NotSupportedException($"Signature algorithm not supported (CBOR value: {signatureAlgorithm})");
-                }
+                if (!result)
+                    throw new Exception($"Signature validation failed");
             }
-            catch (DgcSignatureValidationException)
+            else
             {
-                // Rethrow managed exceptions
-                throw;
+                throw new NotSupportedException($"Signature algorithm not supported (CBOR value: {signatureAlgorithm})");
             }
-            catch (Exception ex)
-            {
-                // Catch generic exceptions and rethrow as DgcSignatureValidationException
-                throw new DgcSignatureValidationException($"Error while validating signature: {ex.Message}", ex, publicKeyData);
-            }
+
         }
 #endif
 

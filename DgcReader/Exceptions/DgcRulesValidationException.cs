@@ -10,22 +10,22 @@ namespace DgcReader.Exceptions
     [Serializable]
     public class DgcRulesValidationException : DgcException
     {
-        public IRuleValidationResult? ValidationResult { get; }
+        public IRulesValidationResult? ValidationResult { get; }
 
-        /// <inheritdoc cref="IRuleValidationResult.ValidFrom"/>
-        public DateTimeOffset? ValidFrom => ValidationResult?.ValidFrom;
+        ///// <inheritdoc cref="IRuleValidationResult.ValidFrom"/>
+        //public DateTimeOffset? ValidFrom => ValidationResult?.ValidFrom;
 
-        /// <inheritdoc cref="IRuleValidationResult.ValidUntil"/>
-        public DateTimeOffset? ValidUntil => ValidationResult?.ValidUntil;
+        ///// <inheritdoc cref="IRuleValidationResult.ValidUntil"/>
+        //public DateTimeOffset? ValidUntil => ValidationResult?.ValidUntil;
 
         /// <inheritdoc cref="IRuleValidationResult.Status"/>
         public DgcResultStatus Status => ValidationResult?.Status ?? DgcResultStatus.NeedRulesVerification;
 
-        /// <inheritdoc cref="IRuleValidationResult.RulesVerificationCountry"/>
+        /// <inheritdoc cref="IRulesValidationResult.RulesVerificationCountry"/>
         public string? RulesVerificationCountry => ValidationResult?.RulesVerificationCountry;
 
         public DgcRulesValidationException(string message,
-            IRuleValidationResult? validationResult) :
+            IRulesValidationResult? validationResult) :
             base(message)
         {
             ValidationResult = validationResult;
@@ -33,7 +33,7 @@ namespace DgcReader.Exceptions
 
         public DgcRulesValidationException(string message,
             Exception innerException,
-            IRuleValidationResult? validationResult) :
+            IRulesValidationResult? validationResult) :
             base(message, innerException)
         {
             ValidationResult = validationResult;

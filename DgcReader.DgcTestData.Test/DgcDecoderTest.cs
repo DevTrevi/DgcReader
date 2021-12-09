@@ -104,7 +104,7 @@ namespace DgcReader.DgcTestData.Test
 
                         Assert.IsNotNull(result);
                         Assert.IsNotNull(result.Dgc);
-                        Assert.IsTrue(result.HasValidSignature);
+                        Assert.IsTrue(result.Signature.HasValidSignature);
                     }
                     catch (DgcSignatureExpiredException e)
                     {
@@ -156,13 +156,13 @@ namespace DgcReader.DgcTestData.Test
 
                         Assert.IsNotNull(result);
                         Assert.IsNotNull(result.Dgc);
-                        Assert.IsTrue(result.HasValidSignature);
+                        Assert.IsTrue(result.Signature.HasValidSignature);
 
                         if (entry.ExpectedResults.ContainsKey(ExpectedResultsKeys.EXPECTEDEXPIRATIONCHECK))
                         {
                             if (entry.ExpectedResults[ExpectedResultsKeys.EXPECTEDEXPIRATIONCHECK])
                             {
-                                Assert.AreEqual(result.HasValidSignature, entry.ExpectedResults[ExpectedResultsKeys.EXPECTEDEXPIRATIONCHECK]);
+                                Assert.AreEqual(result.Signature.HasValidSignature, entry.ExpectedResults[ExpectedResultsKeys.EXPECTEDEXPIRATIONCHECK]);
                             }
                         }
                     }

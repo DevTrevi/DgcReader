@@ -44,7 +44,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DgcReader.RuleValidators.Ge
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DgcReader.RuleValidators.Germany.Test", "RuleValidators\Test\DgcReader.RuleValidators.Germany.Test\DgcReader.RuleValidators.Germany.Test.csproj", "{18449B88-3812-4DA3-A4E3-0B6CD94FC9A4}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DgcReader.Providers.Abstractions", "DgcReader.Providers.Abstractions\DgcReader.Providers.Abstractions.csproj", "{DFC231D4-0E4A-46C9-BA09-186AF59A9D21}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DgcReader.Providers.Abstractions", "DgcReader.Providers.Abstractions\DgcReader.Providers.Abstractions.csproj", "{DFC231D4-0E4A-46C9-BA09-186AF59A9D21}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

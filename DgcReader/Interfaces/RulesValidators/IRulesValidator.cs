@@ -22,7 +22,7 @@ namespace DgcReader.Interfaces.RulesValidators
         /// <param name="countryCode">The 2-letter ISO country code for which to request rules validation</param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        Task<IRuleValidationResult> GetRulesValidationResult(EuDGC dgc, DateTimeOffset validationInstant, string countryCode, CancellationToken cancellationToken = default);
+        Task<IRulesValidationResult> GetRulesValidationResult(EuDGC dgc, DateTimeOffset validationInstant, string countryCode, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Refresh the validation rules used by the prodvider from server

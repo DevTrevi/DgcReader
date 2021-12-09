@@ -1,4 +1,5 @@
 ﻿using DgcReader.Interfaces.TrustListProviders;
+using DgcReader.Models;
 using System;
 using System.Runtime.Serialization;
 
@@ -10,50 +11,43 @@ namespace DgcReader.Exceptions
     public class DgcSignatureValidationException : DgcException
     {
         /// <summary>
-        /// The issuer of the signed COSE object
+        /// The signature validation result
         /// </summary>
-        public string? Issuer { get; internal set; }
+        public SignatureValidationResult? Result { get; set; }
 
-        /// <summary>
-        /// Expiration date of the signed object.
-        /// </summary>
-        public DateTime? ExpirationDate { get; internal set; }
+        ///// <summary>
+        ///// The issuer of the signed COSE object
+        ///// </summary>
+        //public string? Issuer { get; internal set; }
 
-        /// <summary>
-        /// The issue date of the signed object.
-        /// </summary>
-        public DateTime? IssueDate { get; internal set; }
+        ///// <summary>
+        ///// Expiration date of the signed object.
+        ///// </summary>
+        //public DateTime? ExpirationDate { get; internal set; }
 
-        /// <summary>
+        ///// <summary>
+        ///// The issue date of the signed object.
+        ///// </summary>
+        //public DateTime? IssueDate { get; internal set; }
+
+        ///// <summary>
         /// The public key data used to validate the signature
         /// </summary>
-        public ITrustedCertificateData? PublicKeyData { get; }
+        //public ITrustedCertificateData? PublicKeyData { get; }
 
         public DgcSignatureValidationException(string message,
-            ITrustedCertificateData? publicKeyData = null,
-            string? issuer = null,
-            DateTime? issueDate = null,
-            DateTime? expirationDate = null) :
+            SignatureValidationResult? result = null) :
             base(message)
         {
-            PublicKeyData = publicKeyData;
-            Issuer = issuer;
-            IssueDate = issueDate;
-            ExpirationDate = expirationDate;
+            Result = result;
         }
 
         public DgcSignatureValidationException(string message,
             Exception innerException,
-            ITrustedCertificateData? publicKeyData = null,
-            string? issuer = null,
-            DateTime? issueDate = null,
-            DateTime? expirationDate = null) :
+            SignatureValidationResult? result = null) :
             base(message, innerException)
         {
-            PublicKeyData = publicKeyData;
-            Issuer = issuer;
-            IssueDate = issueDate;
-            ExpirationDate = expirationDate;
+            Result = result;
         }
 
         public DgcSignatureValidationException(SerializationInfo info, StreamingContext context)
@@ -69,15 +63,11 @@ namespace DgcReader.Exceptions
         /// <summary>
         /// The certificate key identifier used for searching the public key
         /// </summary>
-        public string? Kid { get; }
+        public string? Kid => Result?.CertificateKid;
 
-        public DgcUnknownSignerException(string message, string? kid,
-            string? issuer = null,
-            DateTime? issueDate = null,
-            DateTime? expirationDate = null)
-            : base(message, issuer: issuer, issueDate: issueDate, expirationDate: expirationDate)
+        public DgcUnknownSignerException(string message, SignatureValidationResult? result = null)
+            : base(message, result: result)
         {
-            Kid = kid;
         }
 
         public DgcUnknownSignerException(SerializationInfo info, StreamingContext context)
@@ -89,25 +79,18 @@ namespace DgcReader.Exceptions
     [Serializable]
     public class DgcSignatureExpiredException : DgcSignatureValidationException
     {
-        public DgcSignatureExpiredException(string message,
-            ITrustedCertificateData? publicKeyData = null,
-            string? issuer = null,
-            DateTime? issueDate = null,
-            DateTime? expirationDate = null) :
-            base(message, publicKeyData, issuer, issueDate, expirationDate)
+        public DgcSignatureExpiredException(string message, SignatureValidationResult? result = null) :
+            base(message, result: result)
         {
-          
+
         }
 
         public DgcSignatureExpiredException(string message,
             Exception innerException,
-            ITrustedCertificateData? publicKeyData = null,
-            string? issuer = null,
-            DateTime? issueDate = null,
-            DateTime? expirationDate = null) :
-            base(message, innerException, publicKeyData, issuer, issueDate, expirationDate)
+            SignatureValidationResult? result = null) :
+            base(message, innerException, result: result)
         {
-          
+
         }
 
         public DgcSignatureExpiredException(SerializationInfo info, StreamingContext context)

@@ -1,4 +1,6 @@
-﻿using GreenpassReader.Models;
+﻿using DgcReader.Interfaces.RulesValidators;
+using DgcReader.Interfaces.TrustListProviders;
+using GreenpassReader.Models;
 using System;
 
 // Copyright (c) 2021 Davide Trevisan
@@ -15,6 +17,73 @@ namespace DgcReader.Models
         /// The Digital Green Certificate data
         /// </summary>
         public EuDGC? Dgc { get; internal set; }
+
+        /// <summary>
+        /// The validity status of the certificate.
+        /// Only <see cref="DgcResultStatus.Valid"/> and <see cref="DgcResultStatus.PartiallyValid"/> values should be considered successful
+        /// </summary>
+        public DgcResultStatus Status
+        {
+            get
+            {
+                if (Dgc == null)
+                    return DgcResultStatus.NotEuDCC;
+
+                if (!Signature.HasValidSignature)
+                    return DgcResultStatus.InvalidSignature;
+
+                if (Blacklist.IsBlacklisted == true)
+                    return DgcResultStatus.Blacklisted;
+
+                if (RulesValidation != null)
+                {
+                    return RulesValidation.Status;
+                }
+
+                return DgcResultStatus.OpenResult;
+            }
+        }
+
+        /// <summary>
+        /// A string message describing the status of the validation result
+        /// </summary>
+        public string StatusMessage { get; internal set; }
+
+        /// <summary>
+        /// The date and time for which the certificate was verified
+        /// </summary>
+        public DateTimeOffset ValidationInstant { get; internal set; }
+
+        /// <summary>
+        /// Country for which the rules has been verified (2-letter ISO code)
+        /// </summary>
+        public string? AcceptanceCountry { get; internal set; }
+
+        /// <summary>
+        /// The signature validation result
+        /// </summary>
+        public SignatureValidationResult Signature { get; internal set; } = new SignatureValidationResult();
+
+        /// <summary>
+        /// The blacklist validation result
+        /// </summary>
+        public BlacklistValidationResult Blacklist { get; internal set; } = new BlacklistValidationResult();
+
+        /// <summary>
+        /// The rules validation result. This can have specific implementations for each rules validator, containing additional informations
+        /// </summary>
+        public IRulesValidationResult? RulesValidation { get; internal set; }
+    }
+
+    /// <summary>
+    /// The signature validation result
+    /// </summary>
+    public class SignatureValidationResult
+    {
+        /// <summary>
+        /// The certificate key identifier
+        /// </summary>
+        public string CertificateKid { get; internal set; }
 
         /// <summary>
         /// The issuer of the signed COSE object
@@ -39,46 +108,37 @@ namespace DgcReader.Models
         public bool HasValidSignature { get; internal set; } = false;
 
         /// <summary>
+        /// The public key data of the certificate used for checking the signature
+        /// </summary>
+        public ITrustedCertificateData? PublicKeyData { get; internal set; }
+    }
+
+    /// <summary>
+    /// The blacklist validation result
+    /// </summary>
+    public class BlacklistValidationResult
+    {
+        /// <summary>
         /// True if a blacklist check was performed on the certificate.
         /// This is true also if the certificate is blacklisted
         /// </summary>
         public bool BlacklistVerified { get; internal set; } = false;
 
         /// <summary>
-        /// The validity status of the certificate.
-        /// Only <see cref="DgcResultStatus.Valid"/> and <see cref="DgcResultStatus.PartiallyValid"/> values should be considered successful
+        /// If true, the certificate must be considered not valid
+        /// If null, it means that no blacklist providers was available for validation
         /// </summary>
-        public DgcResultStatus Status { get; internal set; } = DgcResultStatus.NotEuDCC;
+        public bool? IsBlacklisted { get; internal set; }
 
         /// <summary>
-        /// If specified, determines the date and time when the certification is considered Valid.
-        /// If null, the certification should be considered invalid
-        /// Always refer to <see cref="Status"/> for the effective validity for the verifying country
+        /// The certificate identifier used for blacklist validation
         /// </summary>
-        public DateTimeOffset? ValidFrom { get; internal set; }
+        public string? CertificateIdentifier { get; internal set; }
 
         /// <summary>
-        /// If specified, determines the date and time when the certification is considered expired.
-        /// If null, the certification should be considered not valid.
-        /// Always refer to <see cref="Status"/> for the effective validity for the verifying country
+        /// If <see cref="IsBlacklisted"/> is true, this is the type of the blacklist provider implementation where the positive match was found
         /// </summary>
-        public DateTimeOffset? ValidUntil { get; internal set; }
-
-        /// <summary>
-        /// The date and time for which the certificate was verified
-        /// </summary>
-        public DateTimeOffset ValidationInstant { get; internal set; }
-
-        /// <summary>
-        /// Country for which the rules has been verified (2-letter ISO code)
-        /// </summary>
-        public string? RulesVerificationCountry { get; internal set; }
-
-        /// <summary>
-        /// A string message describing the status of the validation result
-        /// </summary>
-        public string StatusMessage { get; internal set; }
-
+        public Type? BlacklistProviderType { get; internal set; }
     }
 
     /// <summary>
@@ -106,20 +166,26 @@ namespace DgcReader.Models
         /// </summary>
         NeedRulesVerification,
 
+
+        /// <summary>
+        ///
+        /// </summary>
+        OpenResult,
+
         /// <summary>
         /// The certificate is not valid
         /// </summary>
         NotValid,
 
-        /// <summary>
-        /// The certificate is not valid yet
-        /// </summary>
-        NotValidYet,
+        ///// <summary>
+        ///// The certificate is not valid yet
+        ///// </summary>
+        //NotValidYet,
 
-        /// <summary>
-        /// The certificate is considered valid in the country of verification, but may be considered not valid in other countries
-        /// </summary>
-        PartiallyValid,
+        ///// <summary>
+        ///// The certificate is considered valid in the country of verification, but may be considered not valid in other countries
+        ///// </summary>
+        //PartiallyValid,
 
         /// <summary>
         /// The certificate is valid in the country of verification, and should be valid in other countries as well

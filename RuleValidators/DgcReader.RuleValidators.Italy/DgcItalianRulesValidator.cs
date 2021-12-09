@@ -102,20 +102,19 @@ namespace DgcReader.RuleValidators.Italy
         #region Implementation of IRulesValidator
 
         /// <inheritdoc/>
-        public async Task<IRuleValidationResult> GetRulesValidationResult(EuDGC dgc, DateTimeOffset validationInstant, string countryCode = "IT", CancellationToken cancellationToken = default)
+        public async Task<IRulesValidationResult> GetRulesValidationResult(EuDGC dgc, DateTimeOffset validationInstant, string countryCode = "IT", CancellationToken cancellationToken = default)
         {
             if (!await SupportsCountry(countryCode))
                 throw new DgcRulesValidationException($"Rules validation for country {countryCode} is not supported by this provider");
 
-            var result = new DgcRulesValidationResult
+            var result = new ItalianRulesValidationResult
             {
-                Dgc = dgc,
                 ValidationInstant = validationInstant,
             };
 
-            if (result.Dgc == null)
+            if (dgc == null)
             {
-                result.Status = DgcResultStatus.NotEuDCC;
+                result.ItalianStatus = DgcItalianResultStatus.NotEuDCC;
                 return result;
             }
 
@@ -133,7 +132,7 @@ namespace DgcReader.RuleValidators.Italy
                 if(dgc.GetCertificateEntry() is TestEntry)
                 {
                     Logger.LogWarning($"Test entries are considered not valid when validation mode is {ValidationMode.Strict2G}");
-                    result.Status = DgcResultStatus.NotValid;
+                    result.ItalianStatus = DgcItalianResultStatus.NotValid;
                     return result;
                 }
             }
@@ -165,13 +164,13 @@ namespace DgcReader.RuleValidators.Italy
                 {
                     // An EU DCC must have one of the sections above.
                     Logger?.LogWarning($"No vaccinations, tests or recovery statements found in the certificate.");
-                    result.Status = DgcResultStatus.NotEuDCC;
+                    result.ItalianStatus = DgcItalianResultStatus.NotEuDCC;
                 }
             }
             catch (Exception e)
             {
                 Logger?.LogError(e, $"Validation failed with error {e.Message}");
-                result.Status = DgcResultStatus.NotValid;
+                result.ItalianStatus = DgcItalianResultStatus.NotValid;
             }
             return result;
         }
@@ -235,9 +234,9 @@ namespace DgcReader.RuleValidators.Italy
         /// <param name="signedDgc">Info of the signed DGC</param>
         /// <returns></returns>
 
-        public async Task<DgcRulesValidationResult> ValidateBusinessRules(SignedDgc signedDgc)
+        public async Task<ItalianRulesValidationResult> ValidateBusinessRules(SignedDgc signedDgc)
         {
-            return (DgcRulesValidationResult)await GetRulesValidationResult(signedDgc.Dgc, DateTimeOffset.Now);
+            return (ItalianRulesValidationResult)await GetRulesValidationResult(signedDgc.Dgc, DateTimeOffset.Now);
         }
 
 
@@ -251,7 +250,7 @@ namespace DgcReader.RuleValidators.Italy
         /// <param name="dgc"></param>
         /// <param name="result">The output result compiled by the function</param>
         /// <param name="rules"></param>
-        private void CheckVaccinations(EuDGC dgc, DgcRulesValidationResult result, IEnumerable<RuleSetting> rules)
+        private void CheckVaccinations(EuDGC dgc, ItalianRulesValidationResult result, IEnumerable<RuleSetting> rules)
         {
             var vaccination = dgc.Vaccinations.Last(r => r.TargetedDiseaseAgent == DiseaseAgents.Covid19);
 
@@ -294,18 +293,18 @@ namespace DgcReader.RuleValidators.Italy
                 // Exception: Checking sputnik not from San Marino
                 if (vaccination.MedicinalProduct == VaccineProducts.Sputnik && vaccination.Country != "SM")
                 {
-                    result.Status = DgcResultStatus.NotValid;
+                    result.ItalianStatus = DgcItalianResultStatus.NotValid;
                     return;
                 }
 
                 if (result.ValidFrom > result.ValidationInstant)
-                    result.Status = DgcResultStatus.NotValidYet;
+                    result.ItalianStatus = DgcItalianResultStatus.NotValidYet;
                 else if (result.ValidUntil < result.ValidationInstant)
-                    result.Status = DgcResultStatus.NotValid;
+                    result.ItalianStatus = DgcItalianResultStatus.NotValid;
                 else if (vaccination.DoseNumber < vaccination.TotalDoseSeries)
-                    result.Status = DgcResultStatus.PartiallyValid;
+                    result.ItalianStatus = DgcItalianResultStatus.PartiallyValid;
                 else
-                    result.Status = DgcResultStatus.Valid;
+                    result.ItalianStatus = DgcItalianResultStatus.Valid;
             }
         }
 
@@ -314,7 +313,7 @@ namespace DgcReader.RuleValidators.Italy
         /// </summary>
         /// <param name="dgc"></param>
         /// <param name="rules"></param>
-        private void CheckTests(EuDGC dgc, DgcRulesValidationResult result, IEnumerable<RuleSetting> rules)
+        private void CheckTests(EuDGC dgc, ItalianRulesValidationResult result, IEnumerable<RuleSetting> rules)
         {
             var test = dgc.Tests.Last(r => r.TargetedDiseaseAgent == DiseaseAgents.Covid19);
 
@@ -335,7 +334,7 @@ namespace DgcReader.RuleValidators.Italy
                         break;
                     default:
                         Logger?.LogWarning($"Test type {test.TestType} not supported by current rules");
-                        result.Status = DgcResultStatus.NotValid;
+                        result.ItalianStatus = DgcItalianResultStatus.NotValid;
                         return;
                 }
 
@@ -344,11 +343,11 @@ namespace DgcReader.RuleValidators.Italy
 
                 // Calculate the status
                 if (result.ValidFrom > result.ValidationInstant)
-                    result.Status = DgcResultStatus.NotValidYet;
+                    result.ItalianStatus = DgcItalianResultStatus.NotValidYet;
                 else if (result.ValidUntil < result.ValidationInstant)
-                    result.Status = DgcResultStatus.NotValid;
+                    result.ItalianStatus = DgcItalianResultStatus.NotValid;
                 else
-                    result.Status = DgcResultStatus.Valid;
+                    result.ItalianStatus = DgcItalianResultStatus.Valid;
             }
             else
             {
@@ -356,7 +355,7 @@ namespace DgcReader.RuleValidators.Italy
                 if (test.TestResult != TestResults.Detected)
                     Logger?.LogWarning($"Found test with unkwnown TestResult {test.TestResult}. The certificate is considered invalid");
 
-                result.Status = DgcResultStatus.NotValid;
+                result.ItalianStatus = DgcItalianResultStatus.NotValid;
             }
         }
 
@@ -365,7 +364,7 @@ namespace DgcReader.RuleValidators.Italy
         /// </summary>
         /// <param name="dgc"></param>
         /// <param name="rules"></param>
-        private void CheckRecoveryStatements(EuDGC dgc, DgcRulesValidationResult result, IEnumerable<RuleSetting> rules)
+        private void CheckRecoveryStatements(EuDGC dgc, ItalianRulesValidationResult result, IEnumerable<RuleSetting> rules)
         {
             var recovery = dgc.Recoveries.Last(r => r.TargetedDiseaseAgent == DiseaseAgents.Covid19);
 
@@ -378,13 +377,13 @@ namespace DgcReader.RuleValidators.Italy
             result.ValidUntil = recovery.ValidUntil.Date;
 
             if (result.ValidFrom > result.ValidationInstant)
-                result.Status = DgcResultStatus.NotValidYet;
+                result.ItalianStatus = DgcItalianResultStatus.NotValidYet;
             else if (result.ValidationInstant > result.ValidFrom.Value.AddDays(endDay))
-                result.Status = DgcResultStatus.NotValid;
+                result.ItalianStatus = DgcItalianResultStatus.NotValid;
             else if (result.ValidationInstant > result.ValidUntil)
-                result.Status = DgcResultStatus.PartiallyValid;
+                result.ItalianStatus = DgcItalianResultStatus.PartiallyValid;
             else
-                result.Status = DgcResultStatus.Valid;
+                result.ItalianStatus = DgcItalianResultStatus.Valid;
         }
 
 

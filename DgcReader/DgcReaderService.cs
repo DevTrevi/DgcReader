@@ -175,6 +175,7 @@ namespace DgcReader
                         result.ValidUntil = rulesResult.ValidUntil;
                         result.RulesVerificationCountry = rulesResult.RulesVerificationCountry;
                         result.Status = rulesResult.Status;
+                        result.StatusMessage = rulesResult.StatusMessage;
 
                         if (throwOnError)
                         {

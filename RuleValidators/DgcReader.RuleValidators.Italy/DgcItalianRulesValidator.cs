@@ -12,10 +12,10 @@ using DgcReader.RuleValidators.Italy.Const;
 using DgcReader.RuleValidators.Italy.Models;
 using DgcReader.Models;
 using System.Threading;
-using DgcReader.RuleValidators.Italy.Exceptions;
 using Microsoft.Extensions.Logging;
 using DgcReader.Interfaces.RulesValidators;
 using DgcReader.Interfaces.BlacklistProviders;
+using DgcReader.Exceptions;
 
 #if NETSTANDARD2_0_OR_GREATER || NET5_0_OR_GREATER || NET47_OR_GREATER
 using Microsoft.Extensions.Options;
@@ -163,10 +163,14 @@ namespace DgcReader.RuleValidators.Italy
             {
                 var rules = await GetRules(cancellationToken);
                 if (rules == null)
-                    throw new Exception("Unable to get validation rules");
+                {
+                    result.Status = DgcResultStatus.NeedRulesVerification;
+                    result.StatusMessage = "Unable to get validation rules";
+                    return result;
+                }
 
                 // Checking min version:
-                CheckMinSdkVersion(rules);
+                CheckMinSdkVersion(rules, result);
 
                 if (dgc.Recoveries?.Any(r => r.TargetedDiseaseAgent == DiseaseAgents.Covid19) == true)
                 {
@@ -186,6 +190,12 @@ namespace DgcReader.RuleValidators.Italy
                     _logger?.LogWarning($"No vaccinations, tests or recovery statements found in the certificate.");
                     result.Status = DgcResultStatus.NotEuDCC;
                 }
+            }
+            catch (DgcRulesValidationException e)
+            {
+                if (e.ValidationResult != null)
+                    return e.ValidationResult;
+
             }
             catch (Exception e)
             {
@@ -430,6 +440,7 @@ namespace DgcReader.RuleValidators.Italy
         /// Computes the status by checking the tests in the DCC
         /// </summary>
         /// <param name="dgc"></param>
+        /// <param name="result">The output result compiled by the function</param>
         /// <param name="rules"></param>
         private void CheckTests(EuDGC dgc, DgcRulesValidationResult result, IEnumerable<RuleSetting> rules)
         {
@@ -481,6 +492,7 @@ namespace DgcReader.RuleValidators.Italy
         /// Computes the status by checking the recovery statements in the DCC
         /// </summary>
         /// <param name="dgc"></param>
+        /// <param name="result">The output result compiled by the function</param>
         /// <param name="rules"></param>
         private void CheckRecoveryStatements(EuDGC dgc, DgcRulesValidationResult result, IEnumerable<RuleSetting> rules)
         {
@@ -510,8 +522,9 @@ namespace DgcReader.RuleValidators.Italy
         /// If <see cref="DgcItalianRulesValidatorOptions.IgnoreMinimumSdkVersion"/> is false, an exception will be thrown if the implementation is obsolete
         /// </summary>
         /// <param name="rules"></param>
+        /// <param name="result"></param>
         /// <exception cref="DgcRulesValidationException"></exception>
-        private void CheckMinSdkVersion(IEnumerable<RuleSetting> rules)
+        private void CheckMinSdkVersion(IEnumerable<RuleSetting> rules, DgcRulesValidationResult? result = null)
         {
             var obsolete = false;
             string message = string.Empty;
@@ -552,7 +565,11 @@ namespace DgcReader.RuleValidators.Italy
                 }
                 else
                 {
-                    throw new DgcRulesValidationException(message);
+                    if (result == null)
+                        result = new DgcRulesValidationResult();
+                    result.Status = DgcResultStatus.NeedRulesVerification;
+                    result.StatusMessage = message;
+                    throw new DgcRulesValidationException(message, result);
                 }
             }
 

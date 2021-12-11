@@ -1,16 +1,21 @@
 # DgcReader
 
 
-### An extensible, unofficial library for decoding and validate the European Digital Green Certificate
+### Extensible .NET library for decoding and validating European Digital Green Certificates
 [![NuGet version (DgcReader)](https://img.shields.io/nuget/vpre/DgcReader?label=DgcReader)](https://www.nuget.org/packages/DgcReader/)
 
 
-#### Summary
+## Summary
 The library allows to decode and validate any EU Digital Green Certificate, providing some abstractions to easily implement specific providers for every country's backend. 
 
 It supports any kind of project compatible with .NET Standard 2.0 and also legacy applications from .NET Framework 4.5.2 onwards.
 
-#### Usage
+Starting from version 1.3.0, the library has been included in the [list of verified SDKs by Italian authorities (Ministero della salute)](https://github.com/ministero-salute/it-dgc-verificac19-sdk-onboarding).  
+The approval only refers to the main module `DgcReader` in combination with `DgcReader.TrustListProviders.Italy` and `DgcReader.RuleValidators.Italy`, using configuration parameters compliant with the current Italian regulations.  
+ 
+For usage in different countries, please refer to the [disclaimer](#disclaimer) and to the specific documentation of each project.
+
+## Usage
 
 The main entry point of the library is the `DgcReaderService` class.  
 
@@ -101,7 +106,7 @@ catch(Exception e)
 Information about how to interprete the decoded values can be found in the [Value Sets for Digital Green Certificates](https://ec.europa.eu/health/sites/default/files/ehealth/docs/digital-green-certificates_dt-specifications_en.pdf) and the [COVID-19 Data Reporting for Non-Lab-Based Testing](https://www.hhs.gov/sites/default/files/non-lab-based-covid19-test-reporting.pdf).
 
 
-#### Rules validation
+## Rules validation
 
 Rules validation is an optional service and can be done by registering an `IRulesValidator` service, or by passing it to the constructor.
 
@@ -112,16 +117,12 @@ If validation succeded, the result status will be set to `Valid` or `PartiallyVa
 While TrustList providers and BlackList providers are virtually interchangeable, the rules for determining if a certificate is valid are different for every country.  
 For this reason, a specific implementation of the `IRulesValidator` should be used in order to determine if the certificate is valid for a particular country.
 
-In the repository there is currently an implementation for the Italian validation rules.  
-***Note:*** These rules are changing overtime, so ***it is not ensured in any way that the implementation it is fully compliant with the current Italian dispositions.***  
-Anyway, current Italian regulations also requires the usage of the offical SDK [it-dgc-verificac19-sdk-android](https://github.com/ministero-salute/it-dgc-verificac19-sdk-android) for an application in order to be compliant.  
-
-#### Supported frameworks differences
+## Supported frameworks differences
 The library supports a wide range of .NET and .NET Framework versions, trying to keep the dependencies to third party libraries at minimum. 
 For this reason, the implementation of the cryptographic functionalities for signature validations and certificates parsing are implemented with the apis of the  `System.Security.Cryptography` namespace.  
 These APIs were not fully implemented in previous versions of the framework, so the version compiled for .NET Framework 4.5.2 uses the [BouncyCastle](https://www.bouncycastle.org/csharp/) library instead.
 
-#### Packages
+## Packages
 
 | Description | Version |
 |-----------------------------------------------|-----------------------------------|
@@ -131,25 +132,26 @@ These APIs were not fully implemented in previous versions of the framework, so 
 | Abstractions for building TrustList providers | [![NuGet version (DgcReader.TrustListProviders.Abstractions)](https://img.shields.io/nuget/vpre/DgcReader.TrustListProviders.Abstractions)](https://www.nuget.org/packages/DgcReader.TrustListProviders.Abstractions/)  |
 | Implementation for the Italian validation rules| [![NuGet version (DgcReader.RuleValidators.Italy)](https://img.shields.io/nuget/vpre/DgcReader.RuleValidators.Italy)](https://www.nuget.org/packages/DgcReader.RuleValidators.Italy/)  |
 
-#### Upgrading from version < 1.2.0
-In 1.2.0 release of the packages, many changes was made in order to cleanup and standardize the interfaces as mush as possible.
-If you are upgrading from a previus version, keep this in mind and read this readme carefully in order to correctly use the library as intended.
-
-### Extending the library
+## Extending the library
 
 All you have to do in order to extend the library is to implement the interfaces exposed under the `DgcReader.Interfaces.*` namespace.
 You can use the implementations in the repository as an example, or you can code them from scratch.  
 If you are implementing a TrustList provider, the `DgcReader.TrustListProviders.Abstractions` package can results useful to simply implement a service optimized for multiple concurrent requests like a web application.  
 Any suggestion will be appreciated!
 
-#### Requirements
+## Requirements
 
 In order to compile and run the solution, you will need the following tools:
 - Microsoft Visual Studio 2019 with the latest updates installed (16.11.7 at the moment of writing), or Microsoft Visual Studio 2022
 - Because some projects supports multiple version of the .NET framework, you should have installed the related targeting packs. At the moment, .NET Framework 4.5.2, .NET Framework 4.7 and .NET Standard 2.0 are supported
 
-#### Disclaimer
+## <a name="disclaimer">Disclaimer</a>
+
 This library is **not** an official implementation, therefore its use may be subject to restrictions by some countries regulations.  
+
+Some implementations in this repository may not have been approved by official authorities, or may be approved only by some countries.  
+Unless otherwise indicated, such implementations must be considered unofficial, and it is not assured in any way that they fully comply with dispositions of the reference countries.
+
 The author assumes no responsibility for any unauthorized use of the library and no warranties about the correctness of the implementation, as better stated in the License.
 
 

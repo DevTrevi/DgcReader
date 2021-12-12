@@ -14,7 +14,7 @@ namespace DgcReader.Models
         /// <summary>
         /// The Digital Green Certificate data
         /// </summary>
-        public EuDGC Dgc { get; internal set; }
+        public EuDGC? Dgc { get; internal set; }
 
         /// <summary>
         /// The issuer of the signed COSE object

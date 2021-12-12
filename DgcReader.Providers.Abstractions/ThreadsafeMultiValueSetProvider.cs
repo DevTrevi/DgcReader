@@ -152,7 +152,13 @@ namespace DgcReader.Providers.Abstractions
 
                 var valueSet = await GetValuesFromServer(key, cancellationToken);
 
-                cancellationToken.ThrowIfCancellationRequested();
+                if (valueSet == null)
+                {
+                    Logger?.LogWarning($"Null {GetValuesetName(key)} returned from server");
+                    return valueSet;
+                }
+
+                // Try to update the in-memory value
                 await _currentValueSetsSemaphore.WaitAsync(cancellationToken);
                 try
                 {
@@ -169,16 +175,13 @@ namespace DgcReader.Providers.Abstractions
 
                 // Try to update the cache
                 cancellationToken.ThrowIfCancellationRequested();
-                if (valueSet != null)
+                try
                 {
-                    try
-                    {
-                        await UpdateCache(key, valueSet, cancellationToken);
-                    }
-                    catch (Exception e)
-                    {
-                        Logger?.LogError(e, $"Error while updating {GetValuesetName(key)} cache: {e.Message}");
-                    }
+                    await UpdateCache(key, valueSet, cancellationToken);
+                }
+                catch (Exception e)
+                {
+                    Logger?.LogError(e, $"Error while updating {GetValuesetName(key)} cache: {e.Message}");
                 }
                 return valueSet;
             }

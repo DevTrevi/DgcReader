@@ -1,5 +1,4 @@
-﻿using DgcReader.Interfaces.TrustListProviders;
-using DgcReader.Models;
+﻿using DgcReader.Models;
 using System;
 using System.Runtime.Serialization;
 
@@ -14,26 +13,6 @@ namespace DgcReader.Exceptions
         /// The signature validation result
         /// </summary>
         public SignatureValidationResult? Result { get; set; }
-
-        ///// <summary>
-        ///// The issuer of the signed COSE object
-        ///// </summary>
-        //public string? Issuer { get; internal set; }
-
-        ///// <summary>
-        ///// Expiration date of the signed object.
-        ///// </summary>
-        //public DateTime? ExpirationDate { get; internal set; }
-
-        ///// <summary>
-        ///// The issue date of the signed object.
-        ///// </summary>
-        //public DateTime? IssueDate { get; internal set; }
-
-        ///// <summary>
-        /// The public key data used to validate the signature
-        /// </summary>
-        //public ITrustedCertificateData? PublicKeyData { get; }
 
         public DgcSignatureValidationException(string message,
             SignatureValidationResult? result = null) :

@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Logging;
 using System;
 
+#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
 namespace DgcReader
 {
     public static class ILoggerExtensions

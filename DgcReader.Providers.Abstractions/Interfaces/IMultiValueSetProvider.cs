@@ -6,6 +6,11 @@ using System.Threading.Tasks;
 
 namespace DgcReader.Providers.Abstractions.Interfaces
 {
+    /// <summary>
+    /// A value set provider capable of returning multiple valuesets of type T, partitioned by TKey
+    /// </summary>
+    /// <typeparam name="T">The type of the valueset managed by the provider</typeparam>
+    /// <typeparam name="TKey">The key type for partitioning the valuesets</typeparam>
     public interface IMultiValueSetProvider<T, TKey>
     {
         /// <summary>

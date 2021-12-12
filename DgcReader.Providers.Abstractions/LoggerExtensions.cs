@@ -6,6 +6,7 @@
 namespace Microsoft.Extensions.Logging
 {
 #if NETSTANDARD1_1
+#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
     public static class LoggerExtensions
     {
         public static void LogError(this ILogger logger, Exception exception, string message, params object[] args)

@@ -10,15 +10,12 @@ namespace DgcReader.Exceptions
     [Serializable]
     public class DgcRulesValidationException : DgcException
     {
+        /// <summary>
+        /// The rules validation result
+        /// </summary>
         public IRulesValidationResult? ValidationResult { get; }
 
-        ///// <inheritdoc cref="IRuleValidationResult.ValidFrom"/>
-        //public DateTimeOffset? ValidFrom => ValidationResult?.ValidFrom;
-
-        ///// <inheritdoc cref="IRuleValidationResult.ValidUntil"/>
-        //public DateTimeOffset? ValidUntil => ValidationResult?.ValidUntil;
-
-        /// <inheritdoc cref="IRuleValidationResult.Status"/>
+        /// <inheritdoc cref="IRulesValidationResult.Status"/>
         public DgcResultStatus Status => ValidationResult?.Status ?? DgcResultStatus.NeedRulesVerification;
 
         /// <inheritdoc cref="IRulesValidationResult.RulesVerificationCountry"/>

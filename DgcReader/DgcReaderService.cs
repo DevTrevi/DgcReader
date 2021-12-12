@@ -14,6 +14,7 @@ using DgcReader.Interfaces.TrustListProviders;
 using DgcReader.Interfaces.BlacklistProviders;
 using System.Linq;
 using System.Collections.Generic;
+using Newtonsoft.Json;
 
 // Copyright (c) 2021 Davide Trevisan
 // Licensed under the Apache License, Version 2.0
@@ -74,7 +75,7 @@ namespace DgcReader
 
                 // Step 1: decode
                 var cose = DecodeCoseObject(qrCodeData);
-                var dgc = GetSignedDgc(cose);
+                result.Dgc = GetDgc(cose);
 
                 // Step 2: check signature
                 try
@@ -114,7 +115,6 @@ namespace DgcReader
 
         /// <summary>
         /// Decodes the DGC data, verifying signature, blacklist and rules if a provider is available.
-        /// This overload is intended for testing purposes only
         /// </summary>
         /// <param name="qrCodeData">The QRCode data of the DGC</param>
         /// <param name="acceptanceCountryCode">The 2-letter ISO country of the acceptance country. This information is mandatory in order to perform the rules validation</param>
@@ -138,9 +138,7 @@ namespace DgcReader
                     var cose = DecodeCoseObject(qrCodeData);
 
                     // Step 1: Decoding data
-                    var signedDgc = GetSignedDgc(cose);
-
-                    result.Dgc = signedDgc.Dgc;
+                    result.Dgc = GetDgc(cose);
 
                     // Step 2: check signature
                     result.Signature = await GetSignatureValidationResult(cose, validationInstant, throwOnError);
@@ -153,6 +151,7 @@ namespace DgcReader
                 }
                 catch (DgcException)
                 {
+                    // Managed exception, rethrow as is
                     throw;
                 }
                 catch (Exception e)
@@ -191,7 +190,7 @@ namespace DgcReader
         /// <param name="qrCodeData">The QRCode data of the DGC</param>
         /// <param name="acceptanceCountryCode">The 2-letter ISO country of the acceptance country. This information is mandatory in order to perform the rules validation</param>
         /// <returns></returns>
-        public Task<DgcValidationResult> GetValidationResult(string qrCodeData, string? acceptanceCountryCode)
+        public Task<DgcValidationResult> GetValidationResult(string qrCodeData, string acceptanceCountryCode)
         {
             return Verify(qrCodeData, acceptanceCountryCode, false);
         }
@@ -204,7 +203,7 @@ namespace DgcReader
         /// <param name="acceptanceCountryCode">The 2-letter ISO country of the acceptance country. This information is mandatory in order to perform the rules validation</param>
         /// <param name="validationInstant">The validation instant of the DGC</param>
         /// <returns></returns>
-        public Task<DgcValidationResult> GetValidationResult(string qrCodeData, string? acceptanceCountryCode, DateTimeOffset validationInstant)
+        public Task<DgcValidationResult> GetValidationResult(string qrCodeData, string acceptanceCountryCode, DateTimeOffset validationInstant)
         {
             return Verify(qrCodeData, acceptanceCountryCode, validationInstant, false);
         }
@@ -375,7 +374,7 @@ namespace DgcReader
                     if (blacklisted)
                     {
                         context.IsBlacklisted = true;
-                        context.BlacklistProviderType = blacklistProvider.GetType();
+                        context.BlacklistMatchProviderType = blacklistProvider.GetType();
 
                         Logger?.LogWarning($"The certificate is blacklisted");
                         if (throwOnError)
@@ -384,6 +383,7 @@ namespace DgcReader
                         return context;
                     }
                 }
+                context.IsBlacklisted = false;
             }
             else
             {
@@ -409,44 +409,72 @@ namespace DgcReader
             if (string.IsNullOrEmpty(acceptanceCountryCode))
             {
                 Logger?.LogWarning($"No acceptance country code specified, rules validation is skipped");
-
+                return null;
             }
-            else
+
+            if (RulesValidators == null)
             {
-                var rulesValidator = await GetRulesValidator(acceptanceCountryCode);
-                if (rulesValidator != null)
-                {
-                    var rulesResult = await rulesValidator.GetRulesValidationResult(dgc, validationInstant, acceptanceCountryCode);
+                Logger?.LogWarning($"No rules validators registered, rules validation is skipped");
+                return null;
+            }
 
-                    if (throwOnError)
+            IRulesValidationResult? rulesResult = null;
+            foreach (var validator in RulesValidators)
+            {
+                if (await validator.SupportsCountry(acceptanceCountryCode))
+                {
+                    rulesResult = await validator.GetRulesValidationResult(dgc, validationInstant, acceptanceCountryCode);
+
+                    switch (rulesResult.Status)
                     {
-                        if (rulesResult.Status != DgcResultStatus.Valid)
-                        {
-                            var message = rulesResult.StatusMessage;
-                            if (string.IsNullOrEmpty(message))
-                                message = GetDgcResultStatusDescription(rulesResult.Status);
+                        case DgcResultStatus.Valid:
+                            // If valid, returns the result
+                            return rulesResult;
+                        case DgcResultStatus.NeedRulesVerification:
+                        case DgcResultStatus.OpenResult:
+                            // If result is "Open", try next validator if multiple validators for this country exists
+                            continue;
+                        default:
+                            // With any other result, return the result or throw an exception
+                            if (throwOnError)
+                            {
+                                var message = rulesResult.StatusMessage;
+                                if (string.IsNullOrEmpty(message))
+                                    message = GetDgcResultStatusDescription(rulesResult.Status);
 
-                            throw new DgcRulesValidationException(message, rulesResult);
-                        }
+                                throw new DgcRulesValidationException(message, rulesResult);
+                            }
+
+                            return rulesResult;
                     }
-
-                    return rulesResult;
-                }
-                else
-                {
-                    Logger?.LogWarning($"No rules validator is registered for acceptance country {acceptanceCountryCode}, rules validation is skipped");
                 }
             }
 
-            return null;
+            // No result or Open result after checking supported validators
+            if (rulesResult == null)
+            {
+                Logger?.LogWarning($"No rules validator is registered for acceptance country {acceptanceCountryCode}, rules validation is skipped");
+                return null;
+            }
+
+            // Result is not null, it will certainly be an Open result
+            if (throwOnError)
+            {
+                var message = rulesResult.StatusMessage;
+                if (string.IsNullOrEmpty(message))
+                    message = GetDgcResultStatusDescription(rulesResult.Status);
+
+                throw new DgcRulesValidationException(message, rulesResult);
+            }
+            return rulesResult;
         }
 
         /// <summary>
-        /// Extract the data from the COSE object
+        /// Extract the DGC data from the COSE object
         /// </summary>
         /// <param name="cose"></param>
         /// <returns></returns>
-        private SignedDgc GetSignedDgc(CoseSign1_Object cose)
+        private EuDGC GetDgc(CoseSign1_Object cose)
         {
             var cwt = cose.GetCwt();
             if (cwt == null)
@@ -461,15 +489,7 @@ namespace DgcReader
             if (dgc == null)
                 throw new DgcException($"Unable to get DGC data from cwt");
 
-            var result = new SignedDgc
-            {
-                Issuer = cwt.GetIssuer(),
-                IssuedDate = cwt.GetIssuedAt(),
-                ExpirationDate = cwt.GetExpiration(),
-                Dgc = dgc,
-            };
-
-            return result;
+            return dgc;
         }
 
         private static byte[] Base45Decoding(byte[] encodedData)
@@ -527,13 +547,9 @@ namespace DgcReader
                 case DgcResultStatus.NeedRulesVerification:
                     return "Country rules has not been verified for the certificate";
                 case DgcResultStatus.OpenResult:
-                    return "Validation could determine a definitive result";
+                    return "Validation could not determine a definitive result";
                 case DgcResultStatus.NotValid:
                     return "Certificate is not valid";
-                //case DgcResultStatus.NotValidYet:
-                //    return $"Certificate is not valid yet";
-                //case DgcResultStatus.PartiallyValid:
-                //    return "Certificate is valid in the country of verification, but may be not valid in other countries";
                 case DgcResultStatus.Valid:
                     return "Certificate is valid";
                 default:
@@ -570,25 +586,6 @@ namespace DgcReader
                     Logger?.LogDebug($"Public key data for {kid} from country {issuingCountryCode} found using {provider}");
                     return publicKeyData;
                 }
-            }
-            return null;
-        }
-
-        /// <summary>
-        /// Return the first registered rule validator supporting the required acceptance country
-        /// </summary>
-        /// <param name="acceptanceCountryCode"></param>
-        /// <returns></returns>
-        /// <exception cref="DgcException"></exception>
-        private async Task<IRulesValidator?> GetRulesValidator(string acceptanceCountryCode)
-        {
-            if (RulesValidators == null)
-                return null;
-
-            foreach (var validator in RulesValidators)
-            {
-                if (await validator.SupportsCountry(acceptanceCountryCode))
-                    return validator;
             }
             return null;
         }

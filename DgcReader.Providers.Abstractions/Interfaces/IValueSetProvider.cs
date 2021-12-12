@@ -6,6 +6,10 @@ using System.Threading.Tasks;
 
 namespace DgcReader.Providers.Abstractions.Interfaces
 {
+    /// <summary>
+    /// A value set provider for valuesets of type T
+    /// </summary>
+    /// <typeparam name="T">The type of the valueset managed by the provider</typeparam>
     public interface IValueSetProvider<T>
     {
         /// <summary>

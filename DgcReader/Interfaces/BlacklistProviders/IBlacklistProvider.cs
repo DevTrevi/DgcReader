@@ -7,6 +7,9 @@ using System.Threading.Tasks;
 
 namespace DgcReader.Interfaces.BlacklistProviders
 {
+    /// <summary>
+    /// Blacklist provider for checking blacklisted DGC identifiers
+    /// </summary>
     public interface IBlacklistProvider
     {
         /// <summary>

@@ -339,8 +339,6 @@ namespace GreenpassReader.Models
         /// <param name="json"></param>
         /// <returns></returns>
         public static EuDGC? FromJson(string json) => JsonConvert.DeserializeObject<EuDGC>(json, Converter.Settings);
-
-        public string ToJson() => JsonConvert.SerializeObject(this, Converter.Settings);
     }
 
     internal static class Converter

@@ -19,8 +19,7 @@ namespace DgcReader.Models
         public EuDGC? Dgc { get; internal set; }
 
         /// <summary>
-        /// The validity status of the certificate.
-        /// Only <see cref="DgcResultStatus.Valid"/> and <see cref="DgcResultStatus.PartiallyValid"/> values should be considered successful
+        /// The validity status of the certificate
         /// </summary>
         public DgcResultStatus Status
         {
@@ -35,19 +34,17 @@ namespace DgcReader.Models
                 if (Blacklist.IsBlacklisted == true)
                     return DgcResultStatus.Blacklisted;
 
-                if (RulesValidation != null)
-                {
-                    return RulesValidation.Status;
-                }
+                if (RulesValidation == null)
+                    return DgcResultStatus.NeedRulesVerification;
 
-                return DgcResultStatus.OpenResult;
+                return RulesValidation.Status;
             }
         }
 
         /// <summary>
         /// A string message describing the status of the validation result
         /// </summary>
-        public string StatusMessage { get; internal set; }
+        public string? StatusMessage { get; internal set; }
 
         /// <summary>
         /// The date and time for which the certificate was verified
@@ -73,6 +70,12 @@ namespace DgcReader.Models
         /// The rules validation result. This can have specific implementations for each rules validator, containing additional informations
         /// </summary>
         public IRulesValidationResult? RulesValidation { get; internal set; }
+
+        /// <inheritdoc/>
+        public override string ToString()
+        {
+            return $"{nameof(DgcValidationResult)} Status: {Status} - Acceptance country: {AcceptanceCountry}";
+        }
     }
 
     /// <summary>
@@ -83,7 +86,7 @@ namespace DgcReader.Models
         /// <summary>
         /// The certificate key identifier
         /// </summary>
-        public string CertificateKid { get; internal set; }
+        public string? CertificateKid { get; internal set; }
 
         /// <summary>
         /// The issuer of the signed COSE object
@@ -111,6 +114,16 @@ namespace DgcReader.Models
         /// The public key data of the certificate used for checking the signature
         /// </summary>
         public ITrustedCertificateData? PublicKeyData { get; internal set; }
+
+        /// <inheritdoc/>
+        public override string ToString()
+        {
+            var s = "Signature: ";
+            if (HasValidSignature)
+                return s + $"valid";
+
+            return s + $"invalid (Issued by {(Issuer ?? "(unknown)")} on {(IssuedDate?.ToString("g") ?? "-")} - Expiring on {(SignatureExpiration?.ToString("g") ?? "-")})";
+        }
     }
 
     /// <summary>
@@ -136,9 +149,22 @@ namespace DgcReader.Models
         public string? CertificateIdentifier { get; internal set; }
 
         /// <summary>
-        /// If <see cref="IsBlacklisted"/> is true, this is the type of the blacklist provider implementation where the positive match was found
+        /// The type of blacklist provider where a match was found for the certificate identifier
         /// </summary>
-        public Type? BlacklistProviderType { get; internal set; }
+        public Type? BlacklistMatchProviderType { get; internal set; }
+
+        /// <inheritdoc/>
+        public override string ToString()
+        {
+            var s = "Blacklist check: ";
+            if (BlacklistVerified == false)
+                return s + "not verified";
+
+            if (IsBlacklisted == true)
+                return s + $"blacklisted";
+
+            return s + "not blacklisted";
+        }
     }
 
     /// <summary>
@@ -162,13 +188,13 @@ namespace DgcReader.Models
         Blacklisted,
 
         /// <summary>
-        /// The certificate has a valid signature, but needs to be verified against the hosting country rules.
+        /// The certificate rules has not been validated by any rules validator
         /// </summary>
         NeedRulesVerification,
 
-
         /// <summary>
-        ///
+        /// The certificate rules has been validated without a definitive result.
+        /// A manual check should be performed in order to verifiy if the certificate is valid or not.
         /// </summary>
         OpenResult,
 
@@ -176,16 +202,6 @@ namespace DgcReader.Models
         /// The certificate is not valid
         /// </summary>
         NotValid,
-
-        ///// <summary>
-        ///// The certificate is not valid yet
-        ///// </summary>
-        //NotValidYet,
-
-        ///// <summary>
-        ///// The certificate is considered valid in the country of verification, but may be considered not valid in other countries
-        ///// </summary>
-        //PartiallyValid,
 
         /// <summary>
         /// The certificate is valid in the country of verification, and should be valid in other countries as well

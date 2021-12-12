@@ -6,6 +6,9 @@ using System.Linq;
 
 namespace DgcReader
 {
+    /// <summary>
+    /// Extension methods for <see cref="EuDGC"/>
+    /// </summary>
     public static class EuDGCExtensionMethods
     {
         /// <summary>

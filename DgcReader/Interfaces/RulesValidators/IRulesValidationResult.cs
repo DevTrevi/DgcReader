@@ -12,20 +12,6 @@ namespace DgcReader.Interfaces.RulesValidators
     /// </summary>
     public interface IRulesValidationResult
     {
-        ///// <summary>
-        ///// If specified, determines the date and time when the certification is considered Valid.
-        ///// If null, the certification should be considered invalid
-        ///// Always refer to <see cref="Status"/> for the effective validity for the verifying country
-        ///// </summary>
-        //public DateTimeOffset? ValidFrom { get; }
-
-        ///// <summary>
-        ///// If specified, determines the date and time when the certification is considered expired.
-        ///// If null, the certification should be considered not valid.
-        ///// Always refer to <see cref="Status"/> for the effective validity for the verifying country
-        ///// </summary>
-        //public DateTimeOffset? ValidUntil { get; }
-
         /// <summary>
         /// Validation status of the business rules
         /// </summary>

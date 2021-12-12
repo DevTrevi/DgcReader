@@ -9,6 +9,9 @@ namespace DgcReader.Exceptions
     [Serializable]
     public class DgcBlackListException : DgcException
     {
+        /// <summary>
+        /// The Blacklist validation result
+        /// </summary>
         public BlacklistValidationResult Result { get; }
 
         public DgcBlackListException(string message,
@@ -17,10 +20,11 @@ namespace DgcReader.Exceptions
         {
             Result = result;
         }
-
+#pragma warning disable CS8618
         public DgcBlackListException(SerializationInfo info, StreamingContext context)
             : base(info, context)
         {
         }
+#pragma warning restore
     }
 }

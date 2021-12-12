@@ -2,6 +2,7 @@
 using PeterO.Cbor;
 using System.Security.Cryptography;
 using DgcReader.Interfaces.TrustListProviders;
+using DgcReader.Exceptions;
 
 #if NET5_0_OR_GREATER
 using System.Formats.Asn1;
@@ -258,7 +259,6 @@ namespace DgcReader.Cwt.Cose
         /// Get the signature algorithm used to sign the data
         /// </summary>
         /// <returns></returns>
-        /// <exception cref="DgcSignatureValidationException"></exception>
         private CoseSignatureAlgorithm GetSignatureAlgorithm()
         {
             // First find out which algorithm to use by searching for the algorithm ID in the protected attributes.
@@ -467,7 +467,7 @@ namespace DgcReader.Cwt.Cose
             Array.Copy(signature, r, len);
             Array.Copy(signature, len, s, 0, len);
 
-            List<byte[]> seq = new List<byte[]>();
+            var seq = new List<byte[]>();
             seq.Add(ASN1.ToUnsignedInteger(r));
             seq.Add(ASN1.ToUnsignedInteger(s));
 

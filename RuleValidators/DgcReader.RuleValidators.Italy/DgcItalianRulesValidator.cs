@@ -8,11 +8,11 @@ using DgcReader.RuleValidators.Italy.Const;
 using DgcReader.RuleValidators.Italy.Models;
 using DgcReader.Models;
 using System.Threading;
-using DgcReader.RuleValidators.Italy.Exceptions;
 using Microsoft.Extensions.Logging;
 using DgcReader.Interfaces.RulesValidators;
 using DgcReader.Interfaces.BlacklistProviders;
 using DgcReader.RuleValidators.Italy.Providers;
+using DgcReader.Exceptions;
 
 #if NETSTANDARD2_0_OR_GREATER || NET5_0_OR_GREATER || NET47_OR_GREATER
 using Microsoft.Extensions.Options;
@@ -104,13 +104,17 @@ namespace DgcReader.RuleValidators.Italy
         /// <inheritdoc/>
         public async Task<IRulesValidationResult> GetRulesValidationResult(EuDGC dgc, DateTimeOffset validationInstant, string countryCode = "IT", CancellationToken cancellationToken = default)
         {
-            if (!await SupportsCountry(countryCode))
-                throw new DgcRulesValidationException($"Rules validation for country {countryCode} is not supported by this provider");
-
             var result = new ItalianRulesValidationResult
             {
                 ValidationInstant = validationInstant,
             };
+
+            if (!await SupportsCountry(countryCode))
+            {
+                result.ItalianStatus = DgcItalianResultStatus.NeedRulesVerification;
+                result.StatusMessage = $"Rules validation for country {countryCode} is not supported by this provider";
+                return result;
+            }
 
             if (dgc == null)
             {
@@ -140,13 +144,16 @@ namespace DgcReader.RuleValidators.Italy
             try
             {
                 var rulesContainer = await _rulesProvider.GetValueSet(cancellationToken);
-                if (rulesContainer == null)
-                    throw new Exception("Unable to get validation rules");
-
-                var rules = rulesContainer.Rules;
+                var rules = rulesContainer?.Rules;
+                if (rules == null)
+                {
+                    result.ItalianStatus = DgcItalianResultStatus.NeedRulesVerification;
+                    result.StatusMessage = "Unable to get validation rules";
+                    return result;
+                }
 
                 // Checking min version:
-                CheckMinSdkVersion(rules);
+                CheckMinSdkVersion(rules, validationInstant);
 
                 if (dgc.Recoveries?.Any(r => r.TargetedDiseaseAgent == DiseaseAgents.Covid19) == true)
                 {
@@ -166,6 +173,12 @@ namespace DgcReader.RuleValidators.Italy
                     Logger?.LogWarning($"No vaccinations, tests or recovery statements found in the certificate.");
                     result.ItalianStatus = DgcItalianResultStatus.NotEuDCC;
                 }
+            }
+            catch (DgcRulesValidationException e)
+            {
+                if (e.ValidationResult != null)
+                    return e.ValidationResult;
+
             }
             catch (Exception e)
             {
@@ -312,6 +325,7 @@ namespace DgcReader.RuleValidators.Italy
         /// Computes the status by checking the tests in the DCC
         /// </summary>
         /// <param name="dgc"></param>
+        /// <param name="result">The output result compiled by the function</param>
         /// <param name="rules"></param>
         private void CheckTests(EuDGC dgc, ItalianRulesValidationResult result, IEnumerable<RuleSetting> rules)
         {
@@ -363,6 +377,7 @@ namespace DgcReader.RuleValidators.Italy
         /// Computes the status by checking the recovery statements in the DCC
         /// </summary>
         /// <param name="dgc"></param>
+        /// <param name="result">The output result compiled by the function</param>
         /// <param name="rules"></param>
         private void CheckRecoveryStatements(EuDGC dgc, ItalianRulesValidationResult result, IEnumerable<RuleSetting> rules)
         {
@@ -392,8 +407,9 @@ namespace DgcReader.RuleValidators.Italy
         /// If <see cref="DgcItalianRulesValidatorOptions.IgnoreMinimumSdkVersion"/> is false, an exception will be thrown if the implementation is obsolete
         /// </summary>
         /// <param name="rules"></param>
+        /// <param name="validationInstant"></param>
         /// <exception cref="DgcRulesValidationException"></exception>
-        private void CheckMinSdkVersion(IEnumerable<RuleSetting> rules)
+        private void CheckMinSdkVersion(IEnumerable<RuleSetting> rules, DateTimeOffset validationInstant)
         {
             var obsolete = false;
             string message = string.Empty;
@@ -434,7 +450,13 @@ namespace DgcReader.RuleValidators.Italy
                 }
                 else
                 {
-                    throw new DgcRulesValidationException(message);
+                    var result = new ItalianRulesValidationResult
+                    {
+                        ValidationInstant = validationInstant,
+                        ItalianStatus = DgcItalianResultStatus.NeedRulesVerification,
+                        StatusMessage = message,
+                    };
+                    throw new DgcRulesValidationException(message, result);
                 }
             }
 

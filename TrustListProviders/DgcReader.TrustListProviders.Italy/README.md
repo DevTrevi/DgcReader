@@ -4,6 +4,9 @@
 
 Implementation of ITrustListProvider that uses the Italian endpoint for downloading the trusted public keys used for signature verification of the Digital Green Certificates.
 
+Starting from version 1.3.0, the library has been included in the [list of verified SDKs by Italian authorities (Ministero della salute)](https://github.com/ministero-salute/it-dgc-verificac19-sdk-onboarding).  
+The approval only refers to the main module `DgcReader` in combination with this provider (`DgcReader.TrustListProviders.Italy`) and `DgcReader.RuleValidators.Italy`.
+
 ## Usage
 
 In order to use the provider, you can register it as a service or you can instantiate it directly, depending on how your application is designed:

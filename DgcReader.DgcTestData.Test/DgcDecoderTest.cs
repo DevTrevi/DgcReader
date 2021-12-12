@@ -7,6 +7,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using DgcReader.Interfaces.TrustListProviders;
+using System.Security.Cryptography.X509Certificates;
 #if NET452
 using System.Net.Http;
 using Microsoft.Extensions.Configuration;
@@ -99,6 +100,8 @@ namespace DgcReader.DgcTestData.Test
                     try
                     {
                         var clock = entry.TestContext.ValidationClock ?? System.DateTimeOffset.Now;
+
+                        var certificate = new X509Certificate2(entry.TestContext.Certificate);
 
                         var result = await DgcReader.Verify(entry.PREFIX, null, clock);
 

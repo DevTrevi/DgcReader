@@ -332,7 +332,12 @@ namespace DgcReader
                 // Wrap unmanaged exceptions as DgcSignatureValidationException
                 Logger?.LogWarning($"HCERT signature verification failed: {e.Message}");
                 if (throwOnError)
+                {
+                    if (e is DgcSignatureValidationException)
+                        throw;
+
                     throw new DgcSignatureValidationException(e.Message, e, context);
+                }
             }
 
             return context;

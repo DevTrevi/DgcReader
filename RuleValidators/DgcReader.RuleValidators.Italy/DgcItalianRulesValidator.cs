@@ -145,7 +145,72 @@ namespace DgcReader.RuleValidators.Italy
         #region Implementation of IRulesValidator
 
         /// <inheritdoc/>
-        public async Task<IRuleValidationResult> GetRulesValidationResult(EuDGC dgc, DateTimeOffset validationInstant, CancellationToken cancellationToken = default)
+        public Task<IRuleValidationResult> GetRulesValidationResult(EuDGC dgc, DateTimeOffset validationInstant, CancellationToken cancellationToken = default)
+        {
+
+
+            // Validation mode check
+            if (_options.ValidationMode == null)
+            {
+                // Warning if not set excplicitly
+                _logger?.LogWarning($"Validation mode not set. The {ValidationMode.Basic3G} validation mode will be used");
+            }
+
+            return this.GetRulesValidationResult(dgc,
+                validationInstant,
+                _options.ValidationMode ?? ValidationMode.Basic3G,
+                cancellationToken);
+        }
+
+        /// <inheritdoc/>
+        public async Task RefreshRules(CancellationToken cancellationToken = default)
+        {
+            await RefreshRulesList(cancellationToken);
+        }
+        #endregion
+
+        #region Implementation of IBlackListProvider
+
+        /// <inheritdoc/>
+        public async Task<bool> IsBlacklisted(string certificateIdentifier, CancellationToken cancellationToken = default)
+        {
+            var blacklist = await GetBlacklist(cancellationToken);
+            if (blacklist == null)
+            {
+                _logger?.LogWarning($"Unable to get the blacklist: considering the certificate valid");
+                return true;
+            }
+
+            return blacklist.Contains(certificateIdentifier);
+        }
+
+        /// <inheritdoc/>
+        public async Task<IEnumerable<string>?> GetBlacklist(CancellationToken cancellationToken = default)
+        {
+            var rules = await GetRules(cancellationToken);
+            return rules?.GetBlackList();
+        }
+
+        /// <inheritdoc/>
+        public async Task<IEnumerable<string>?> RefreshBlacklist(CancellationToken cancellationToken = default)
+        {
+            var rules = await RefreshRulesList(cancellationToken);
+            return rules?.GetBlackList();
+        }
+        #endregion
+
+        #region Public methods
+
+
+        /// <summary>
+        /// Returns the validation result
+        /// </summary>
+        /// <param name="dgc"></param>
+        /// <param name="validationInstant"></param>
+        /// <param name="validationMode">The Italian validation mode to be used</param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        public async Task<IRuleValidationResult> GetRulesValidationResult(EuDGC dgc, DateTimeOffset validationInstant, ValidationMode validationMode, CancellationToken cancellationToken = default)
         {
             var result = new DgcRulesValidationResult
             {
@@ -159,18 +224,11 @@ namespace DgcReader.RuleValidators.Italy
                 return result;
             }
 
-            // Validation mode check
-            if (_options.ValidationMode == null)
-            {
-                // Warning if not set excplicitly
-                _logger?.LogWarning($"Validation mode not set. The {ValidationMode.Basic3G} validation mode will be used");
-            }
-
             // Super Greenpass check
-            if(_options.ValidationMode == ValidationMode.Strict2G)
+            if (validationMode == ValidationMode.Strict2G)
             {
                 // If 2G mode is active, Test entries are considered not valid
-                if(dgc.GetCertificateEntry() is TestEntry)
+                if (dgc.GetCertificateEntry() is TestEntry)
                 {
                     _logger?.LogWarning($"Test entries are considered not valid when validation mode is {ValidationMode.Strict2G}");
                     result.Status = DgcResultStatus.NotValid;
@@ -224,44 +282,6 @@ namespace DgcReader.RuleValidators.Italy
             return result;
         }
 
-        /// <inheritdoc/>
-        public async Task RefreshRules(CancellationToken cancellationToken = default)
-        {
-            await RefreshRulesList(cancellationToken);
-        }
-        #endregion
-
-        #region Implementation of IBlackListProvider
-
-        /// <inheritdoc/>
-        public async Task<bool> IsBlacklisted(string certificateIdentifier, CancellationToken cancellationToken = default)
-        {
-            var blacklist = await GetBlacklist(cancellationToken);
-            if (blacklist == null)
-            {
-                _logger?.LogWarning($"Unable to get the blacklist: considering the certificate valid");
-                return true;
-            }
-
-            return blacklist.Contains(certificateIdentifier);
-        }
-
-        /// <inheritdoc/>
-        public async Task<IEnumerable<string>?> GetBlacklist(CancellationToken cancellationToken = default)
-        {
-            var rules = await GetRules(cancellationToken);
-            return rules?.GetBlackList();
-        }
-
-        /// <inheritdoc/>
-        public async Task<IEnumerable<string>?> RefreshBlacklist(CancellationToken cancellationToken = default)
-        {
-            var rules = await RefreshRulesList(cancellationToken);
-            return rules?.GetBlackList();
-        }
-        #endregion
-
-        #region Public methods
 
         /// <summary>
         /// Validates the specified certificate against the Italian business rules.

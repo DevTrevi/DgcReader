@@ -81,6 +81,20 @@ Default value is 15 days.
   - In `Basic3G` mode, all kind of certificates can be validated (vaccinations, recovery certificates and negative tests).
   - In `Strict2G` mode, also known as *"Super Greenpass"*, test results are always considered not valid.
 
+## Specify ValidationMode per call
+Validation mode is read from options by default.  
+If you need to specify it for each call, you can use the overload method by calling the following extension:
+
+ ``` csharp
+
+var result = dgcReaderService.VerifyForItaly(qrCodeData, ValidationMode.Strict2G);
+
+
+// Or alternatively without throwing exceptions, same as GetValidationResult
+var result = dgcReaderService.VerifyForItaly(qrCodeData, ValidationMode.Strict2G, throwOnError: false);
+```
+
+
 
 ## Forcing the update of the rules
 If the application needs to update the rules at a specific time (i.e. by a scheduled task, or when a user press a *"Refresh"* button), you can simply call the `RefreshRulesList` function of the validator.

@@ -12,6 +12,7 @@ using Microsoft.Extensions.Logging;
 using DgcReader.Interfaces.RulesValidators;
 using DgcReader.Interfaces.TrustListProviders;
 using DgcReader.Interfaces.BlacklistProviders;
+using System.Threading;
 
 // Copyright (c) 2021 Davide Trevisan
 // Licensed under the Apache License, Version 2.0
@@ -23,9 +24,20 @@ namespace DgcReader
     /// </summary>
     public class DgcReaderService
     {
-        private readonly ITrustListProvider? TrustListProvider;
-        private readonly IBlacklistProvider? BlackListProvider;
-        private readonly IRulesValidator? RulesValidator;
+        /// <summary>
+        /// The registered TrustList provider
+        /// </summary>
+        public readonly ITrustListProvider? TrustListProvider;
+
+        /// <summary>
+        /// The registered BlackList provider
+        /// </summary>
+        public readonly IBlacklistProvider? BlackListProvider;
+
+        /// <summary>
+        /// The registered rules validator
+        /// </summary>
+        public readonly IRulesValidator? RulesValidator;
         private readonly ILogger? Logger;
 
         /// <summary>
@@ -116,9 +128,40 @@ namespace DgcReader
         /// <param name="qrCodeData">The QRCode data of the DGC</param>
         /// <param name="validationInstant">The instant of validation of the object </param>
         /// <param name="throwOnError">If true, throw an exception if the validation fails</param>
+        /// <param name="cancellationToken"></param>
         /// <returns></returns>
         /// <exception cref="DgcException"></exception>
-        public async Task<DgcValidationResult> Verify(string qrCodeData, DateTimeOffset validationInstant, bool throwOnError = true)
+        public Task<DgcValidationResult> Verify(string qrCodeData, DateTimeOffset validationInstant, bool throwOnError = true, CancellationToken cancellationToken = default)
+        {
+
+            Func<EuDGC, DateTimeOffset, CancellationToken, Task<IRuleValidationResult>>? rulesValidatorFunction = null;
+            if (RulesValidator != null)
+                rulesValidatorFunction = RulesValidator.GetRulesValidationResult;
+
+            return Verify(qrCodeData,
+                validationInstant,
+                rulesValidatorFunction,
+                throwOnError,
+                cancellationToken);
+        }
+
+
+        /// <summary>
+        /// Decodes the DGC data, verifying signature, blacklist and rules if a provider is available.
+        /// This overload is intended for internal use only, and should not be used directly
+        /// </summary>
+        /// <param name="qrCodeData">The QRCode data of the DGC</param>
+        /// <param name="validationInstant">The instant of validation of the object </param>
+        /// <param name="rulesValidatorFunction">The specific function to be called for rules validation</param>
+        /// <param name="throwOnError">If true, throw an exception if the validation fails</param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        /// <exception cref="DgcException"></exception>
+        public async Task<DgcValidationResult> Verify(string qrCodeData,
+            DateTimeOffset validationInstant,
+            Func<EuDGC, DateTimeOffset, CancellationToken, Task<IRuleValidationResult>>? rulesValidatorFunction,
+            bool throwOnError = true,
+            CancellationToken cancellationToken = default)
         {
             var result = new DgcValidationResult()
             {
@@ -153,7 +196,7 @@ namespace DgcReader
                     if (BlackListProvider != null)
                     {
                         var certEntry = result.Dgc.GetCertificateEntry();
-                        var blacklisted = await BlackListProvider.IsBlacklisted(certEntry.CertificateIdentifier);
+                        var blacklisted = await BlackListProvider.IsBlacklisted(certEntry.CertificateIdentifier, cancellationToken);
 
                         // Check performed
                         result.BlacklistVerified = true;
@@ -168,9 +211,9 @@ namespace DgcReader
                     }
 
                     // Step 4: check country rules
-                    if (RulesValidator != null)
+                    if (rulesValidatorFunction != null)
                     {
-                        var rulesResult = await RulesValidator.GetRulesValidationResult(result.Dgc, result.ValidationInstant);
+                        var rulesResult = await rulesValidatorFunction.Invoke(result.Dgc, result.ValidationInstant, cancellationToken);
                         result.ValidFrom = rulesResult.ValidFrom;
                         result.ValidUntil = rulesResult.ValidUntil;
                         result.RulesVerificationCountry = rulesResult.RulesVerificationCountry;
@@ -251,6 +294,7 @@ namespace DgcReader
 
             return result;
         }
+
 
         /// <summary>
         /// Decodes the DGC data, verifying signature, blacklist and rules if a provider is available.

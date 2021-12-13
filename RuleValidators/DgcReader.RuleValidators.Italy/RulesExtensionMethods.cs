@@ -56,6 +56,4 @@ namespace DgcReader.RuleValidators.Italy
         }
     }
 
-
-
 }

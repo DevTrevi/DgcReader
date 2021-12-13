@@ -16,6 +16,7 @@ using DgcReader.RuleValidators.Germany.CovpassDgcCertlogic;
 using DgcReader.RuleValidators.Germany.CovpassDgcCertlogic.Domain.Rules;
 using DgcReader.RuleValidators.Germany.Providers;
 using Newtonsoft.Json;
+using System.Globalization;
 
 #if NETSTANDARD2_0_OR_GREATER || NET5_0_OR_GREATER || NET47_OR_GREATER
 using Microsoft.Extensions.Options;
@@ -32,7 +33,7 @@ namespace DgcReader.RuleValidators.Germany
     public class DgcGermanRulesValidator : IRulesValidator
     {
 
-        protected readonly ILogger? Logger;
+        private readonly ILogger? Logger;
         private readonly DgcGermanRulesValidatorOptions Options;
 
         private readonly RuleIdentifiersProvider _ruleIdentifiersProvider;
@@ -134,7 +135,11 @@ namespace DgcReader.RuleValidators.Germany
             if (!await SupportsCountry(countryCode))
                 throw new DgcException($"Rules validation for country {countryCode} is not supported by this provider");
 
-            var result = new DgcRulesValidationResult();
+            var result = new GermanRulesValidationResult()
+            {
+                RulesVerificationCountry = countryCode,
+                Status = DgcResultStatus.NeedRulesVerification,
+            };
 
             if (dgc == null)
             {
@@ -164,7 +169,7 @@ namespace DgcReader.RuleValidators.Germany
                 var externalParameters = new ExternalParameter
                 {
                     ValidationClock = validationInstant,
-                    ValueSets = valueSets, // TODO
+                    ValueSets = valueSets,
                     CountryCode = countryCode,
                     Expiration = DateTimeOffset.MaxValue,   // Signature validation is done by another module
                     ValidFrom = DateTimeOffset.MinValue,    // Signature validation is done by another module
@@ -175,11 +180,41 @@ namespace DgcReader.RuleValidators.Germany
 
                 var certString = JsonConvert.SerializeObject(dgc);
 
-                var test = _certLogicEngine.Validate(certificateType,
+                var testResults = _certLogicEngine.Validate(certificateType,
                     dgc.SchemaVersion,
                     rules,
                     externalParameters,
                     certString).ToArray();
+
+                // Se the validation results to the final result
+                result.ValidationResults = testResults;
+
+                var englishCulture = CultureInfo.GetCultureInfo("en");
+                if (!testResults.Any())
+                {
+                    // No rules found for the target acceptance country
+                    result.Status = DgcResultStatus.NeedRulesVerification;
+                }
+                else if (testResults.Any(r=>r.Result == Result.FAIL))
+                {
+                    result.Status = DgcResultStatus.NotValid;
+                    result.StatusMessage = "Rules validation failed: ";
+                    result.StatusMessage += string.Join(", ",
+                        testResults.Where(r => r.Result == Result.FAIL)
+                        .Select(r => r.Rule.Descriptions.GetDescription(englishCulture)));
+                }
+                else if (testResults.Any(r => r.Result == Result.OPEN))
+                {
+                    result.Status = DgcResultStatus.OpenResult;
+                    result.StatusMessage = "These rules can not be validated: ";
+                    result.StatusMessage += string.Join(", ",
+                        testResults.Where(r => r.Result == Result.OPEN)
+                        .Select(r => r.Rule.Descriptions.GetDescription(englishCulture)));
+                }
+                else if (testResults.All(r=>r.Result == Result.PASSED))
+                {
+                    result.Status = DgcResultStatus.Valid;
+                }
 
             }
             catch (Exception e)

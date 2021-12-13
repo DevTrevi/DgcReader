@@ -229,6 +229,11 @@ namespace DgcReader.RuleValidators.Germany
         public async Task<IEnumerable<string>> GetSupportedCountries(CancellationToken cancellationToken = default)
         {
             var rulesIdentifiersValueSet = await _ruleIdentifiersProvider.GetValueSet(cancellationToken);
+            if (rulesIdentifiersValueSet == null)
+            {
+                Logger?.LogWarning("Unable to get the list of supported countries");
+                return Enumerable.Empty<string>();
+            }
             return rulesIdentifiersValueSet.Identifiers.Select(r => r.Country).Distinct().OrderBy(r => r).ToArray();
         }
 

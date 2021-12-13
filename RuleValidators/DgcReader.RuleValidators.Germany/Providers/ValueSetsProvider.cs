@@ -44,7 +44,13 @@ namespace DgcReader.RuleValidators.Germany.Providers
                 Logger?.LogDebug($"Fetching value set {id}...");
 
                 var identifiersValueSet = await valueSetIdentifiersProvider.GetValueSet(cancellationToken);
-                var identifier = identifiersValueSet.Identifiers.SingleOrDefault(r=> r.Id == id);
+                var identifier = identifiersValueSet?.Identifiers.SingleOrDefault(r=> r.Id == id);
+
+                if (identifier == null)
+                {
+                    Logger?.LogWarning($"Valueset identifier id {id} was not found");
+                    return null;
+                }
 
                 var response = await HttpClient.GetAsync($"{Const.BaseUrl}/valuesets/{identifier.Hash}", cancellationToken);
                 if (response.IsSuccessStatusCode)

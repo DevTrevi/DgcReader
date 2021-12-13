@@ -86,31 +86,24 @@ namespace DgcReader.RuleValidators.Germany.Providers
 
         private async Task<RuleEntry> FetchRuleEntry(string countryCode, string hash, CancellationToken cancellationToken = default)
         {
-            try
+            Logger?.LogDebug($"Fetching rule for country {countryCode} - hash {hash}");
+            var url = $"{Const.BaseUrl}/rules/{countryCode}/{hash}";
+
+            var response = await HttpClient.GetAsync(url, cancellationToken);
+            if (response.IsSuccessStatusCode)
             {
-                var start = DateTime.Now;
-                Logger?.LogDebug($"Fetching rule for country {countryCode} - hash {hash}");
-                var url = $"{Const.BaseUrl}/rules/{countryCode}/{hash}";
+                string content = await response.Content.ReadAsStringAsync();
 
-                var response = await HttpClient.GetAsync(url, cancellationToken);
-                if (response.IsSuccessStatusCode)
-                {
-                    string content = await response.Content.ReadAsStringAsync();
+                var result = JsonConvert.DeserializeObject<RuleEntry>(content);
 
-                    var result = JsonConvert.DeserializeObject<RuleEntry>(content);
+                if (result == null)
+                    throw new Exception("Error wile deserializing rule from server");
 
-                    if (result == null)
-                        throw new Exception("Error wile deserializing rule from server");
-
-                    return result;
-                }
-
-                throw new Exception($"The remote server responded with code {response.StatusCode}: {response.ReasonPhrase}");
+                return result;
             }
-            catch (Exception ex)
-            {
-                throw;
-            }
+
+            throw new Exception($"The remote server responded with code {response.StatusCode}: {response.ReasonPhrase}");
         }
+
     }
 }

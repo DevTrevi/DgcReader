@@ -10,24 +10,38 @@ using System.Text;
 
 namespace DgcReader.RuleValidators.Germany.CovpassDgcCertlogic
 {
-
+    /// <summary>
+    /// Service for retrieving affected fields data from a json payload
+    /// </summary>
     public interface IAffectedFieldsDataRetriever
     {
+        /// <summary>
+        /// Returns data affected by the rule validation
+        /// </summary>
+        /// <param name="rule"></param>
+        /// <param name="dataJsonNode"></param>
+        /// <param name="certificateType"></param>
+        /// <returns></returns>
         string GetAffectedFieldsData(RuleEntry rule, JObject dataJsonNode, CertificateType certificateType);
     }
 
-
+    /// <inheritdoc/>
     public class DefaultAffectedFieldsDataRetriever : IAffectedFieldsDataRetriever
     {
         private readonly JObject SchemaJson;
         private readonly ILogger? logger;
 
+        /// <summary>
+        /// Cosntructor
+        /// </summary>
+        /// <param name="logger"></param>
         public DefaultAffectedFieldsDataRetriever(ILogger? logger)
         {
             SchemaJson = JObject.Parse(Encoding.UTF8.GetString(Resources.CovPassSdk.json_schema_v1));
             this.logger = logger;
         }
 
+        /// <inheritdoc/>
         public string GetAffectedFieldsData(RuleEntry rule, JObject dataJsonNode, CertificateType certificateType)
         {
             var affectedFields = new StringBuilder();

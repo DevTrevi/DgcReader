@@ -49,11 +49,7 @@ namespace DgcReader.RuleValidators.Germany.CovpassDgcCertlogic
 
         private JObject PrepareData(ExternalParameter externalParameter, string payload)
         {
-            var d = new ValidatorData
-            {
-                ExternalParameter = externalParameter,
-                Payload = JObject.Parse(payload),
-            };
+            var d = new ValidatorData(externalParameter, JObject.Parse(payload));
             var o = JObject.FromObject(d);
 
             return o;
@@ -133,14 +129,28 @@ namespace DgcReader.RuleValidators.Germany.CovpassDgcCertlogic
 
         private static T Clone<T>(T obj)
         {
+#pragma warning disable CS8603 // Possible null reference return.
             return JsonConvert.DeserializeObject<T>(JsonConvert.SerializeObject(obj));
+#pragma warning restore CS8603 // Possible null reference return.
         }
 
-        class ValidatorData
+        private class ValidatorData
         {
+            public ValidatorData(ExternalParameter externalParameter, JObject payload)
+            {
+                ExternalParameter = externalParameter;
+                Payload = payload;
+            }
+
+            /// <summary>
+            /// External parameters for the validator
+            /// </summary>
             [JsonProperty(EXTERNAL_KEY)]
             public ExternalParameter ExternalParameter { get; set; }
 
+            /// <summary>
+            /// The payload to be validated
+            /// </summary>
             [JsonProperty(PAYLOAD_KEY)]
             public JObject Payload { get; set; }
 

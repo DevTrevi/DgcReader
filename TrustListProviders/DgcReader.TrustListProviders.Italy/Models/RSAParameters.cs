@@ -10,11 +10,6 @@ namespace DgcReader.TrustListProviders.Italy.Models
     /// <inheritdoc cref="IRSAParameters"/>
     public class RSAParameters : IRSAParameters
     {
-        /// <inheritdoc />
-        public RSAParameters()
-        {
-
-        }
 
 #if NET452
 
@@ -29,8 +24,8 @@ namespace DgcReader.TrustListProviders.Italy.Models
         /// <inheritdoc />
         public RSAParameters(System.Security.Cryptography.RSAParameters p)
         {
-            Modulus = p.Modulus?.ToArray();
-            Exponent = p.Exponent?.ToArray();
+            Modulus = p.Modulus.ToArray();
+            Exponent = p.Exponent.ToArray();
         }
 #endif
 

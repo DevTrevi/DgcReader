@@ -14,7 +14,7 @@ namespace DgcReader.TrustListProviders.Sweden
 
         /**
          * Converts the supplied bytes into the ASN.1 DER encoding for an unsigned integer.
-         * 
+         *
          * @param i
          *          the byte array to convert
          * @return the DER encoding
@@ -47,7 +47,7 @@ namespace DgcReader.TrustListProviders.Sweden
 
         /**
          * Convert the supplied input to an ASN.1 Sequence.
-         * 
+         *
          * @param seq
          *          the data in the sequence
          * @return the DER encoding

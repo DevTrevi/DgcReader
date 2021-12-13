@@ -18,7 +18,7 @@ namespace DgcReader.TrustListProviders.Italy.Models
 
         /// <inheritdoc/>
         [JsonProperty("certificates")]
-        public IEnumerable<CertificateData> Certificates { get; set; }
+        public IEnumerable<CertificateData> Certificates { get; set; } = new CertificateData[0];
 
         /// <inheritdoc/>
         public DateTimeOffset? Expiration => null;

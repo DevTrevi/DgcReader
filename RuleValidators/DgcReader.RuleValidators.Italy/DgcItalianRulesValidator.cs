@@ -244,12 +244,12 @@ namespace DgcReader.RuleValidators.Italy
         /// Validates the specified certificate against the Italian business rules.
         /// Is assumed that the Signed DGC signature was already validated for signature and expiration
         /// </summary>
-        /// <param name="signedDgc">Info of the signed DGC</param>
+        /// <param name="dgc">The DGC to be validated</param>
         /// <returns></returns>
 
-        public async Task<ItalianRulesValidationResult> ValidateBusinessRules(SignedDgc signedDgc)
+        public async Task<ItalianRulesValidationResult> ValidateBusinessRules(EuDGC dgc)
         {
-            return (ItalianRulesValidationResult)await GetRulesValidationResult(signedDgc.Dgc, DateTimeOffset.Now);
+            return (ItalianRulesValidationResult)await GetRulesValidationResult(dgc, DateTimeOffset.Now);
         }
 
 

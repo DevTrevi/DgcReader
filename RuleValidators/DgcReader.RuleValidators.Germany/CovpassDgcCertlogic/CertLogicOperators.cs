@@ -8,6 +8,9 @@ using System.Linq;
 
 namespace DgcReader.RuleValidators.Germany.CovpassDgcCertlogic
 {
+    /// <summary>
+    /// Provides implementations of CertLogic operators for the JsonLogic library
+    /// </summary>
     public static class CertLogicOperators
     {
         public static void AddPlusTimeOperator(this IManageOperators manageOperators) => manageOperators.AddOperator("plusTime", EvaluatePlusTime);

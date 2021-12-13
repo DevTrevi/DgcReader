@@ -26,7 +26,7 @@ namespace DgcReader.RuleValidators.Italy.Models
         /// <summary>
         /// A string message describing the status of the validation result (optional)
         /// </summary>
-        public string StatusMessage { get; internal set; }
+        public string? StatusMessage { get; internal set; }
 
 
         /// <inheritdoc/>

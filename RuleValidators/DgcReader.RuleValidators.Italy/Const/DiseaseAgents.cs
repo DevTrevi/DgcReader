@@ -3,6 +3,9 @@
 
 namespace DgcReader.RuleValidators.Italy.Const
 {
+    /// <summary>
+    /// Disease agents codes
+    /// </summary>
     public static class DiseaseAgents
     {
         /// <summary>

@@ -57,7 +57,9 @@ namespace DgcReader.RuleValidators.Italy
         public ValidationMode? ValidationMode { get; set; } = null;
     }
 
-
+    /// <summary>
+    /// Validation modes supported by the provider, according to the official SDK specifications
+    /// </summary>
     public enum ValidationMode
     {
         /// <summary>

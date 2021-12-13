@@ -7,8 +7,17 @@ using System;
 
 namespace Microsoft.Extensions.DependencyInjection
 {
+    /// <summary>
+    /// Exposes extensions allowing to register the <see cref="GermanTrustListProvider"/> service
+    /// </summary>
     public static class GermanTrustListProviderServiceExtensions
     {
+        /// <summary>
+        /// Registers the <see cref="GermanTrustListProvider"/> service in the DI container
+        /// </summary>
+        /// <param name="services"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentNullException"></exception>
         public static GermanTrustListProviderBuilder AddGermanTrustListProvider(this IServiceCollection services)
         {
             if (services is null)
@@ -18,6 +27,12 @@ namespace Microsoft.Extensions.DependencyInjection
             return new GermanTrustListProviderBuilder(services);
         }
 
+        /// <summary>
+        /// Registers the <see cref="GermanTrustListProvider"/> service in the DI container
+        /// </summary>
+        /// <param name="dgcBuilder"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentNullException"></exception>
         public static DgcReaderServiceBuilder AddGermanTrustListProvider(this DgcReaderServiceBuilder dgcBuilder)
         {
             if (dgcBuilder is null)
@@ -28,6 +43,13 @@ namespace Microsoft.Extensions.DependencyInjection
             return dgcBuilder;
         }
 
+        /// <summary>
+        /// Registers the <see cref="GermanTrustListProvider"/> service in the DI container
+        /// </summary>
+        /// <param name="dgcBuilder"></param>
+        /// <param name="configuration"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentNullException"></exception>
         public static DgcReaderServiceBuilder AddGermanTrustListProvider(this DgcReaderServiceBuilder dgcBuilder,
             Action<GermanTrustListProviderOptions> configuration)
         {

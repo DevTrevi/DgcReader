@@ -11,12 +11,12 @@ namespace DgcReader.Interfaces.TrustListProviders
         /// <summary>
         /// The code of the named curve used for the ECDsa key
         /// </summary>
-        string Curve { get; }
+        string? Curve { get; }
 
         /// <summary>
         /// The friendly name of the named curve used for the ECDsa key
         /// </summary>
-        string CurveFriendlyName { get; }
+        string? CurveFriendlyName { get; }
 
         /// <summary>
         /// X parameter of the public key

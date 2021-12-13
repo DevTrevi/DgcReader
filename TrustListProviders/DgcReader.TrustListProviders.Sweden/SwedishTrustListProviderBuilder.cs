@@ -1,7 +1,6 @@
 ﻿#if NETSTANDARD2_0_OR_GREATER || NET5_0_OR_GREATER || NET47_OR_GREATER
 using DgcReader.Interfaces.TrustListProviders;
 using DgcReader.TrustListProviders.Sweden;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 using System;
 
 // Copyright (c) 2021 Davide Trevisan
@@ -9,9 +8,20 @@ using System;
 
 namespace Microsoft.Extensions.DependencyInjection
 {
+    /// <summary>
+    /// Builder exposing methods for configuring the <see cref="SwedishTrustListProvider"/> service
+    /// </summary>
     public class SwedishTrustListProviderBuilder
     {
+        /// <summary>
+        /// Returns the services collection
+        /// </summary>
         private IServiceCollection Services { get; }
+
+        /// <summary>
+        /// Initializes a new instance of <see cref="SwedishTrustListProviderBuilder"/>
+        /// </summary>
+        /// <param name="services"></param>
         public SwedishTrustListProviderBuilder(IServiceCollection services)
         {
             Services = services;
@@ -22,6 +32,12 @@ namespace Microsoft.Extensions.DependencyInjection
             Services.AddSingleton<ITrustListProvider, SwedishTrustListProvider>(sp => sp.GetRequiredService<SwedishTrustListProvider>());
         }
 
+        /// <summary>
+        /// Configures the <see cref="SwedishTrustListProvider"/> service
+        /// </summary>
+        /// <param name="configuration">The delegate used to configure the options</param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentNullException"></exception>
         public SwedishTrustListProviderBuilder Configure(Action<SwedishTrustListProviderOptions> configuration)
         {
             if (configuration is null)

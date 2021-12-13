@@ -58,7 +58,7 @@ namespace DgcReader.RuleValidators.Italy.Providers
         protected override Task<RulesList?> LoadFromCache(CancellationToken cancellationToken = default)
         {
             var filePath = GetRulesListFilePath();
-            RulesList rulesList = null;
+            RulesList? rulesList = null;
             try
             {
                 if (File.Exists(filePath))

@@ -164,7 +164,7 @@ namespace DgcReader.TrustListProviders.Italy
 
                     var subjectCOmponents = ParseCertSubject(cert.Subject);
                     if (subjectCOmponents.ContainsKey("C"))
-                        certData.Country = subjectCOmponents["C"][0];
+                        certData.Country = subjectCOmponents["C"][0] ?? "";
 
 
 
@@ -183,11 +183,7 @@ namespace DgcReader.TrustListProviders.Italy
                     var rsaKeyParams = publicKeyParameters as RsaKeyParameters;
                     if (rsaKeyParams != null)
                     {
-                        certData.RSA = new Models.RSAParameters()
-                        {
-                            Exponent = rsaKeyParams.Exponent.ToByteArray(),
-                            Modulus = rsaKeyParams.Modulus.ToByteArray(),
-                        };
+                        certData.RSA = new Models.RSAParameters(rsaKeyParams);
                     }
 #else
 
@@ -320,7 +316,7 @@ namespace DgcReader.TrustListProviders.Italy
                 var certStart = DateTime.Now;
                 var result = await FetchCertificate(resumeToken, cancellationToken);
                 Logger?.LogDebug($"Cert. with resume token {resumeToken}, kid {result.Kid} downloaded in {DateTime.Now - certStart} ");
-                if (!string.IsNullOrEmpty(result.Kid) && result.Certificate != null)
+                if (result.Kid != null && !string.IsNullOrEmpty(result.Kid) && result.Certificate != null)
                 {
                     if (validKeys.Contains(result.Kid))
                     {
@@ -390,7 +386,7 @@ namespace DgcReader.TrustListProviders.Italy
             }
         }
 
-        private IDictionary<string, string[]> ParseCertSubject(string subject)
+        private IDictionary<string, string?[]> ParseCertSubject(string subject)
         {
             try
             {
@@ -399,15 +395,14 @@ namespace DgcReader.TrustListProviders.Italy
                     {
                         if (!r.Contains('='))
                         {
-
-                            return new KeyValuePair<string, string>(r.Trim(), null);
+                            return new KeyValuePair<string, string?>(r.Trim(), null);
                         }
                         var idx = r.IndexOf('=');
-                        return new KeyValuePair<string, string>(r.Remove(idx).Trim(),
+                        return new KeyValuePair<string, string?>(r.Remove(idx).Trim(),
                             r.Substring(idx + 1).Trim());
                     });
 
-                return new ReadOnlyDictionary<string, string[]>(
+                return new ReadOnlyDictionary<string, string?[]>(
                     entries.GroupBy(r => r.Key)
                     .ToDictionary(r => r.Key, r => r.Select(g => g.Value).ToArray()));
             }

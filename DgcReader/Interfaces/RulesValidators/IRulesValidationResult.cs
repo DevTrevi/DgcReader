@@ -20,7 +20,7 @@ namespace DgcReader.Interfaces.RulesValidators
         /// <summary>
         /// A string message describing the status of the validation (optional)
         /// </summary>
-        public string StatusMessage { get; }
+        public string? StatusMessage { get; }
 
         /// <summary>
         /// Country for which the rules has been verified (2 letter ISO code)

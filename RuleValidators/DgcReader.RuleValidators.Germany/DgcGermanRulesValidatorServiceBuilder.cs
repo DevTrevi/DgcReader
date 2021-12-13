@@ -9,9 +9,20 @@ using System;
 
 namespace Microsoft.Extensions.DependencyInjection
 {
+    /// <summary>
+    /// Builder exposing methods for configuring the <see cref="DgcGermanRulesValidator"/> service
+    /// </summary>
     public class DgcGermanRulesValidatorServiceBuilder
     {
+        /// <summary>
+        /// Returns the services collection
+        /// </summary>
         public IServiceCollection Services { get; }
+
+        /// <summary>
+        /// Initializes a new instance of <see cref="DgcGermanRulesValidatorServiceBuilder"/>
+        /// </summary>
+        /// <param name="services"></param>
         public DgcGermanRulesValidatorServiceBuilder(IServiceCollection services)
         {
             Services = services;
@@ -22,6 +33,12 @@ namespace Microsoft.Extensions.DependencyInjection
             Services.AddSingleton<IRulesValidator, DgcGermanRulesValidator>(sp => sp.GetRequiredService<DgcGermanRulesValidator>());
         }
 
+        /// <summary>
+        /// Configures the <see cref="DgcGermanRulesValidator"/> service
+        /// </summary>
+        /// <param name="configuration">The delegate used to configure the options</param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentNullException"></exception>
         public DgcGermanRulesValidatorServiceBuilder Configure(Action<DgcGermanRulesValidatorOptions> configuration)
         {
             if (configuration is null)

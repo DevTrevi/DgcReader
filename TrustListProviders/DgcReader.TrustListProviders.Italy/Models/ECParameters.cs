@@ -10,10 +10,6 @@ namespace DgcReader.TrustListProviders.Italy.Models
     /// <inheritdoc cref="IECParameters"/>
     public class ECParameters : IECParameters
     {
-        /// <inheritdoc/>
-        public ECParameters()
-        {
-        }
 
 #if NET452
         /// <inheritdoc/>
@@ -29,18 +25,18 @@ namespace DgcReader.TrustListProviders.Italy.Models
         {
             Curve = p.Curve.Oid.Value;
             CurveFriendlyName = p.Curve.Oid.FriendlyName;
-            X = p.Q.X?.ToArray();
-            Y = p.Q.Y?.ToArray();
+            X = p.Q.X.ToArray();
+            Y = p.Q.Y.ToArray();
         }
 #endif
 
         /// <inheritdoc />
         [JsonProperty("cf", NullValueHandling = NullValueHandling.Ignore)]
-        public string CurveFriendlyName { get; set; }
-        
+        public string? CurveFriendlyName { get; set; }
+
         /// <inheritdoc />
         [JsonProperty("c")]
-        public string Curve { get; set; }
+        public string? Curve { get; set; }
 
         /// <inheritdoc />
         [JsonProperty("x")]

@@ -9,19 +9,24 @@ using System.Linq;
 
 namespace DgcReader.RuleValidators.Germany.CovpassDgcCertlogic.Domain.Rules
 {
-
+    /// <inheritdoc/>
     public class CovPassGetRulesUseCase : DefaultGetRulesUseCase
     {
         // Note: the implementation is the same of DefaultGetRulesUseCase
     }
 
+    /// <inheritdoc/>
     public class DefaultGetRulesUseCase : IGetRulesUseCase
     {
+        /// <summary>
+        /// Constructor
+        /// </summary>
         public DefaultGetRulesUseCase()
         {
 
         }
 
+        /// <inheritdoc/>
         public IEnumerable<RuleEntry> Invoke(IEnumerable<RuleEntry> rules, DateTimeOffset validationClock, string acceptanceCountryIsoCode, string issuanceCountryIsoCode, CertificateType certificateType, string? region = null)
         {
             var filteredAcceptanceRules = new Dictionary<string, RuleEntry>();
@@ -78,8 +83,21 @@ namespace DgcReader.RuleValidators.Germany.CovpassDgcCertlogic.Domain.Rules
         }
     }
 
+    /// <summary>
+    /// Service for filtering rules for a specific use case
+    /// </summary>
     public interface IGetRulesUseCase
     {
+        /// <summary>
+        /// Filter the rules for the specified use case
+        /// </summary>
+        /// <param name="rules"></param>
+        /// <param name="validationClock"></param>
+        /// <param name="acceptanceCountryIsoCode"></param>
+        /// <param name="issuanceCountryIsoCode"></param>
+        /// <param name="certificateType"></param>
+        /// <param name="region"></param>
+        /// <returns></returns>
         IEnumerable<RuleEntry> Invoke(
             IEnumerable<RuleEntry> rules,
             DateTimeOffset validationClock,

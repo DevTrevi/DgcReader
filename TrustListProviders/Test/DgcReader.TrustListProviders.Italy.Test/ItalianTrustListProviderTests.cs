@@ -59,6 +59,22 @@ namespace DgcReader.TrustListProviders.Italy.Test
 
         }
 
+        [TestMethod]
+        public async Task TestGetTrustList()
+        {
+            try
+            {
+                var test = await TrustListProvider.GetTrustList();
+                Assert.IsNotNull(test);
+                Assert.IsTrue(test.Any());
+            }
+            catch (Exception e)
+            {
+                throw;
+            }
+
+        }
+
 
         [TestMethod]
         public async Task TestConcurrency()

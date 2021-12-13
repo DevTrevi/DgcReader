@@ -7,25 +7,56 @@ using System.Collections.Generic;
 
 namespace DgcReader.RuleValidators.Germany.CovpassDgcCertlogic
 {
-
-    public enum Result
-    {
-        PASSED,
-        FAIL,
-        OPEN
-    }
-
+    /// <summary>
+    /// Validation of one rule against the certificate data
+    /// </summary>
     public class ValidationResult
     {
-        public RuleEntry Rule { get; set; }
-        public Result Result { get; set; }
-        public string Current { get; set; }
+        /// <summary>
+        /// The rule that has been tested
+        /// </summary>
+        public RuleEntry Rule { get; internal set; }
 
-        public IEnumerable<Exception>? ValidationErrors { get; set; }
+        /// <summary>
+        /// The validation result for the rule
+        /// </summary>
+        public Result Result { get; internal set; }
 
+        /// <summary>
+        /// Current value tested if available
+        /// </summary>
+        public string? Current { get; internal set; }
+
+        /// <summary>
+        /// Errors during validation, leading to an Open result
+        /// </summary>
+        public IEnumerable<Exception>? ValidationErrors { get; internal set; }
+
+        /// <inheritdoc/>
         public override string ToString()
         {
             return $"{Result} {Rule} - Current: {Current}";
         }
+    }
+
+    /// <summary>
+    /// Result status of a rule validation
+    /// </summary>
+    public enum Result
+    {
+        /// <summary>
+        /// Rule check passed
+        /// </summary>
+        PASSED,
+
+        /// <summary>
+        /// Rule check failed
+        /// </summary>
+        FAIL,
+
+        /// <summary>
+        /// Rule check can not be performed, so the result could not be determined
+        /// </summary>
+        OPEN
     }
 }

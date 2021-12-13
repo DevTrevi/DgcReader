@@ -10,17 +10,56 @@ namespace DgcReader.RuleValidators.Germany.CovpassDgcCertlogic
 {
     /// <summary>
     /// Provides implementations of CertLogic operators for the JsonLogic library
+    /// <see href="https://github.com/ehn-dcc-development/dgc-business-rules/tree/main/certlogic"/>
     /// </summary>
     public static class CertLogicOperators
     {
+        /// <summary>
+        /// Add the plusTime operator to the collection
+        /// <see href="https://github.com/ehn-dcc-development/dgc-business-rules/blob/main/certlogic/specification/README.md#offset-date-time-plustime"/>
+        /// </summary>
+        /// <param name="manageOperators"></param>
         public static void AddPlusTimeOperator(this IManageOperators manageOperators) => manageOperators.AddOperator("plusTime", EvaluatePlusTime);
+
+        /// <summary>
+        /// Add the "after" (equivalent of > ) DateTime operator to the collection
+        /// <see href="https://github.com/ehn-dcc-development/dgc-business-rules/blob/main/certlogic/specification/README.md#operations-with-infix-operators"/>
+        /// </summary>
+        /// <param name="manageOperators"></param>
         public static void AddAfterOperator(this IManageOperators manageOperators) => manageOperators.AddOperator("after", EvaluateAfter);
+
+        /// <summary>
+        /// Add the "before" (equivalent of &lt; ) DateTime operator to the collection
+        /// <see href="https://github.com/ehn-dcc-development/dgc-business-rules/blob/main/certlogic/specification/README.md#operations-with-infix-operators"/>
+        /// </summary>
+        /// <param name="manageOperators"></param>
         public static void AddBeforeOperator(this IManageOperators manageOperators) => manageOperators.AddOperator("before", EvaluateBefore);
+
+        /// <summary>
+        /// Add the "not-after" (equivalent of &lt;= ) DateTime operator to the collection
+        /// <see href="https://github.com/ehn-dcc-development/dgc-business-rules/blob/main/certlogic/specification/README.md#operations-with-infix-operators"/>
+        /// </summary>
+        /// <param name="manageOperators"></param>
         public static void AddNotAfterOperator(this IManageOperators manageOperators) => manageOperators.AddOperator("not-after", EvaluateNotAfter);
+
+        /// <summary>
+        /// Add the "not-before" (equivalent of >= ) DateTime operator to the collection
+        /// <see href="https://github.com/ehn-dcc-development/dgc-business-rules/blob/main/certlogic/specification/README.md#operations-with-infix-operators"/>
+        /// </summary>
+        /// <param name="manageOperators"></param>
         public static void AddNotBeforeOperator(this IManageOperators manageOperators) => manageOperators.AddOperator("not-before", EvaluateNotBefore);
+
+
+        /// <summary>
+        /// Add a modified version of the "in" operator
+        /// </summary>
+        /// <param name="manageOperators"></param>
         public static void AddInOperator(this IManageOperators manageOperators) => manageOperators.AddOperator("in", EvaluateIn);
 
-
+        /// <summary>
+        /// Add all the CertLogic operators to the collection
+        /// </summary>
+        /// <param name="manageOperators"></param>
         public static void AddCertLogicOperators(this IManageOperators manageOperators)
         {
             manageOperators.AddPlusTimeOperator();
@@ -31,6 +70,10 @@ namespace DgcReader.RuleValidators.Germany.CovpassDgcCertlogic
             manageOperators.AddInOperator();
         }
 
+        /// <summary>
+        /// Get the basic JsonLogic operators with the added CertLogic operators
+        /// </summary>
+        /// <returns></returns>
         public static IManageOperators GetOperators()
         {
             var operators = EvaluateOperators.Default;
@@ -68,7 +111,8 @@ namespace DgcReader.RuleValidators.Germany.CovpassDgcCertlogic
             }
             else
             {
-                throw new ArgumentException($"Value {value} is not a DateTime or DateTimeOffset");
+                if (!DateTimeOffset.TryParse(value.ToString(), out dateTimeOff))
+                    throw new ArgumentException($"Value {value} is not a DateTime or DateTimeOffset");
             }
 
             switch (unit)
@@ -85,6 +129,15 @@ namespace DgcReader.RuleValidators.Germany.CovpassDgcCertlogic
                     throw new ArgumentException($"Unsupported time unit {unit}");
             }
         }
+
+        /// <summary>
+        /// Evaluates the "after" DateTime operator
+        /// </summary>
+        /// <param name="p"></param>
+        /// <param name="args"></param>
+        /// <param name="data"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentException"></exception>
         public static object EvaluateAfter(IProcessJsonLogic p, JToken[] args, object data)
         {
             if (args.Length < 2 || args.Length > 3)
@@ -100,6 +153,15 @@ namespace DgcReader.RuleValidators.Germany.CovpassDgcCertlogic
             }
             return true;
         }
+
+        /// <summary>
+        /// Evaluates the "before" DateTime operator
+        /// </summary>
+        /// <param name="p"></param>
+        /// <param name="args"></param>
+        /// <param name="data"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentException"></exception>
         public static object EvaluateBefore(IProcessJsonLogic p, JToken[] args, object data)
         {
             if (args.Length < 2 || args.Length > 3)
@@ -115,6 +177,15 @@ namespace DgcReader.RuleValidators.Germany.CovpassDgcCertlogic
             }
             return true;
         }
+
+        /// <summary>
+        /// Evaluates the "not-after" DateTime operator
+        /// </summary>
+        /// <param name="p"></param>
+        /// <param name="args"></param>
+        /// <param name="data"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentException"></exception>
         public static object EvaluateNotAfter(IProcessJsonLogic p, JToken[] args, object data)
         {
             if (args.Length < 2 || args.Length > 3)
@@ -130,6 +201,15 @@ namespace DgcReader.RuleValidators.Germany.CovpassDgcCertlogic
             }
             return true;
         }
+
+        /// <summary>
+        /// Evaluates the "not-before" DateTime operator
+        /// </summary>
+        /// <param name="p"></param>
+        /// <param name="args"></param>
+        /// <param name="data"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentException"></exception>
         public static object EvaluateNotBefore(IProcessJsonLogic p, JToken[] args, object data)
         {
             if (args.Length < 2 || args.Length > 3)
@@ -145,12 +225,23 @@ namespace DgcReader.RuleValidators.Germany.CovpassDgcCertlogic
             }
             return true;
         }
+
+        /// <summary>
+        /// Evaluates the modified "in" operator
+        /// </summary>
+        /// <param name="p"></param>
+        /// <param name="args"></param>
+        /// <param name="data"></param>
+        /// <returns></returns>
         public static object EvaluateIn(IProcessJsonLogic p, JToken[] args, object data)
         {
             object needle = p.Apply(args[0], data);
             object haystack = p.Apply(args[1], data);
             if (haystack is null) return false;
-            if (haystack is String) return (haystack as string).IndexOf(needle.ToString()) >= 0;
+            if (haystack is string s)
+            {
+                return s.IndexOf(needle.ToString()) >= 0;
+            }
 
             // Edit: Search key in Dictionary
             // This considers a valid match the presence of a property with the specified name
@@ -166,11 +257,29 @@ namespace DgcReader.RuleValidators.Germany.CovpassDgcCertlogic
 
         #endregion
 
+        /// <summary>
+        /// Represent a time unit used by the CertLogic rules
+        /// </summary>
         public enum TimeUnit
         {
+            /// <summary>
+            /// Year
+            /// </summary>
             Year,
+
+            /// <summary>
+            /// Month
+            /// </summary>
             Month,
+
+            /// <summary>
+            /// Day
+            /// </summary>
             Day,
+
+            /// <summary>
+            /// Hour
+            /// </summary>
             Hour
         }
     }

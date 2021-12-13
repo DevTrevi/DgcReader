@@ -69,7 +69,6 @@ namespace Microsoft.Extensions.DependencyInjection
         {
             if (useAsBlacklistProvider)
             {
-                Services.RemoveAll<IBlacklistProvider>();
                 Services.AddSingleton<IBlacklistProvider, DgcItalianRulesValidator>(_blacklistProviderFactory);
             }
             else
@@ -93,7 +92,6 @@ namespace Microsoft.Extensions.DependencyInjection
         {
             if (useAsRulesValidator)
             {
-                Services.RemoveAll<IRulesValidator>();
                 Services.AddSingleton<IRulesValidator, DgcItalianRulesValidator>(_rulesValidatorFactory);
             }
             else

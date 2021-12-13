@@ -3,9 +3,19 @@
 
 namespace DgcReader.RuleValidators.Germany.CovpassDgcCertlogic.Data
 {
+    /// <summary>
+    /// Rule type
+    /// </summary>
     public enum RuleType
     {
+        /// <summary>
+        /// Invalidation rule
+        /// </summary>
         INVALIDATION,
+
+        /// <summary>
+        /// Acceptance rule
+        /// </summary>
         ACCEPTANCE,
     }
 }

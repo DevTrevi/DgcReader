@@ -21,12 +21,22 @@ namespace DgcReader.RuleValidators.Germany.CovpassDgcCertlogic
         private const string EXTERNAL_KEY = "external";
         private const string PAYLOAD_KEY = "payload";
         private const string CERTLOGIC_KEY = "CERTLOGIC";
-        private const string CERTLOGIC_VERSION = "1.0.0";
+
+        /// <summary>
+        /// See <see href="https://github.com/ehn-dcc-development/dgc-business-rules/blob/main/certlogic/specification/CHANGELOG.md"/>
+        /// </summary>
+        private const string CERTLOGIC_VERSION = "1.1.0";
 
         private readonly IAffectedFieldsDataRetriever affectedFieldsDataRetriever;
         private readonly IJsonLogicValidator jsonLogicValidator;
         private readonly ILogger? logger;
 
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="affectedFieldsDataRetriever"></param>
+        /// <param name="jsonLogicValidator"></param>
+        /// <param name="logger"></param>
         public DefaultCertLogicEngine(
             IAffectedFieldsDataRetriever affectedFieldsDataRetriever,
             IJsonLogicValidator jsonLogicValidator,
@@ -49,7 +59,7 @@ namespace DgcReader.RuleValidators.Germany.CovpassDgcCertlogic
             return o;
         }
 
-
+        /// <inheritdoc/>
         public IEnumerable<ValidationResult> Validate(
             CertificateType certificateType,
             string hcertVersionString,
@@ -106,7 +116,7 @@ namespace DgcReader.RuleValidators.Germany.CovpassDgcCertlogic
 
             return new ValidationResult
             {
-                Rule = rule,
+                Rule = Clone(rule), // Clone the rule, in order to safely return it in the result for the caller
                 Result = res,
                 Current = cur,
                 ValidationErrors = validationErrors.Any() ? validationErrors : null,
@@ -121,6 +131,11 @@ namespace DgcReader.RuleValidators.Germany.CovpassDgcCertlogic
             return null;
         }
 
+        private static T Clone<T>(T obj)
+        {
+            return JsonConvert.DeserializeObject<T>(JsonConvert.SerializeObject(obj));
+        }
+
         class ValidatorData
         {
             [JsonProperty(EXTERNAL_KEY)]
@@ -132,8 +147,20 @@ namespace DgcReader.RuleValidators.Germany.CovpassDgcCertlogic
         }
     }
 
+    /// <summary>
+    /// Engine capable of validating CertLogic rules
+    /// </summary>
     public interface ICertLogicEngine
     {
+        /// <summary>
+        /// Return validation results for the payload tested against the specified rules
+        /// </summary>
+        /// <param name="certificateType"></param>
+        /// <param name="hcertVersionString"></param>
+        /// <param name="rules"></param>
+        /// <param name="externalParameter"></param>
+        /// <param name="payload"></param>
+        /// <returns></returns>
         IEnumerable<ValidationResult> Validate(
             CertificateType certificateType,
             string hcertVersionString,

@@ -102,7 +102,25 @@ namespace DgcReader.RuleValidators.Italy
         #region Implementation of IRulesValidator
 
         /// <inheritdoc/>
-        public async Task<IRulesValidationResult> GetRulesValidationResult(EuDGC dgc, DateTimeOffset validationInstant, string countryCode = "IT", CancellationToken cancellationToken = default)
+        public Task<IRuleValidationResult> GetRulesValidationResult(EuDGC dgc, DateTimeOffset validationInstant, string countryCode = "IT", CancellationToken cancellationToken = default)
+        {
+
+
+            // Validation mode check
+            if (_options.ValidationMode == null)
+            {
+                // Warning if not set excplicitly
+                _logger?.LogWarning($"Validation mode not set. The {ValidationMode.Basic3G} validation mode will be used");
+            }
+
+            return this.GetRulesValidationResult(dgc,
+                validationInstant,
+                _options.ValidationMode ?? ValidationMode.Basic3G,
+                cancellationToken);
+        }
+
+        /// <inheritdoc/>
+        public async Task<IRulesValidationResult> GetRulesValidationResult(EuDGC dgc, DateTimeOffset validationInstant, string countryCode = "IT", ValidationMode validationMode, CancellationToken cancellationToken = default)
         {
             var result = new ItalianRulesValidationResult
             {
@@ -122,18 +140,11 @@ namespace DgcReader.RuleValidators.Italy
                 return result;
             }
 
-            // Validation mode check
-            if (Options.ValidationMode == null)
-            {
-                // Warning if not set excplicitly
-                Logger?.LogWarning($"Validation mode not set. The {ValidationMode.Basic3G} validation mode will be used");
-            }
-
             // Super Greenpass check
-            if(Options.ValidationMode == ValidationMode.Strict2G)
+            if (validationMode == ValidationMode.Strict2G)
             {
                 // If 2G mode is active, Test entries are considered not valid
-                if(dgc.GetCertificateEntry() is TestEntry)
+                if (dgc.GetCertificateEntry() is TestEntry)
                 {
                     Logger.LogWarning($"Test entries are considered not valid when validation mode is {ValidationMode.Strict2G}");
                     result.ItalianStatus = DgcItalianResultStatus.NotValid;
@@ -238,7 +249,6 @@ namespace DgcReader.RuleValidators.Italy
         }
         #endregion
 
-        #region Public methods
 
         /// <summary>
         /// Validates the specified certificate against the Italian business rules.

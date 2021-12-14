@@ -26,9 +26,20 @@ namespace DgcReader
     /// </summary>
     public class DgcReaderService
     {
-        private readonly IEnumerable<ITrustListProvider> TrustListProviders;
-        private readonly IEnumerable<IBlacklistProvider> BlackListProviders;
-        private readonly IEnumerable<IRulesValidator> RulesValidators;
+        /// <summary>
+        /// The registered TrustList providers
+        /// </summary>
+        public readonly IEnumerable<ITrustListProvider> TrustListProviders;
+
+        /// <summary>
+        /// The registered BlackList providers
+        /// </summary>
+        public readonly IEnumerable<IBlacklistProvider> BlackListProviders;
+
+        /// <summary>
+        /// The registered rule validators
+        /// </summary>
+        public readonly IEnumerable<IRulesValidator> RulesValidators;
         private readonly ILogger? Logger;
 
         /// <summary>
@@ -120,6 +131,7 @@ namespace DgcReader
         /// <param name="acceptanceCountryCode">The 2-letter ISO country of the acceptance country. This information is mandatory in order to perform the rules validation</param>
         /// <param name="validationInstant">The validation instant of the DGC</param>
         /// <param name="throwOnError">If true, throw an exception if the validation fails</param>
+        /// <param name="cancellationToken"></param>
         /// <returns></returns>
         /// <exception cref="DgcException"></exception>
         public async Task<DgcValidationResult> Verify(string qrCodeData, string acceptanceCountryCode, DateTimeOffset validationInstant, bool throwOnError = true)
@@ -182,6 +194,7 @@ namespace DgcReader
 
             return result;
         }
+
 
         /// <summary>
         /// Decodes the DGC data, verifying signature, blacklist and rules if a provider is available.

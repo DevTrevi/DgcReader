@@ -6,7 +6,6 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using DgcReader.RuleValidators.Italy.Const;
 using DgcReader.RuleValidators.Italy.Models;
-using DgcReader.Models;
 using System.Threading;
 using Microsoft.Extensions.Logging;
 using DgcReader.Interfaces.RulesValidators;
@@ -102,37 +101,99 @@ namespace DgcReader.RuleValidators.Italy
         #region Implementation of IRulesValidator
 
         /// <inheritdoc/>
-        public Task<IRuleValidationResult> GetRulesValidationResult(EuDGC dgc, DateTimeOffset validationInstant, string countryCode = "IT", CancellationToken cancellationToken = default)
+        public async Task<IRulesValidationResult> GetRulesValidationResult(EuDGC dgc, DateTimeOffset validationInstant, string countryCode = "IT", CancellationToken cancellationToken = default)
         {
-
-
-            // Validation mode check
-            if (_options.ValidationMode == null)
+            if (!await SupportsCountry(countryCode))
             {
-                // Warning if not set excplicitly
-                _logger?.LogWarning($"Validation mode not set. The {ValidationMode.Basic3G} validation mode will be used");
+                var result = new ItalianRulesValidationResult
+                {
+                    ItalianStatus = DgcItalianResultStatus.NeedRulesVerification,
+                    StatusMessage = $"Rules validation for country {countryCode} is not supported by this provider",
+                };
+                return result;
             }
 
-            return this.GetRulesValidationResult(dgc,
+            // Validation mode check
+            if (Options.ValidationMode == null)
+            {
+                // Warning if not set excplicitly
+                Logger?.LogWarning($"Validation mode not set. The {ValidationMode.Basic3G} validation mode will be used");
+            }
+
+            return await this.GetRulesValidationResult(dgc,
                 validationInstant,
-                _options.ValidationMode ?? ValidationMode.Basic3G,
+                Options.ValidationMode ?? ValidationMode.Basic3G,
                 cancellationToken);
         }
 
         /// <inheritdoc/>
-        public async Task<IRulesValidationResult> GetRulesValidationResult(EuDGC dgc, DateTimeOffset validationInstant, string countryCode = "IT", ValidationMode validationMode, CancellationToken cancellationToken = default)
+        public Task RefreshRules(string? countryCode = null, CancellationToken cancellationToken = default)
+        {
+            return _rulesProvider.RefreshValueSet(cancellationToken);
+        }
+
+        /// <inheritdoc/>
+        public Task<IEnumerable<string>> GetSupportedCountries(CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult(new[] { "IT" }.AsEnumerable());
+        }
+
+        /// <inheritdoc/>
+        public async Task<bool> SupportsCountry(string countryCode, CancellationToken cancellationToken = default)
+        {
+            var supportedCountries = await GetSupportedCountries();
+            return supportedCountries.Any(r => r.Equals(countryCode, StringComparison.InvariantCultureIgnoreCase));
+        }
+        #endregion
+
+        #region Implementation of IBlackListProvider
+
+        /// <inheritdoc/>
+        public async Task<bool> IsBlacklisted(string certificateIdentifier, CancellationToken cancellationToken = default)
+        {
+            var blacklist = await GetBlacklist(cancellationToken);
+            if (blacklist == null)
+            {
+                Logger?.LogWarning($"Unable to get the blacklist: considering the certificate valid");
+                return true;
+            }
+
+            return blacklist.Contains(certificateIdentifier);
+        }
+
+        /// <inheritdoc/>
+        public async Task<IEnumerable<string>?> GetBlacklist(CancellationToken cancellationToken = default)
+        {
+            var rulesContainer = await _rulesProvider.GetValueSet(cancellationToken);
+            return rulesContainer?.Rules?.GetBlackList();
+        }
+
+        /// <inheritdoc/>
+        public async Task<IEnumerable<string>?> RefreshBlacklist(CancellationToken cancellationToken = default)
+        {
+            var rulesSet = await _rulesProvider.RefreshValueSet(cancellationToken);
+            return rulesSet?.Rules?.GetBlackList();
+        }
+        #endregion
+
+        #region Public methods
+
+        /// <summary>
+        /// Returns the validation result
+        /// </summary>
+        /// <param name="dgc"></param>
+        /// <param name="validationInstant"></param>
+        /// <param name="validationMode">The Italian validation mode to be used</param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        public async Task<IRulesValidationResult> GetRulesValidationResult(EuDGC dgc, DateTimeOffset validationInstant, ValidationMode validationMode, CancellationToken cancellationToken = default)
         {
             var result = new ItalianRulesValidationResult
             {
                 ValidationInstant = validationInstant,
             };
 
-            if (!await SupportsCountry(countryCode))
-            {
-                result.ItalianStatus = DgcItalianResultStatus.NeedRulesVerification;
-                result.StatusMessage = $"Rules validation for country {countryCode} is not supported by this provider";
-                return result;
-            }
+
 
             if (dgc == null)
             {
@@ -198,57 +259,6 @@ namespace DgcReader.RuleValidators.Italy
             }
             return result;
         }
-
-        /// <inheritdoc/>
-        public Task RefreshRules(string? countryCode = null, CancellationToken cancellationToken = default)
-        {
-            return _rulesProvider.RefreshValueSet(cancellationToken);
-        }
-
-        /// <inheritdoc/>
-        public Task<IEnumerable<string>> GetSupportedCountries(CancellationToken cancellationToken = default)
-        {
-            return Task.FromResult(new[] { "IT" }.AsEnumerable());
-        }
-
-        /// <inheritdoc/>
-        public async Task<bool> SupportsCountry(string countryCode, CancellationToken cancellationToken = default)
-        {
-            var supportedCountries = await GetSupportedCountries();
-            return supportedCountries.Any(r => r.Equals(countryCode, StringComparison.InvariantCultureIgnoreCase));
-        }
-        #endregion
-
-        #region Implementation of IBlackListProvider
-
-        /// <inheritdoc/>
-        public async Task<bool> IsBlacklisted(string certificateIdentifier, CancellationToken cancellationToken = default)
-        {
-            var blacklist = await GetBlacklist(cancellationToken);
-            if (blacklist == null)
-            {
-                Logger?.LogWarning($"Unable to get the blacklist: considering the certificate valid");
-                return true;
-            }
-
-            return blacklist.Contains(certificateIdentifier);
-        }
-
-        /// <inheritdoc/>
-        public async Task<IEnumerable<string>?> GetBlacklist(CancellationToken cancellationToken = default)
-        {
-            var rulesContainer = await _rulesProvider.GetValueSet(cancellationToken);
-            return rulesContainer?.Rules?.GetBlackList();
-        }
-
-        /// <inheritdoc/>
-        public async Task<IEnumerable<string>?> RefreshBlacklist(CancellationToken cancellationToken = default)
-        {
-            var rulesSet = await _rulesProvider.RefreshValueSet(cancellationToken);
-            return rulesSet?.Rules?.GetBlackList();
-        }
-        #endregion
-
 
         /// <summary>
         /// Validates the specified certificate against the Italian business rules.

@@ -1,8 +1,11 @@
-﻿using DgcReader.Interfaces.RulesValidators;
+﻿using DgcReader.Exceptions;
+using DgcReader.Interfaces.RulesValidators;
 using DgcReader.Models;
 using DgcReader.RuleValidators.Italy;
 using DgcReader.RuleValidators.Italy.Models;
 using System;
+using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 // Copyright (c) 2021 Davide Trevisan
@@ -55,29 +58,31 @@ namespace DgcReader
         /// It is mandatory that the <see cref="DgcItalianRulesValidator"/> is registered as RulesValidator in <see cref="DgcReaderService"/>
         /// </summary>
         /// <param name="dgcReaderService"></param>
-        /// <param name="qrCodeData"></param>
-        /// <param name="validationInstant"></param>
+        /// <param name="qrCodeData">The QRCode data of the DGC</param>
+        /// <param name="validationInstant">The validation instant of the DGC</param>
         /// <param name="validationMode">The Italian validation mode</param>
-        /// <param name="throwOnError"></param>
+        /// <param name="throwOnError">If true, throw an exception if the validation fails</param>
+        /// <param name="cancellationToken"></param>
         /// <returns></returns>
         public static async Task<DgcValidationResult> VerifyForItaly(this DgcReaderService dgcReaderService,
             string qrCodeData,
             DateTimeOffset validationInstant,
             ValidationMode validationMode,
-            bool throwOnError = true)
+            bool throwOnError = true,
+            CancellationToken cancellationToken = default)
         {
-            return await dgcReaderService.Verify(qrCodeData, validationInstant,
-                (dgc, validationInstant, cancellationToken) =>
+            return await dgcReaderService.Verify(qrCodeData, "IT", validationInstant,
+                async (dgc, countryCode, validationInstant, throwOnError ,cancellationToken) =>
                 {
-                    var italianValidator = dgcReaderService.RulesValidator as DgcItalianRulesValidator;
+                    var italianValidator = dgcReaderService.RulesValidators.OfType<DgcItalianRulesValidator>().FirstOrDefault();
                     if (italianValidator == null)
                     {
-                        throw new DgcException($"The registered RulesValidator provider is not a {nameof(DgcItalianRulesValidator)}");
+                        throw new DgcException($"{nameof(DgcItalianRulesValidator)} is not registered in {nameof(DgcReaderService)}");
                     }
 
                     // Call the overload with validationMode parameter
-                    return italianValidator.GetRulesValidationResult(dgc, validationInstant, validationMode, cancellationToken);
-                }, throwOnError);
+                    return await italianValidator.GetRulesValidationResult(dgc, validationInstant, validationMode, cancellationToken);
+                }, throwOnError, cancellationToken);
         }
 
         /// <summary>
@@ -85,16 +90,18 @@ namespace DgcReader
         /// It is mandatory that the <see cref="DgcItalianRulesValidator"/> is registered as RulesValidator in <see cref="DgcReaderService"/>
         /// </summary>
         /// <param name="dgcReaderService"></param>
-        /// <param name="qrCodeData"></param>
+        /// <param name="qrCodeData">The QRCode data of the DGC</param>
         /// <param name="validationMode">The Italian validation mode</param>
-        /// <param name="throwOnError"></param>
+        /// <param name="throwOnError">If true, throw an exception if the validation fails</param>
+        /// <param name="cancellationToken"></param>
         /// <returns></returns>
         public static Task<DgcValidationResult> VerifyForItaly(this DgcReaderService dgcReaderService,
             string qrCodeData,
             ValidationMode validationMode,
-            bool throwOnError = true)
+            bool throwOnError = true,
+            CancellationToken cancellationToken = default)
         {
-            return dgcReaderService.VerifyForItaly(qrCodeData, DateTimeOffset.Now, validationMode, throwOnError);
+            return dgcReaderService.VerifyForItaly(qrCodeData, DateTimeOffset.Now, validationMode, throwOnError, cancellationToken);
         }
     }
 

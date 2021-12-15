@@ -6,6 +6,9 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 #endif
 
+// Copyright (c) 2021 Davide Trevisan
+// Licensed under the Apache License, Version 2.0
+
 namespace DgcReader.RuleValidators.Germany.Test
 {
     public abstract class TestBase

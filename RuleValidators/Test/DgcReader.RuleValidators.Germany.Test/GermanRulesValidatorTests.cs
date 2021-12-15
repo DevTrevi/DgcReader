@@ -1,13 +1,7 @@
 using System;
-using System.Diagnostics;
 using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using DgcReader.RuleValidators.Germany;
-using DgcReader;
 using System.Threading.Tasks;
-using System.Collections.Generic;
-using DgcReader.Exceptions;
-using GreenpassReader.Models;
 using DgcReader.Interfaces.RulesValidators;
 
 #if NETFRAMEWORK
@@ -19,6 +13,9 @@ using System.Net.Http;
 #else
 using Microsoft.Extensions.DependencyInjection;
 #endif
+
+// Copyright (c) 2021 Davide Trevisan
+// Licensed under the Apache License, Version 2.0
 
 namespace DgcReader.RuleValidators.Germany.Test
 {

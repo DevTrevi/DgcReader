@@ -57,7 +57,7 @@ namespace DgcReader.RuleValidators.Germany.Providers
                 {
                     string content = await response.Content.ReadAsStringAsync();
 
-                    var results = JsonConvert.DeserializeObject<ValueSet>(content);
+                    var results = JsonConvert.DeserializeObject<ValueSet>(content, DgcGermanRulesValidator.JsonSerializerSettings);
 
                     if (results == null)
                         throw new Exception($"Error wile deserializing value set {id} from server");

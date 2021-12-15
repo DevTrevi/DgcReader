@@ -94,7 +94,7 @@ namespace DgcReader.RuleValidators.Germany.Providers
             {
                 string content = await response.Content.ReadAsStringAsync();
 
-                var result = JsonConvert.DeserializeObject<RuleEntry>(content);
+                var result = JsonConvert.DeserializeObject<RuleEntry>(content, DgcGermanRulesValidator.JsonSerializerSettings);
 
                 if (result == null)
                     throw new Exception("Error wile deserializing rule from server");

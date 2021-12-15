@@ -30,8 +30,11 @@
 		<ProjectReference Include="..\..\DgcReader\DgcReader.csproj" />
 	</ItemGroup>
 
+
+
+
 	<ItemGroup>
-		<!--<PackageReference Include="JsonLogic.Net" Version="1.1.11" />-->
+		<PackageReference Include="JsonLogic.Net" Version="1.1.11" />
 		<PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
 	</ItemGroup>
 
@@ -47,12 +50,6 @@
 	<ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
 		<PackageReference Include="Microsoft.Extensions.Options" Version="5.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Http" Version="5.0.0" />
-	</ItemGroup>
-
-	<ItemGroup>
-	  <Reference Include="JsonLogic.Net">
-	    <HintPath>..\..\..\..\JsonLogic.Net\JsonLogic.Net\bin\Debug\netstandard1.0\JsonLogic.Net.dll</HintPath>
-	  </Reference>
 	</ItemGroup>
 
 	<ItemGroup>

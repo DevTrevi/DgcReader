@@ -21,14 +21,6 @@ namespace DgcReader.RuleValidators.Germany.Providers
         protected readonly HttpClient HttpClient;
         protected readonly DgcGermanRulesValidatorOptions Options;
 
-        protected static readonly JsonSerializerSettings JsonSettings = new JsonSerializerSettings
-        {
-            MetadataPropertyHandling = MetadataPropertyHandling.Ignore,
-            DateParseHandling = DateParseHandling.None,
-            Converters = {
-                new IsoDateTimeConverter { DateTimeStyles = DateTimeStyles.None }
-            },
-        };
 
         public GermanyValueSetProviderBase(HttpClient httpClient, DgcGermanRulesValidatorOptions options, ILogger? logger)
             : base (logger)
@@ -61,7 +53,7 @@ namespace DgcReader.RuleValidators.Germany.Providers
                 {
                     Logger?.LogInformation($"Loading rules identifiers from file");
                     var fileContent = File.ReadAllText(filePath);
-                    valueSet = JsonConvert.DeserializeObject<T>(fileContent, JsonSettings);
+                    valueSet = JsonConvert.DeserializeObject<T>(fileContent, DgcGermanRulesValidator.JsonSerializerSettings);
                 }
             }
             catch (Exception e)
@@ -97,7 +89,7 @@ namespace DgcReader.RuleValidators.Germany.Providers
                 Directory.CreateDirectory(GetCacheFolder());
 
             var filePath = GetFilePath();
-            var json = JsonConvert.SerializeObject(valueSet, JsonSettings);
+            var json = JsonConvert.SerializeObject(valueSet, DgcGermanRulesValidator.JsonSerializerSettings);
 
             File.WriteAllText(filePath, json);
             return Task.FromResult(0);

@@ -17,6 +17,7 @@ using DgcReader.RuleValidators.Germany.CovpassDgcCertlogic.Domain.Rules;
 using DgcReader.RuleValidators.Germany.Providers;
 using Newtonsoft.Json;
 using System.Globalization;
+using Newtonsoft.Json.Converters;
 
 #if NETSTANDARD2_0_OR_GREATER || NET5_0_OR_GREATER || NET47_OR_GREATER
 using Microsoft.Extensions.Options;
@@ -44,6 +45,17 @@ namespace DgcReader.RuleValidators.Germany
         private readonly DefaultCertLogicEngine _certLogicEngine;
         private readonly CovPassGetRulesUseCase _rulesUseCase;
 
+        public static readonly JsonSerializerSettings JsonSerializerSettings = new JsonSerializerSettings
+        {
+            MetadataPropertyHandling = MetadataPropertyHandling.Ignore,
+            DateParseHandling = DateParseHandling.None,
+            DateTimeZoneHandling = DateTimeZoneHandling.Utc,
+            DateFormatHandling = DateFormatHandling.IsoDateFormat,
+            Converters = {
+                new IsoDateTimeConverter { DateTimeStyles = DateTimeStyles.AssumeUniversal, Culture = CultureInfo.InvariantCulture },
+            },
+        };
+
 #if NET452
         /// <summary>
         /// Constructor
@@ -65,7 +77,7 @@ namespace DgcReader.RuleValidators.Germany
             var affectedFieldsDataRetriever = new DefaultAffectedFieldsDataRetriever(Logger);
             var jsonLogicValidator = new DefaultJsonLogicValidator();
 
-            _certLogicEngine = new DefaultCertLogicEngine(affectedFieldsDataRetriever, jsonLogicValidator, Logger);
+            _certLogicEngine = new DefaultCertLogicEngine(affectedFieldsDataRetriever, jsonLogicValidator);
             _rulesUseCase = new CovPassGetRulesUseCase();
         }
 
@@ -105,7 +117,7 @@ namespace DgcReader.RuleValidators.Germany
             var affectedFieldsDataRetriever = new DefaultAffectedFieldsDataRetriever(Logger);
             var jsonLogicValidator = new DefaultJsonLogicValidator();
 
-            _certLogicEngine = new DefaultCertLogicEngine(affectedFieldsDataRetriever, jsonLogicValidator, Logger);
+            _certLogicEngine = new DefaultCertLogicEngine(affectedFieldsDataRetriever, jsonLogicValidator);
             _rulesUseCase = new CovPassGetRulesUseCase();
         }
 
@@ -178,7 +190,7 @@ namespace DgcReader.RuleValidators.Germany
                     Region = "",
                 };
 
-                var certString = JsonConvert.SerializeObject(dgc);
+                var certString = JsonConvert.SerializeObject(dgc, JsonSerializerSettings);
 
                 var testResults = _certLogicEngine.Validate(certificateType,
                     dgc.SchemaVersion,

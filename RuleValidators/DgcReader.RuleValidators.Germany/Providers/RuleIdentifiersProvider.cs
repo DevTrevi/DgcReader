@@ -41,7 +41,7 @@ namespace DgcReader.RuleValidators.Germany.Providers
                 {
                     string content = await response.Content.ReadAsStringAsync();
 
-                    var results = JsonConvert.DeserializeObject<RuleIdentifier[]>(content);
+                    var results = JsonConvert.DeserializeObject<RuleIdentifier[]>(content, DgcGermanRulesValidator.JsonSerializerSettings);
 
                     if (results == null)
                         throw new Exception("Error wile deserializing rules identifiers from server");

@@ -25,26 +25,22 @@ namespace DgcReader.RuleValidators.Germany.CovpassDgcCertlogic
         /// <summary>
         /// See <see href="https://github.com/ehn-dcc-development/dgc-business-rules/blob/main/certlogic/specification/CHANGELOG.md"/>
         /// </summary>
-        private const string CERTLOGIC_VERSION = "1.1.0";
+        private const string CERTLOGIC_VERSION = "1.2.3";
 
         private readonly IAffectedFieldsDataRetriever affectedFieldsDataRetriever;
         private readonly IJsonLogicValidator jsonLogicValidator;
-        private readonly ILogger? logger;
 
         /// <summary>
         /// Constructor
         /// </summary>
         /// <param name="affectedFieldsDataRetriever"></param>
         /// <param name="jsonLogicValidator"></param>
-        /// <param name="logger"></param>
         public DefaultCertLogicEngine(
             IAffectedFieldsDataRetriever affectedFieldsDataRetriever,
-            IJsonLogicValidator jsonLogicValidator,
-            ILogger? logger)
+            IJsonLogicValidator jsonLogicValidator)
         {
             this.affectedFieldsDataRetriever = affectedFieldsDataRetriever;
             this.jsonLogicValidator = jsonLogicValidator;
-            this.logger = logger;
         }
 
         private JObject PrepareData(ExternalParameter externalParameter, string payload)

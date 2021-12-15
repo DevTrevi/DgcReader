@@ -1,6 +1,7 @@
 ﻿using JsonLogic.Net;
 using Newtonsoft.Json.Linq;
 using System;
+using System.Globalization;
 using System.Linq;
 
 // Copyright (c) 2021 Davide Trevisan
@@ -57,6 +58,13 @@ namespace DgcReader.RuleValidators.Germany.CovpassDgcCertlogic
         public static void AddInOperator(this IManageOperators manageOperators) => manageOperators.AddOperator("in", EvaluateIn);
 
         /// <summary>
+        /// Add the "extractFromUVCI" operator to the collection
+        /// <see href="https://github.com/ehn-dcc-development/dgc-business-rules/blob/main/certlogic/specification/README.md#extract-data-from-an-uvci-extractfromuvci"/>
+        /// </summary>
+        /// <param name="manageOperators"></param>
+        public static void AddExtractFromUVCIOperator(this IManageOperators manageOperators) => manageOperators.AddOperator("extractFromUVCI", EvaluateExtractFromUVCI);
+
+        /// <summary>
         /// Add all the CertLogic operators to the collection
         /// </summary>
         /// <param name="manageOperators"></param>
@@ -68,6 +76,7 @@ namespace DgcReader.RuleValidators.Germany.CovpassDgcCertlogic
             manageOperators.AddNotAfterOperator();
             manageOperators.AddNotBeforeOperator();
             manageOperators.AddInOperator();
+            manageOperators.AddExtractFromUVCIOperator();
         }
 
         /// <summary>
@@ -111,7 +120,7 @@ namespace DgcReader.RuleValidators.Germany.CovpassDgcCertlogic
             }
             else
             {
-                if (!DateTimeOffset.TryParse(value.ToString(), out dateTimeOff))
+                if (!DateTimeOffset.TryParse(value.ToString(), CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out dateTimeOff))
                     throw new ArgumentException($"Value {value} is not a DateTime or DateTimeOffset");
             }
 
@@ -243,6 +252,12 @@ namespace DgcReader.RuleValidators.Germany.CovpassDgcCertlogic
                 return s.IndexOf(needle.ToString()) >= 0;
             }
 
+            if(haystack is JArray jarr)
+            {
+                if (jarr.OfType<JValue>().Any(v=> v.Value == needle))
+                    return true;
+            }
+
             // Edit: Search key in Dictionary
             // This considers a valid match the presence of a property with the specified name
             // regardless of the type
@@ -253,6 +268,35 @@ namespace DgcReader.RuleValidators.Germany.CovpassDgcCertlogic
             }
 
             return haystack.MakeEnumerable().Any(item => item.EqualTo(needle));
+        }
+
+        /// <summary>
+        /// Evaluates the "extractFromUVCI" operator
+        /// <see href="https://github.com/ehn-dcc-development/dgc-business-rules/blob/main/certlogic/specification/README.md#extract-data-from-an-uvci-extractfromuvci"/>
+        /// </summary>
+        /// <param name="p"></param>
+        /// <param name="args"></param>
+        /// <param name="data"></param>
+        /// <returns></returns>
+        public static object? EvaluateExtractFromUVCI(IProcessJsonLogic p, JToken[] args, object data)
+        {
+            string? operand = p.Apply(args[0], data) as string;
+            if (operand is null) return null;
+            int index = Convert.ToInt32(p.Apply(args[1], data));
+
+            if (index < 0) return null;
+
+            var splitted = operand.Split(':', '#', '/');
+            if (splitted.Length > 1)
+            {
+                if (splitted[0] == "URN" && splitted[1] == "UVCI")
+                    splitted = splitted.Skip(2).ToArray();
+            }
+
+            if (splitted.Length <= index)
+                return null;
+
+            return splitted[index];
         }
 
         #endregion

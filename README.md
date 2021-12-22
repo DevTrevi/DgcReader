@@ -25,7 +25,7 @@ public void ConfigureServices(IServiceCollection services)
 {
     ...
     services.AddDgcReader()                     // Add the DgcReaderService as singleton
-        .AddItalianTrustListProvider(o =>       // Register the ItalianTrustListProvider service (or any other provider type)
+        .AddItalianTrustListProvider(o =>       // Register at least one trust list provider
         {
             // Optionally, configure the provider with custom options
             o.RefreshInterval = TimeSpan.FromHours(24);
@@ -33,8 +33,9 @@ public void ConfigureServices(IServiceCollection services)
             o.SaveCertificate = true;
             ...
         })
-        .AddItalianBlacklistProvider()      // The blacklist provider service
-        .AddItalianRulesValidator();        // Finally, the rules validator
+        .AddItalianBlacklistProvider()      // The blacklist provider(s)
+        .AddItalianRulesValidator()         // Finally, the rule validator(s)
+        .AddGermanRulesValidator();         // Each rule validator will enable more acceptance countries to be supported
 }
 ```
 
@@ -57,7 +58,7 @@ var trustListProvider = new ItalianTrustListProvider(httpClient);
 var rulesValidator = new DgcItalianRulesValidator(httpClient);  // Note: this implementation is both a IRulesValidator and a IBlacklistProvider
 
 // Create an instance of the DgcReaderService
-var dgcReader = new DgcReaderService(trustListProvider, rulesValidator, rulesValidator);
+var dgcReader = DgcReaderService.Create(trustListProvider, rulesValidator, rulesValidator);
 ```
 
 Once instantiated and configured with at least the `ITrustListProvider` service, you can simply call one of the methods shown in c)
@@ -65,11 +66,12 @@ Once instantiated and configured with at least the `ITrustListProvider` service,
 #### b) Use the `DgcReaderService` without arguments (i.e. **no** `TrustListProvider`and `RulesValidator`):
 
 This lets you decode all the QR code data without verification, but still gives you a quick idea about how the library works.
- You can use the open source [EU Digital Green Test Certifactes](https://github.com/eu-digital-green-certificates/dgc-testdata) or your personal certificate.
+You can use the open source [EU Digital Green Test Certificates](https://github.com/eu-digital-green-certificates/dgc-testdata) or your personal certificate.
  
 ```csharp
 // Create the default instance of the `DgcReaderService` with an empty constructor
 var dgcReader = new DgcReaderService();
+var decoded = await dgcReader.Decode("HC1:01234...");
 ``` 
 
 #### c) Run the validation
@@ -77,13 +79,14 @@ var dgcReader = new DgcReaderService();
 ``` csharp
 ...
 string qrCodeData = "Raw qr code data staring with HC1:";
+string acceptanceCountry = "IT";    // Specify the 2-letter ISO code of the acceptance country
 
 // Decode and validate the qr code data.
 // The result will contain all the details of the validated object
-var result = await dgcReader.GetValidationResult(qrCodeData);
+var result = await dgcReader.GetValidationResult(qrCodeData, acceptanceCountry);
 
 var status = result.Status;
-var signatureIsValid = result.HasValidSignature;
+// Note: all the validation details are available in the result
 ...
 
 ```
@@ -91,11 +94,12 @@ var signatureIsValid = result.HasValidSignature;
 ``` csharp
 ...
 string qrCodeData = "Raw qr code data staring with HC1:";
+string acceptanceCountry = "IT";    // Specify the 2-letter ISO code of the acceptance country
 try
 {
     // Decode and validate the signature.
     // If anything fails, an exception is thrown containing the error details
-    var result = await dgcReader.Verify(qrCodeData);
+    var result = await dgcReader.Verify(qrCodeData, acceptanceCountry);
 }
 catch(Exception e)
 {
@@ -105,17 +109,57 @@ catch(Exception e)
 
 Information about how to interprete the decoded values can be found in the [Value Sets for Digital Green Certificates](https://ec.europa.eu/health/sites/default/files/ehealth/docs/digital-green-certificates_dt-specifications_en.pdf) and the [COVID-19 Data Reporting for Non-Lab-Based Testing](https://www.hhs.gov/sites/default/files/non-lab-based-covid19-test-reporting.pdf).
 
+## What's new in 2.0
+The new version of the service supports validation for multiple acceptance countries by registering multiple validator services.  
+It support also registration of multiple TrustList providers and BlackList providers.
 
-## Rules validation
+In order to support these new features, there are some breaking changes that must be taken into account when upgrading from version 1.x:
+- The `DgcReaderService` constructor now accepts multiple instances for each kind of service.  
+If you don't need to add multiple providers and you don't use dependency injection, you can simply use the `Create` factory method.
+- Methods `Verify` and `GetValidationResult` now requires to specify the acceptance country
+- The `DgcValidationResult` and the exceptions has been reorganized in a cleaner way, and the `DgcResultStatus` values are less bound to countries specific rules.  
+If you need, you can still access specific informations or customized status for a specific implementation of a RuleValidator service by accessing the RulesValidation property of the result.  
+By checking the actual implementation, you will get all the details returned by the RuleProvider used for the validation:
+``` csharp
+...
+if (result.RulesValidation is ItalianRulesValidationResult italianResult)
+{
+    var italianStatus = italianResult.ItalianStatus;    // Access specific status, according to the official Italian SDK
+}
+else if (result.RulesValidation is GermanRulesValidationResult germanResult)
+{
+    // do something else...
+}
+```
+In order to simplify this operation, each RuleValidator may expose some extension methods:
+``` csharp
+...
 
-Rules validation is an optional service and can be done by registering an `IRulesValidator` service, or by passing it to the constructor.
+var result = await dgcReader.Verify(data, "AT"); // Get validation result for country "AT"
 
- 
-Once registered, the validator will be executed when calling `DgcReader.Verify()` or `DgcReader.GetValidationResult()`.  
-If validation succeded, the result status will be set to `Valid` or `PartiallyValid`, otherwise another status will be returned when calling `DgcReader.GetValidationResult()`, or an exception will be thrown when using `DgcReader.Verify()`.
+var germanRulesResult = result.GetGermanValidationResult();          // This should return the RulesValidation property as GermanRulesValidationResult, because the german validator supports Austria as an acceptance country
+var italianRulesResult = result.GetItalianValidationResult();   // This will return null
 
-While TrustList providers and BlackList providers are virtually interchangeable, the rules for determining if a certificate is valid are different for every country.  
-For this reason, a specific implementation of the `IRulesValidator` should be used in order to determine if the certificate is valid for a particular country.
+```
+Please refer to each RuleValidator readme for more details.
+
+#### Understanding validation workflow with multiple providers
+There are some differences about how each service type is managed by the validation workflow.  
+When registering multiple services, the following logic is applied:  
+
+- Multiple 'IRulesValidator': having multiple rule validators increases the capability of the service, by expanding the list of supported acceptance countries.
+When validating a certificate, a validator supporting the required country will be searched. 
+    - If no validators are found, the validation fails with status `NeedRulesVerification`    
+    - If the validator could not return a final verdict (`NeedRulesVerification` or `OpenResult`), the service will try to validate the certificate with the next available validator for the acceptance country, if any.  
+    - When a validator can obtain a final result, either positive or negative, the result is returned.
+    - Otherwise, if a final result is not available, the result obtained from the last validator is returned.
+
+- Multiple 'IBlackListProvider': the certificate identifier will be searched in every registered provider, unless a match is found.
+The first match will cause the Blacklist check to fail.
+Using multiple blacklist providers increases the propability of a match for a banned certificate.
+- Multiple `ITrustListProvider`: when checking for signature validity, the public key of the certificate is searched using each provider, until a match is found.
+The first match found will be used for validating the signature, without searching it in the remaining TrustList providers. 
+Registering multiple trustlist providers can improve resiliency to national service backend temporary issues, or delays in propagation of the trusted certificates.
 
 ## Supported frameworks differences
 The library supports a wide range of .NET and .NET Framework versions, trying to keep the dependencies to third party libraries at minimum. 

@@ -334,8 +334,6 @@ namespace DgcReader.RuleValidators.Italy
                     result.ItalianStatus = DgcItalianResultStatus.NotValidYet;
                 else if (result.ValidUntil < result.ValidationInstant)
                     result.ItalianStatus = DgcItalianResultStatus.NotValid;
-                else if (vaccination.DoseNumber < vaccination.TotalDoseSeries)
-                    result.ItalianStatus = DgcItalianResultStatus.PartiallyValid;
                 else
                     result.ItalianStatus = DgcItalianResultStatus.Valid;
             }
@@ -415,8 +413,6 @@ namespace DgcReader.RuleValidators.Italy
                 result.ItalianStatus = DgcItalianResultStatus.NotValidYet;
             else if (result.ValidationInstant > result.ValidFrom.Value.AddDays(endDay))
                 result.ItalianStatus = DgcItalianResultStatus.NotValid;
-            else if (result.ValidationInstant > result.ValidUntil)
-                result.ItalianStatus = DgcItalianResultStatus.PartiallyValid;
             else
                 result.ItalianStatus = DgcItalianResultStatus.Valid;
         }

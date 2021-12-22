@@ -92,12 +92,7 @@ namespace DgcReader.RuleValidators.Italy.Models
         NotValidYet,
 
         /// <summary>
-        /// The certificate is considered valid in the country of verification, but may be considered not valid in other countries
-        /// </summary>
-        PartiallyValid,
-
-        /// <summary>
-        /// The certificate is valid in the country of verification, and should be valid in other countries as well
+        /// The certificate is valid
         /// </summary>
         Valid,
     }

@@ -36,7 +36,6 @@ namespace DgcReader
                 case DgcItalianResultStatus.NotValidYet:
                     return DgcResultStatus.NotValid;
 
-                case DgcItalianResultStatus.PartiallyValid:
                 case DgcItalianResultStatus.Valid:
                     return DgcResultStatus.Valid;
 

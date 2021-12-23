@@ -29,7 +29,7 @@ namespace DgcReader.RuleValidators.Germany.Providers
             Options = options;
         }
 
-        protected virtual string GetCacheFolder() => Path.Combine(Options.BasePath, Options.FolderName);
+        protected virtual string GetCacheFolder() => Path.Combine(Options.BasePath, Const.ProviderDataFolder);
 
         protected abstract string GetFileName();
 
@@ -123,7 +123,7 @@ namespace DgcReader.RuleValidators.Germany.Providers
             Options = options;
         }
 
-        protected virtual string GetCacheFolder() => Path.Combine(Options.BasePath, Options.FolderName);
+        protected virtual string GetCacheFolder() => Path.Combine(Options.BasePath, Const.ProviderDataFolder);
 
         protected abstract string GetFileName(TKey key);
 

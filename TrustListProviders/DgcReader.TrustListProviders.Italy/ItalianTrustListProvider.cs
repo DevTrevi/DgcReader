@@ -44,6 +44,9 @@ namespace DgcReader.TrustListProviders.Italy
         private const string CertUpdateUrl = "https://get.dgc.gov.it/v1/dgc/signercertificate/update";
         private const string CertStatusUrl = "https://get.dgc.gov.it/v1/dgc/signercertificate/status";
 
+        private const string ProviderDataFolder = "DgcReaderData\\TrustLists\\Italy";
+        private const string FileName = "trustlist-it.json";
+
         private readonly HttpClient _httpClient;
 
         private static readonly JsonSerializerSettings JsonSettings = new JsonSerializerSettings
@@ -124,9 +127,9 @@ namespace DgcReader.TrustListProviders.Italy
         /// <inheritdoc/>
         public override bool SupportsCertificates => true;
 
-#endregion
+        #endregion
 
-#region Implementation of TrustListProviderBase
+        #region Implementation of TrustListProviderBase
 
         /// <inheritdoc/>
         protected override async Task<ITrustList> GetTrustListFromServer(CancellationToken cancellationToken = default)
@@ -223,7 +226,7 @@ namespace DgcReader.TrustListProviders.Italy
         /// <inheritdoc/>
         protected override Task<ITrustList?> LoadCache(CancellationToken cancellationToken = default)
         {
-            var filePath = GetTrustListFilePath();
+            var filePath = GetCacheFilePath();
             TrustList? trustList = null;
             try
             {
@@ -264,15 +267,17 @@ namespace DgcReader.TrustListProviders.Italy
         /// <inheritdoc/>
         protected override Task UpdateCache(ITrustList trustList, CancellationToken cancellationToken = default)
         {
-            var filePath = GetTrustListFilePath();
+            var filePath = GetCacheFilePath();
+            if (!Directory.Exists(GetCacheFolder()))
+                Directory.CreateDirectory(GetCacheFolder());
             var json = JsonConvert.SerializeObject(trustList, JsonSettings);
 
             File.WriteAllText(filePath, json);
             return Task.FromResult(0);
         }
-#endregion
+        #endregion
 
-#region Private
+        #region Private
 
         private async Task<string[]> FetchCertificatesStatus(CancellationToken cancellationToken = default)
         {
@@ -288,7 +293,7 @@ namespace DgcReader.TrustListProviders.Italy
                     var results = JsonConvert.DeserializeObject<string[]>(content);
 
                     Logger?.LogDebug($"{results?.Length} read in {DateTime.Now - start}");
-                    return results ?? new string [0];
+                    return results ?? new string[0];
                 }
 
                 throw new Exception($"The remote server responded with code {response.StatusCode}: {response.ReasonPhrase}");
@@ -413,12 +418,10 @@ namespace DgcReader.TrustListProviders.Italy
             }
         }
 
-        private string GetTrustListFilePath()
-        {
-            return Path.Combine(Options.BasePath, Options.TrustListFileName);
-        }
+        private string GetCacheFolder() => Path.Combine(Options.BasePath, ProviderDataFolder);
+        private string GetCacheFilePath() => Path.Combine(GetCacheFolder(), FileName);
 
 
-#endregion
+        #endregion
     }
 }

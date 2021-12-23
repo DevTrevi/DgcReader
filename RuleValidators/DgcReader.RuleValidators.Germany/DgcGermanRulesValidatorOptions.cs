@@ -34,11 +34,6 @@ namespace DgcReader.RuleValidators.Germany
         public string BasePath { get; set; } = Directory.GetCurrentDirectory();
 
         /// <summary>
-        /// The folder name where rules will be stored, relative to <see cref="BasePath"/>
-        /// </summary>
-        public string FolderName { get; set; } = "RuleValidators\\Germany";
-
-        /// <summary>
         /// Maximum duration of the configuration file before is discarded.
         /// If a refresh is not possible when the refresh interval expires, the current file can be used until
         /// it passes the specified period. Default is 30 days

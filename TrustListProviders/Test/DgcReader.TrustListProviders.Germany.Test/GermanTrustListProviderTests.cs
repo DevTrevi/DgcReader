@@ -149,7 +149,6 @@ namespace DgcReader.TrustListProviders.Germany.Test
                     o.SaveSignature = Options.SaveSignature;
                     o.BasePath = Options.BasePath;
                     o.MaxFileAge = Options.MaxFileAge;
-                    o.TrustListFileName = Options.TrustListFileName;
                 });
         }
 #endif

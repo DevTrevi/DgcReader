@@ -15,6 +15,9 @@ namespace DgcReader.RuleValidators.Italy.Providers
 {
     internal class RulesProvider : ThreadsafeValueSetProvider<RulesList>
     {
+        private const string ProviderDataFolder = "DgcReaderData\\RuleValidators\\Italy";
+        private const string FileName = "rules-it.json";
+
         private readonly HttpClient _httpClient;
         private readonly DgcItalianRulesValidatorOptions Options;
 
@@ -57,7 +60,7 @@ namespace DgcReader.RuleValidators.Italy.Providers
 
         protected override Task<RulesList?> LoadFromCache(CancellationToken cancellationToken = default)
         {
-            var filePath = GetRulesListFilePath();
+            var filePath = GetCacheFilePath();
             RulesList? rulesList = null;
             try
             {
@@ -96,7 +99,9 @@ namespace DgcReader.RuleValidators.Italy.Providers
 
         protected override Task UpdateCache(RulesList rules, CancellationToken cancellationToken = default)
         {
-            var filePath = GetRulesListFilePath();
+            var filePath = GetCacheFilePath();
+            if (!Directory.Exists(GetCacheFolder()))
+                Directory.CreateDirectory(GetCacheFolder());
             var json = JsonConvert.SerializeObject(rules, JsonSettings);
 
             File.WriteAllText(filePath, json);
@@ -136,10 +141,8 @@ namespace DgcReader.RuleValidators.Italy.Providers
             }
         }
 
-        private string GetRulesListFilePath()
-        {
-            return Path.Combine(Options.BasePath, Options.RulesListFileName);
-        }
+        private string GetCacheFolder() => Path.Combine(Options.BasePath, ProviderDataFolder);
+        private string GetCacheFilePath() => Path.Combine(GetCacheFolder(), FileName);
 
     }
 }

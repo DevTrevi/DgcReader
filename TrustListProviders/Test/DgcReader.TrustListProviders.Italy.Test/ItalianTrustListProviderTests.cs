@@ -191,7 +191,6 @@ namespace DgcReader.TrustListProviders.Italy.Test
                     o.SaveCertificate = Options.SaveCertificate;
                     o.BasePath = Options.BasePath;
                     o.MaxFileAge = Options.MaxFileAge;
-                    o.TrustListFileName = Options.TrustListFileName;
                 });
         }
 #endif

@@ -169,7 +169,6 @@ namespace DgcReader.TrustListProviders.Sweden.Test
                     o.MinRefreshInterval = Options.MinRefreshInterval;
                     o.BasePath = Options.BasePath;
                     o.MaxFileAge = Options.MaxFileAge;
-                    o.TrustListFileName = Options.TrustListFileName;
                 });
         }
 #endif

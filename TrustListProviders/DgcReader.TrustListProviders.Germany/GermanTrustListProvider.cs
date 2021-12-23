@@ -44,6 +44,9 @@ namespace DgcReader.TrustListProviders.Germany
     {
         private const string CertUpdateUrl = "https://de.dscg.ubirch.com/trustList/DSC/";
 
+        private const string ProviderDataFolder = "DgcReaderData\\TrustLists\\Germany";
+        private const string FileName = "trustlist-de.json";
+
         private readonly HttpClient _httpClient;
 
         private static readonly JsonSerializerSettings JsonSettings = new JsonSerializerSettings
@@ -228,8 +231,8 @@ namespace DgcReader.TrustListProviders.Germany
         /// <inheritdoc/>
         protected override Task<ITrustList?> LoadCache(CancellationToken cancellationToken = default)
         {
-            var filePath = GetTrustListFilePath();
-            TrustList trustList = null;
+            var filePath = GetCacheFilePath();
+            TrustList? trustList = null;
             try
             {
                 if (File.Exists(filePath))
@@ -269,7 +272,9 @@ namespace DgcReader.TrustListProviders.Germany
         /// <inheritdoc/>
         protected override Task UpdateCache(ITrustList trustList, CancellationToken cancellationToken = default)
         {
-            var filePath = GetTrustListFilePath();
+            var filePath = GetCacheFilePath();
+            if (!Directory.Exists(GetCacheFolder()))
+                Directory.CreateDirectory(GetCacheFolder());
             var json = JsonConvert.SerializeObject(trustList, JsonSettings);
 
             File.WriteAllText(filePath, json);
@@ -315,10 +320,8 @@ namespace DgcReader.TrustListProviders.Germany
             }
         }
 
-        private string GetTrustListFilePath()
-        {
-            return Path.Combine(Options.BasePath, Options.TrustListFileName);
-        }
+        private string GetCacheFolder() => Path.Combine(Options.BasePath, ProviderDataFolder);
+        private string GetCacheFilePath() => Path.Combine(GetCacheFolder(), FileName);
 
         private bool VerifyTrustlistSignature(string data, string signature)
         {

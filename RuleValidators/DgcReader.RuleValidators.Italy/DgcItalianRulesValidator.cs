@@ -151,7 +151,9 @@ namespace DgcReader.RuleValidators.Italy
         /// <inheritdoc/>
         public async Task<bool> IsBlacklisted(string certificateIdentifier, CancellationToken cancellationToken = default)
         {
-            var blacklist = await GetBlacklist(cancellationToken);
+            var rulesContainer = await _rulesProvider.GetValueSet(cancellationToken);
+            var blacklist = rulesContainer?.Rules?.GetBlackList();
+
             if (blacklist == null)
             {
                 Logger?.LogWarning($"Unable to get the blacklist: considering the certificate valid");
@@ -162,21 +164,20 @@ namespace DgcReader.RuleValidators.Italy
         }
 
         /// <inheritdoc/>
+        public async Task RefreshBlacklist(CancellationToken cancellationToken = default)
+        {
+            await _rulesProvider.RefreshValueSet(cancellationToken);
+        }
+        #endregion
+
+        #region Public methods
+
+        /// <inheritdoc/>
         public async Task<IEnumerable<string>?> GetBlacklist(CancellationToken cancellationToken = default)
         {
             var rulesContainer = await _rulesProvider.GetValueSet(cancellationToken);
             return rulesContainer?.Rules?.GetBlackList();
         }
-
-        /// <inheritdoc/>
-        public async Task<IEnumerable<string>?> RefreshBlacklist(CancellationToken cancellationToken = default)
-        {
-            var rulesSet = await _rulesProvider.RefreshValueSet(cancellationToken);
-            return rulesSet?.Rules?.GetBlackList();
-        }
-        #endregion
-
-        #region Public methods
 
         /// <summary>
         /// Returns the validation result

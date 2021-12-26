@@ -46,6 +46,14 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DgcReader.RuleValidators.Ge
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DgcReader.Providers.Abstractions", "DgcReader.Providers.Abstractions\DgcReader.Providers.Abstractions.csproj", "{DFC231D4-0E4A-46C9-BA09-186AF59A9D21}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "BlackListProviders", "BlackListProviders", "{510DD3B5-6B7D-4024-A1C2-B2B925A3A01D}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DgcReader.BlacklistProviders.Italy", "BlacklistProviders\DgcReader.BlacklistProviders.Italy\DgcReader.BlacklistProviders.Italy.csproj", "{CE72E1E6-56A8-4252-A50D-D6AF03655287}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Test", "Test", "{1240A31E-C3AB-428E-80E6-48CD29CD1E2B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DgcReader.BlacklistProviders.Italy.Test", "BlacklistProviders\Test\DgcReader.BlacklistProviders.Italy.Test\DgcReader.BlacklistProviders.Italy.Test.csproj", "{2A0B4B80-E3F2-4A07-B45C-8543464E40E4}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -108,6 +116,14 @@ Global
 		{DFC231D4-0E4A-46C9-BA09-186AF59A9D21}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DFC231D4-0E4A-46C9-BA09-186AF59A9D21}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DFC231D4-0E4A-46C9-BA09-186AF59A9D21}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CE72E1E6-56A8-4252-A50D-D6AF03655287}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CE72E1E6-56A8-4252-A50D-D6AF03655287}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CE72E1E6-56A8-4252-A50D-D6AF03655287}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CE72E1E6-56A8-4252-A50D-D6AF03655287}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2A0B4B80-E3F2-4A07-B45C-8543464E40E4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2A0B4B80-E3F2-4A07-B45C-8543464E40E4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2A0B4B80-E3F2-4A07-B45C-8543464E40E4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2A0B4B80-E3F2-4A07-B45C-8543464E40E4}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -126,6 +142,9 @@ Global
 		{F20D016F-D27E-4072-8E26-54C90598A106} = {7124E97F-3F0F-471F-8330-176CCD30FD9F}
 		{426FA351-B507-464D-AB23-AA8183FD7499} = {BEA722FC-0C1B-4BDD-A273-4B415029F06F}
 		{18449B88-3812-4DA3-A4E3-0B6CD94FC9A4} = {3EF4A069-88A1-484F-AA55-8703DC4E7754}
+		{CE72E1E6-56A8-4252-A50D-D6AF03655287} = {510DD3B5-6B7D-4024-A1C2-B2B925A3A01D}
+		{1240A31E-C3AB-428E-80E6-48CD29CD1E2B} = {510DD3B5-6B7D-4024-A1C2-B2B925A3A01D}
+		{2A0B4B80-E3F2-4A07-B45C-8543464E40E4} = {1240A31E-C3AB-428E-80E6-48CD29CD1E2B}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {4B910BDD-0DA5-4052-94AE-2E889E4FB766}

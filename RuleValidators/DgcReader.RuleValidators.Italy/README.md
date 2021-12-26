@@ -8,7 +8,7 @@ Implementation of `IRulesValidator` for validating Digital Green Certificates ag
 The `DgcItalianRulesValidator` implements also the `IBlacklistProvider` interface, and can be used for both purposes.
 
 Starting from version 1.3.0, the library has been included in the [list of verified SDKs by Italian authorities (Ministero della salute)](https://github.com/ministero-salute/it-dgc-verificac19-sdk-onboarding).  
-The approval only refers to the main module `DgcReader` in combination with this provider (`DgcReader.RuleValidators.Italy`) and `DgcReader.TrustListProviders.Italy`.
+The approval only refers to the main module `DgcReader` in combination with the Italian providers included in the project (`DgcReader.RuleValidators.Italy`, `DgcReader.BlacklistProviders.Italy` and `DgcReader.TrustListProviders.Italy` )
 
 ## Usage
 

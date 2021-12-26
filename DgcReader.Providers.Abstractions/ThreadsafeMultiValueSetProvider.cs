@@ -35,7 +35,7 @@ namespace DgcReader.Providers.Abstractions
         /// <summary>
         /// The task that is currently executing the <see cref="RefreshValueSet"/> method
         /// </summary>
-        private Task<T?>? _refreshTask = null;
+        private readonly IDictionary<TKey, SingleTaskRunner<T?>> _refreshTasks = new Dictionary<TKey, SingleTaskRunner<T>>();
 
         /// <summary>
         /// Semaphore controlling access to <see cref="_refreshTask"/>
@@ -251,7 +251,7 @@ namespace DgcReader.Providers.Abstractions
         public virtual TimeSpan RefreshInterval => TimeSpan.FromHours(24);
 
         /// <summary>
-        /// If specified, prevent that every validation request causes a refresh attempt when the current valueset is expired. Default is 5 minutes
+        /// If specified, prevent that every request causes a refresh attempt when the current valueset is expired. Default is 5 minutes
         /// </summary>
         public virtual TimeSpan MinRefreshInterval => TimeSpan.FromMinutes(5);
 
@@ -273,37 +273,15 @@ namespace DgcReader.Providers.Abstractions
             await _refreshTaskSemaphore.WaitAsync(cancellationToken);
             try
             {
-                if (_refreshTask == null)
+                SingleTaskRunner<T?>? runner = null;
+                if (!_refreshTasks.TryGetValue(key, out runner))
                 {
-                    _refreshTask = Task.Run(async () =>
-                    {
-                        try
-                        {
-                            _refreshTaskCancellation = new CancellationTokenSource();
-                            return await RefreshValueSet(key, _refreshTaskCancellation.Token);
-                        }
-                        finally
-                        {
-                            await _refreshTaskSemaphore.WaitAsync(_refreshTaskCancellation?.Token ?? default);
-                            try
-                            {
-                                _refreshTask = null;
-                                _refreshTaskCancellation?.Dispose();
-                                _refreshTaskCancellation = null;
-                            }
-                            catch (Exception e)
-                            {
-                                Logger?.LogError(e, $"Error while checking refresh semaphore: {e.Message}");
-                            }
-                            finally
-                            {
-                                _refreshTaskSemaphore.Release();
-                            }
-
-                        }
-                    });
+                    runner = new SingleTaskRunner<T?>(ct => RefreshValueSet(key, ct), Logger);
+                    _refreshTasks.Add(key, runner);
                 }
-                return _refreshTask;
+
+                return await runner.RunSingleTask();
+
             }
             catch (Exception e)
             {

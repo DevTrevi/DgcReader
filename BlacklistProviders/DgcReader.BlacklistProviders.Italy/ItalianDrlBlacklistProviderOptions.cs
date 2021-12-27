@@ -8,9 +8,9 @@ using System.IO;
 namespace DgcReader.BlacklistProviders.Italy
 {
     /// <summary>
-    /// Options for the <see cref="ItalianBlacklistProvider"/>
+    /// Options for the <see cref="ItalianDrlBlacklistProvider"/>
     /// </summary>
-    public class ItalianBlacklistProviderOptions
+    public class ItalianDrlBlacklistProviderOptions
     {
         /// <summary>
         /// Duration of the stored file before a refresh is requested. Default is 1 hour

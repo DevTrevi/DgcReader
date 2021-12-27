@@ -2,7 +2,7 @@
 
 	<PropertyGroup>
 		<!-- Workaround for migrations EFCore 1.x -->
-		<!--<OutputType>Exe</OutputType>-->
+		<OutputType>Exe</OutputType>
 		<TargetFrameworks>net452;net47;netstandard2.0;netstandard2.1</TargetFrameworks>
 		<LangVersion>Latest</LangVersion>
 		<Nullable>enable</Nullable>
@@ -10,7 +10,7 @@
 		<Authors>Davide Trevisan</Authors>
 		<Copyright>Copyright © 2021 Davide Trevisan</Copyright>
 		<RepositoryUrl>https://github.com/DevTrevi/DGCReader</RepositoryUrl>
-		<PackageTags>DGC DCC DigitalGreenCertificate DigitalCovidCertificate Greenpass VerificaC19 Blacklist</PackageTags>
+		<PackageTags>DGC DCC DigitalGreenCertificate DigitalCovidCertificate Greenpass VerificaC19 Blacklist DRL</PackageTags>
 		<Description>Blacklist provider implementation using the official Italian backend APIs. This provider is included in the list of verified SDKs by Italian authorities</Description>
 		<Version>2.0.0</Version>
 		<PackageLicenseExpression> Apache-2.0</PackageLicenseExpression>

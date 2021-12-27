@@ -7,11 +7,10 @@ using DgcReader.BlacklistProviders.Italy;
 
 namespace DgcReader.BlacklistProviders.Italy.Migrations
 {
-    [DbContext(typeof(ItalianBlacklistDbContext))]
-    [Migration("20211227020345_Initial")]
-    partial class Initial
+    [DbContext(typeof(ItalianDrlBlacklistDbContext))]
+    partial class ItalianDrlBlacklistDbContextModelSnapshot : ModelSnapshot
     {
-        protected override void BuildTargetModel(ModelBuilder modelBuilder)
+        protected override void BuildModel(ModelBuilder modelBuilder)
         {
             modelBuilder
                 .HasAnnotation("ProductVersion", "1.1.6");
@@ -24,7 +23,7 @@ namespace DgcReader.BlacklistProviders.Italy.Migrations
 
                     b.HasKey("HashedUCVI");
 
-                    b.ToTable("DgcReader_ItalianBlacklist_Blacklist");
+                    b.ToTable("DgcReader_ItalianDrl_Blacklist");
                 });
 
             modelBuilder.Entity("DgcReader.BlacklistProviders.Italy.Entities.SyncStatus", b =>
@@ -51,7 +50,7 @@ namespace DgcReader.BlacklistProviders.Italy.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("DgcReader_ItalianBlacklist_SyncStatus");
+                    b.ToTable("DgcReader_ItalianDrl_SyncStatus");
                 });
         }
     }

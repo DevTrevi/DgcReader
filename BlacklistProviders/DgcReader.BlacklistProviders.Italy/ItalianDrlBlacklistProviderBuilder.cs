@@ -9,9 +9,9 @@ using System;
 namespace Microsoft.Extensions.DependencyInjection
 {
     /// <summary>
-    /// Builder exposing methods for configuring the <see cref="ItalianBlacklistProvider"/> service
+    /// Builder exposing methods for configuring the <see cref="ItalianDrlBlacklistProvider"/> service
     /// </summary>
-    public class ItalianBlacklistProviderBuilder
+    public class ItalianDrlBlacklistProviderBuilder
     {
         /// <summary>
         /// Returns the services collection
@@ -19,27 +19,27 @@ namespace Microsoft.Extensions.DependencyInjection
         private IServiceCollection Services { get; }
 
         /// <summary>
-        /// Initializes a new instance of <see cref="ItalianBlacklistProviderBuilder"/>
+        /// Initializes a new instance of <see cref="ItalianDrlBlacklistProviderBuilder"/>
         /// </summary>
         /// <param name="services"></param>
-        public ItalianBlacklistProviderBuilder(IServiceCollection services)
+        public ItalianDrlBlacklistProviderBuilder(IServiceCollection services)
         {
             Services = services;
 
             Services.AddHttpClient();
 
-            Services.AddSingleton<ItalianBlacklistProvider>();
-            Services.AddSingleton<IBlacklistProvider, ItalianBlacklistProvider>(sp => sp.GetRequiredService<ItalianBlacklistProvider>());
+            Services.AddSingleton<ItalianDrlBlacklistProvider>();
+            Services.AddSingleton<IBlacklistProvider, ItalianDrlBlacklistProvider>(sp => sp.GetRequiredService<ItalianDrlBlacklistProvider>());
         }
 
 
         /// <summary>
-        /// Configures the <see cref="ItalianBlacklistProvider"/> service
+        /// Configures the <see cref="ItalianDrlBlacklistProvider"/> service
         /// </summary>
         /// <param name="configuration">The delegate used to configure the options</param>
         /// <returns></returns>
         /// <exception cref="ArgumentNullException"></exception>
-        public ItalianBlacklistProviderBuilder Configure(Action<ItalianBlacklistProviderOptions> configuration)
+        public ItalianDrlBlacklistProviderBuilder Configure(Action<ItalianDrlBlacklistProviderOptions> configuration)
         {
             if (configuration is null)
             {

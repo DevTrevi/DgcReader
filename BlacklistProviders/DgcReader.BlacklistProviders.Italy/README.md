@@ -1,9 +1,10 @@
-﻿# Italian Blacklist Provider
+﻿# Italian Drl Blacklist Provider
 #### DgcReader.BlacklistProviders.Italy 
 
 [![NuGet version (DgcReader.BlacklistProviders.Italy)](https://img.shields.io/nuget/vpre/DgcReader.BlacklistProviders.Italy)](https://www.nuget.org/packages/DgcReader.BlacklistProviders.Italy/)
 
-Implementation of `IBlacklistProvider` for verify revoked certificates.
+Implementation of `IBlacklistProvider` for verify revoked certificates.  
+You can find more details about the DRL specification in the [official documentation](https://github.com/ministero-salute/it-dgc-documentation/blob/master/DRL.md)
 
 Starting from version 1.3.0, the library has been included in the [list of verified SDKs by Italian authorities (Ministero della salute)](https://github.com/ministero-salute/it-dgc-verificac19-sdk-onboarding).  
 The approval only refers to the main module `DgcReader` in combination with the Italian providers included in the project (`DgcReader.RuleValidators.Italy`, `DgcReader.BlacklistProviders.Italy` and `DgcReader.TrustListProviders.Italy` )
@@ -19,7 +20,7 @@ public void ConfigureServices(IServiceCollection services)
     ...
     services.AddDgcReader()
         .AddItalianTrustListProvider()
-        .AddItalianBlacklistProvider(o =>      // <-- Register the ItalianBlacklistProvider service
+        .AddItalianDrlBlacklistProvider(o =>      // <-- Register the ItalianDrlBlacklistProvider service
         {
             // Optionally, configure the validator with custom options
             o.RefreshInterval = TimeSpan.FromSeconds(5);
@@ -34,14 +35,14 @@ public void ConfigureServices(IServiceCollection services)
  ``` csharp
 ...
 // You can use the constructor
-var blacklistProvider = new ItalianBlacklistProvider(httpClient);
+var blacklistProvider = new ItalianDrlBlacklistProvider(httpClient);
 ...
 
-// Or you can use the ItalianBlacklistProvider.Create facory method
+// Or you can use the ItalianDrlBlacklistProvider.Create facory method
 // This will help you to unwrap the IOptions interface when you specify 
 // custom options for the provider:
-var blacklistProvider = ItalianBlacklistProvider.Create(httpClient, 
-    new ItalianBlacklistProviderOptions {
+var blacklistProvider = ItalianDrlBlacklistProvider.Create(httpClient, 
+    new ItalianDrlBlacklistProviderOptions {
         RefreshInterval = TimeSpan.FromHours(24),
         MinRefreshInterval = TimeSpan.FromHours(1),
         SaveCertificate = true
@@ -77,7 +78,7 @@ Default value is 15 days.
  ``` csharp
 // Example of configuration using Microsoft Sql Server
 services.AddDgcReader()
-    .AddItalianBlacklistProvider(o =>
+    .AddItalianDrlBlacklistProvider(o =>
     {
         o.DbContext.UseSqlServer("Data Source=localhost;Initial Catalog=DgcReader_ItalianBlacklist;persist security info=True;Integrated Security=True;MultipleActiveResultSets=True");
     });

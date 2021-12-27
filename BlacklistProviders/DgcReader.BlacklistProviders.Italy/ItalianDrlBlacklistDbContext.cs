@@ -10,17 +10,17 @@ namespace DgcReader.BlacklistProviders.Italy
     /// <summary>
     /// Ef core DbContext for storing the blacklist entries
     /// </summary>
-    public class ItalianBlacklistDbContext : DbContext
+    public class ItalianDrlBlacklistDbContext : DbContext
     {
         /// <inheritdoc/>
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
-        public ItalianBlacklistDbContext(DbContextOptions options) : base(options)
+        public ItalianDrlBlacklistDbContext(DbContextOptions options) : base(options)
         {
 
         }
 
         /// <inheritdoc/>
-        public ItalianBlacklistDbContext()
+        public ItalianDrlBlacklistDbContext()
         {
         }
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
@@ -32,7 +32,7 @@ namespace DgcReader.BlacklistProviders.Italy
 
             if (!optionsBuilder.IsConfigured)
             {
-                var connString = "italianBlacklist.db";
+                var connString = "DataSource=italian-drl.db";
                 optionsBuilder.UseSqlite(connString);
             }
 
@@ -45,14 +45,14 @@ namespace DgcReader.BlacklistProviders.Italy
 
             modelBuilder.Entity<BlacklistEntry>(b =>
             {
-                b.ToTable("DgcReader_ItalianBlacklist_Blacklist");
+                b.ToTable("DgcReader_ItalianDrl_Blacklist");
                 b.HasKey(e => e.HashedUCVI);
                 b.Property(e => e.HashedUCVI).HasMaxLength(44);
             });
 
             modelBuilder.Entity<SyncStatus>(b =>
             {
-                b.ToTable("DgcReader_ItalianBlacklist_SyncStatus");
+                b.ToTable("DgcReader_ItalianDrl_SyncStatus");
 
 
                 b.Property<int>("Id").ValueGeneratedNever();
@@ -74,14 +74,14 @@ namespace DgcReader.BlacklistProviders.Italy
         public DbSet<SyncStatus> SyncStatus { get; private set; }
     }
 
-    ///// <summary>
-    ///// Workaround for Migrations EFCore 1.x
-    ///// </summary>
-    //public class Program
-    //{
-    //    /// <inheritdoc/>
-    //    public static void Main(string[] args)
-    //    {
-    //    }
-    //}
+    /// <summary>
+    /// Workaround for Migrations EFCore 1.x
+    /// </summary>
+    public class Program
+    {
+        /// <inheritdoc/>
+        public static void Main(string[] args)
+        {
+        }
+    }
 }

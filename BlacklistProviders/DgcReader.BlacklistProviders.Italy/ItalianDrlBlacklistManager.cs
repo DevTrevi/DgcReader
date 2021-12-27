@@ -18,12 +18,12 @@ namespace DgcReader.BlacklistProviders.Italy
     /// <summary>
     /// Class for manage the local blacklist database
     /// </summary>
-    public class ItalianBlacklistManager
+    public class ItalianDrlBlacklistManager
     {
         private const string ProviderDataFolder = "DgcReaderData\\Blacklist\\Italy";
-        private const string FileName = "italian-blacklist.db";
+        private const string FileName = "italian-drl.db";
 
-        private ItalianBlacklistProviderOptions Options { get; }
+        private ItalianDrlBlacklistProviderOptions Options { get; }
         private ILogger? Logger { get; }
 
         private bool _dbVersionChecked;
@@ -34,7 +34,7 @@ namespace DgcReader.BlacklistProviders.Italy
         /// </summary>
         /// <param name="options"></param>
         /// <param name="logger"></param>
-        public ItalianBlacklistManager(ItalianBlacklistProviderOptions options, ILogger? logger)
+        public ItalianDrlBlacklistManager(ItalianDrlBlacklistProviderOptions options, ILogger? logger)
         {
             Options = options;
             Logger = logger;
@@ -76,7 +76,7 @@ namespace DgcReader.BlacklistProviders.Italy
         /// <returns></returns>
         public async Task<SyncStatus> SetTargetVersion(IDrlVersionInfo statusEntry, CancellationToken cancellationToken = default)
         {
-            Logger.LogInformation($"Updating target version to {statusEntry.Version} ({statusEntry.Id})");
+            Logger?.LogInformation($"Updating target version to {statusEntry.Version} ({statusEntry.Id})");
             using (var ctx = await GetDbContext(cancellationToken))
             {
                 var status = await GetOrCreateSyncStatus(ctx, cancellationToken);
@@ -239,7 +239,7 @@ namespace DgcReader.BlacklistProviders.Italy
             }
         }
 
-        private async Task<SyncStatus> GetOrCreateSyncStatus(ItalianBlacklistDbContext ctx, CancellationToken cancellationToken = default)
+        private async Task<SyncStatus> GetOrCreateSyncStatus(ItalianDrlBlacklistDbContext ctx, CancellationToken cancellationToken = default)
         {
             var syncStatus = await ctx.SyncStatus
                     .OrderByDescending(r => r.LocalVersion)
@@ -258,7 +258,7 @@ namespace DgcReader.BlacklistProviders.Italy
             return syncStatus;
         }
 
-        private async Task<ItalianBlacklistDbContext> GetDbContext(CancellationToken cancellationToken = default)
+        private async Task<ItalianDrlBlacklistDbContext> GetDbContext(CancellationToken cancellationToken = default)
         {
             // Check directory
             if (!Directory.Exists(GetCacheFolder()))
@@ -271,7 +271,7 @@ namespace DgcReader.BlacklistProviders.Italy
                 Options.DbContext.UseSqlite(connString);
             }
 
-            var ctx = new ItalianBlacklistDbContext(Options.DbContext.Options);
+            var ctx = new ItalianDrlBlacklistDbContext(Options.DbContext.Options);
 
             // Check if db should be updated
             if (!_dbVersionChecked)
@@ -293,7 +293,7 @@ namespace DgcReader.BlacklistProviders.Italy
         /// <param name="ucvis"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        private async Task AddMissingUcvis(ItalianBlacklistDbContext ctx, string[] ucvis, CancellationToken cancellationToken = default)
+        private async Task AddMissingUcvis(ItalianDrlBlacklistDbContext ctx, string[] ucvis, CancellationToken cancellationToken = default)
         {
             if (ucvis?.Any() != true)
                 return;
@@ -328,7 +328,7 @@ namespace DgcReader.BlacklistProviders.Italy
         /// <param name="ucvis"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        private async Task RemoveUcvis(ItalianBlacklistDbContext ctx, string[] ucvis, CancellationToken cancellationToken = default)
+        private async Task RemoveUcvis(ItalianDrlBlacklistDbContext ctx, string[] ucvis, CancellationToken cancellationToken = default)
         {
             if (ucvis?.Any() != true)
                 return;

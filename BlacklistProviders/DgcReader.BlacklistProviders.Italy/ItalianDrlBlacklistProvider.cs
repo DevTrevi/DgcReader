@@ -20,17 +20,17 @@ namespace DgcReader.BlacklistProviders.Italy
     /// <summary>
     /// Blacklist provider using the Italian backend
     /// </summary>
-    public class ItalianBlacklistProvider : IBlacklistProvider
+    public class ItalianDrlBlacklistProvider : IBlacklistProvider
     {
 
         private const string BlacklistStatusUrl = "https://get.dgc.gov.it/v1/dgc/drl/check";
         private const string BlacklistChunkUrl = "https://get.dgc.gov.it/v1/dgc/drl";
 
 
-        private readonly ItalianBlacklistProviderOptions _options;
+        private readonly ItalianDrlBlacklistProviderOptions _options;
         private readonly HttpClient HttpClient;
-        private readonly ILogger<ItalianBlacklistProvider>? Logger;
-        private readonly ItalianBlacklistManager BlacklistManager;
+        private readonly ILogger<ItalianDrlBlacklistProvider>? Logger;
+        private readonly ItalianDrlBlacklistManager BlacklistManager;
         private readonly SingleTaskRunner<bool> RefreshBlacklistTaskRunner;
         private DateTime lastRefreshAttempt;
 
@@ -43,15 +43,15 @@ namespace DgcReader.BlacklistProviders.Italy
         /// <param name="httpClient">The http client instance that will be used for requests to the server</param>
         /// <param name="options">The options for the provider</param>
         /// <param name="logger">Instance of <see cref="ILogger"/> used by the provider (optional).</param>
-        public ItalianBlacklistProvider(HttpClient httpClient,
-            ItalianBlacklistProviderOptions? options = null,
-            ILogger<ItalianBlacklistProvider>? logger = null)
+        public ItalianDrlBlacklistProvider(HttpClient httpClient,
+            ItalianDrlBlacklistProviderOptions? options = null,
+            ILogger<ItalianDrlBlacklistProvider>? logger = null)
         {
-            _options = options ?? new ItalianBlacklistProviderOptions();
+            _options = options ?? new ItalianDrlBlacklistProviderOptions();
             HttpClient = httpClient;
             Logger = logger;
 
-            BlacklistManager = new ItalianBlacklistManager(_options, logger);
+            BlacklistManager = new ItalianDrlBlacklistManager(_options, logger);
             RefreshBlacklistTaskRunner = new SingleTaskRunner<bool>(async ct =>
             {
                 await UpdateFromServer(ct);
@@ -60,18 +60,18 @@ namespace DgcReader.BlacklistProviders.Italy
         }
 
         /// <summary>
-        /// Factory method for creating an instance of <see cref="ItalianBlacklistProvider"/>
+        /// Factory method for creating an instance of <see cref="ItalianDrlBlacklistProvider"/>
         /// whithout using the DI mechanism. Useful for legacy applications
         /// </summary>
         /// <param name="httpClient">The http client instance that will be used for requests to the server</param>
         /// <param name="options">The options for the provider</param>
         /// <param name="logger">Instance of <see cref="ILogger"/> used by the provider (optional).</param>
         /// <returns></returns>
-        public static ItalianBlacklistProvider Create(HttpClient httpClient,
-            ItalianBlacklistProviderOptions? options = null,
-            ILogger<ItalianBlacklistProvider>? logger = null)
+        public static ItalianDrlBlacklistProvider Create(HttpClient httpClient,
+            ItalianDrlBlacklistProviderOptions? options = null,
+            ILogger<ItalianDrlBlacklistProvider>? logger = null)
         {
-            return new ItalianBlacklistProvider(httpClient, options, logger);
+            return new ItalianDrlBlacklistProvider(httpClient, options, logger);
         }
 #else
         /// <summary>
@@ -80,15 +80,15 @@ namespace DgcReader.BlacklistProviders.Italy
         /// <param name="httpClient">The http client instance that will be used for requests to the server</param>
         /// <param name="options">The options for the provider</param>
         /// <param name="logger">Instance of <see cref="ILogger"/> used by the provider (optional).</param>
-        public ItalianBlacklistProvider(HttpClient httpClient,
-            IOptions<ItalianBlacklistProviderOptions>? options = null,
-            ILogger<ItalianBlacklistProvider>? logger = null)
+        public ItalianDrlBlacklistProvider(HttpClient httpClient,
+            IOptions<ItalianDrlBlacklistProviderOptions>? options = null,
+            ILogger<ItalianDrlBlacklistProvider>? logger = null)
         {
-            _options = options?.Value ?? new ItalianBlacklistProviderOptions();
+            _options = options?.Value ?? new ItalianDrlBlacklistProviderOptions();
             HttpClient = httpClient;
             Logger = logger;
 
-            BlacklistManager = new ItalianBlacklistManager(_options, logger);
+            BlacklistManager = new ItalianDrlBlacklistManager(_options, logger);
             RefreshBlacklistTaskRunner = new SingleTaskRunner<bool>(async ct =>
             {
                 await UpdateFromServer(ct);
@@ -97,18 +97,18 @@ namespace DgcReader.BlacklistProviders.Italy
         }
 
         /// <summary>
-        /// Factory method for creating an instance of <see cref="ItalianBlacklistProvider"/>
+        /// Factory method for creating an instance of <see cref="ItalianDrlBlacklistProvider"/>
         /// whithout using the DI mechanism. Useful for legacy applications
         /// </summary>
         /// <param name="httpClient">The http client instance that will be used for requests to the server</param>
         /// <param name="options">The options for the provider</param>
         /// <param name="logger">Instance of <see cref="ILogger"/> used by the provider (optional).</param>
         /// <returns></returns>
-        public static ItalianBlacklistProvider Create(HttpClient httpClient,
-            ItalianBlacklistProviderOptions? options = null,
-            ILogger<ItalianBlacklistProvider>? logger = null)
+        public static ItalianDrlBlacklistProvider Create(HttpClient httpClient,
+            ItalianDrlBlacklistProviderOptions? options = null,
+            ILogger<ItalianDrlBlacklistProvider>? logger = null)
         {
-            return new ItalianBlacklistProvider(httpClient,
+            return new ItalianDrlBlacklistProvider(httpClient,
                 options == null ? null : Options.Create(options),
                 logger);
         }

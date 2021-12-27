@@ -33,7 +33,7 @@ public void ConfigureServices(IServiceCollection services)
             o.SaveCertificate = true;
             ...
         })
-        .AddItalianBlacklistProvider()      // The blacklist provider(s)
+        .AddItalianDrlBlacklistProvider()      // The blacklist provider(s)
         .AddItalianRulesValidator()         // Finally, the rule validator(s)
         .AddGermanRulesValidator();         // Each rule validator will enable more acceptance countries to be supported
 }
@@ -55,7 +55,7 @@ If you don't use the dependency injection, you can instantiate it directly:
 // Create an instance of the TrustListProvider (eg. ItalianTrustListProvider) and the other required services
 var httpClient = new HttpClient();
 var trustListProvider = new ItalianTrustListProvider(httpClient);
-var blacklistProvider = new ItalianBlacklistProvider(httpClient);
+var blacklistProvider = new ItalianDrlBlacklistProvider(httpClient);
 var rulesValidator = new DgcItalianRulesValidator(httpClient);
 
 // Create an instance of the DgcReaderService

@@ -125,18 +125,6 @@ public void ConfigureServices(IServiceCollection services)
 }
 ```
 
-Or you can use it as an `IBlacklistProvider` **only** (i.e. in combination with a rule validator for a different country that has no blacklist providers available):
-
- ``` csharp
-public void ConfigureServices(IServiceCollection services)
-{
-    ...
-    services.AddDgcReader()
-        .AddItalianTrustListProvider()
-        .AddItalianBlacklistProvider();
-}
-```
-
 ------
 Copyright &copy; 2021 Davide Trevisan  
 Licensed under the Apache License, Version 2.0

@@ -3,10 +3,9 @@ using Microsoft.Extensions.Logging;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
-using DgcReader.BlacklistProviders.Italy.Models;
-using Newtonsoft.Json;
 using System;
 using DgcReader.Providers.Abstractions;
+using DgcReader.BlacklistProviders.Italy.Entities;
 
 #if !NET452
 using Microsoft.Extensions.Options;
@@ -22,17 +21,11 @@ namespace DgcReader.BlacklistProviders.Italy
     /// </summary>
     public class ItalianDrlBlacklistProvider : IBlacklistProvider
     {
-
-        private const string BlacklistStatusUrl = "https://get.dgc.gov.it/v1/dgc/drl/check";
-        private const string BlacklistChunkUrl = "https://get.dgc.gov.it/v1/dgc/drl";
-
-
-        private readonly ItalianDrlBlacklistProviderOptions _options;
-        private readonly HttpClient HttpClient;
+        private readonly ItalianDrlBlacklistProviderOptions Options;
         private readonly ILogger<ItalianDrlBlacklistProvider>? Logger;
         private readonly ItalianDrlBlacklistManager BlacklistManager;
-        private readonly SingleTaskRunner<bool> RefreshBlacklistTaskRunner;
-        private DateTime lastRefreshAttempt;
+        private readonly SingleTaskRunner<SyncStatus> RefreshBlacklistTaskRunner;
+        private DateTime LastRefreshAttempt;
 
 
         #region Constructor
@@ -47,15 +40,15 @@ namespace DgcReader.BlacklistProviders.Italy
             ItalianDrlBlacklistProviderOptions? options = null,
             ILogger<ItalianDrlBlacklistProvider>? logger = null)
         {
-            _options = options ?? new ItalianDrlBlacklistProviderOptions();
-            HttpClient = httpClient;
+            Options = options ?? new ItalianDrlBlacklistProviderOptions();
             Logger = logger;
 
-            BlacklistManager = new ItalianDrlBlacklistManager(_options, logger);
-            RefreshBlacklistTaskRunner = new SingleTaskRunner<bool>(async ct =>
+            var drlClient = new ItalianDrlBlacklistClient(httpClient, logger);
+            BlacklistManager = new ItalianDrlBlacklistManager(Options, drlClient, logger);
+            RefreshBlacklistTaskRunner = new SingleTaskRunner<SyncStatus>(async ct =>
             {
-                await UpdateFromServer(ct);
-                return true;
+                LastRefreshAttempt = DateTime.Now;
+                return await BlacklistManager.UpdateFromServer(ct);
             }, Logger);
         }
 
@@ -84,15 +77,15 @@ namespace DgcReader.BlacklistProviders.Italy
             IOptions<ItalianDrlBlacklistProviderOptions>? options = null,
             ILogger<ItalianDrlBlacklistProvider>? logger = null)
         {
-            _options = options?.Value ?? new ItalianDrlBlacklistProviderOptions();
-            HttpClient = httpClient;
+            Options = options?.Value ?? new ItalianDrlBlacklistProviderOptions();
             Logger = logger;
 
-            BlacklistManager = new ItalianDrlBlacklistManager(_options, logger);
-            RefreshBlacklistTaskRunner = new SingleTaskRunner<bool>(async ct =>
+            var drlClient = new ItalianDrlBlacklistClient(httpClient, logger);
+            BlacklistManager = new ItalianDrlBlacklistManager(Options, drlClient, logger);
+            RefreshBlacklistTaskRunner = new SingleTaskRunner<SyncStatus>(async ct =>
             {
-                await UpdateFromServer(ct);
-                return true;
+                LastRefreshAttempt = DateTime.Now;
+                return await BlacklistManager.UpdateFromServer(ct);
             }, Logger);
         }
 
@@ -109,7 +102,7 @@ namespace DgcReader.BlacklistProviders.Italy
             ILogger<ItalianDrlBlacklistProvider>? logger = null)
         {
             return new ItalianDrlBlacklistProvider(httpClient,
-                options == null ? null : Options.Create(options),
+                options == null ? null : Microsoft.Extensions.Options.Options.Create(options),
                 logger);
         }
 #endif
@@ -121,10 +114,10 @@ namespace DgcReader.BlacklistProviders.Italy
         public async Task<bool> IsBlacklisted(string certificateIdentifier, CancellationToken cancellationToken = default)
         {
             // Get latest check datetime
-            var lastCheck = await BlacklistManager.GetLastCheck();
+            var status = await BlacklistManager.GetSyncStatus(true, cancellationToken);
 
 
-            if (lastCheck.Add(_options.MaxFileAge) < DateTime.Now)
+            if (status.LastCheck.Add(Options.MaxFileAge) < DateTime.Now)
             {
                 // MaxFileAge expired
 
@@ -133,15 +126,16 @@ namespace DgcReader.BlacklistProviders.Italy
                 // Wait for the task to complete
                 await refreshTask;
             }
-            else if (lastCheck.Add(_options.RefreshInterval) < DateTime.Now)
+            else if (status.LastCheck.Add(Options.RefreshInterval) < DateTime.Now ||
+                status.HasPendingDownload())
             {
                 // Normal expiration
 
                 // If min refresh expired
-                if (lastRefreshAttempt.Add(_options.MinRefreshInterval) < DateTime.Now)
+                if (LastRefreshAttempt.Add(Options.MinRefreshInterval) < DateTime.Now)
                 {
                     var refreshTask = await RefreshBlacklistTaskRunner.RunSingleTask(cancellationToken);
-                    if (!_options.UseAvailableValuesWhileRefreshing)
+                    if (!Options.UseAvailableValuesWhileRefreshing)
                     {
                         // Wait for the task to complete
                         await refreshTask;
@@ -160,117 +154,5 @@ namespace DgcReader.BlacklistProviders.Italy
         }
         #endregion
 
-        #region Private
-
-        /// <summary>
-        /// Updates the local blacklist if a new version is available from the remote server
-        /// </summary>
-        /// <param name="cancellationToken"></param>
-        /// <returns></returns>
-        private async Task UpdateFromServer(CancellationToken cancellationToken = default)
-        {
-
-            lastRefreshAttempt = DateTime.Now;
-            var syncStatus = await BlacklistManager.GetSyncStatus(cancellationToken);
-
-            var remoteStatus = await GetDrlStatus(syncStatus.LocalVersion, cancellationToken);
-
-            if (syncStatus.LocalVersion == remoteStatus.Version)
-            {
-                await BlacklistManager.SetLastCheck(DateTime.Now, cancellationToken);
-            }
-            else
-            {
-                if (syncStatus.TargetVersion != remoteStatus.Version)
-                {
-                    Logger?.LogInformation($"New Clr version {remoteStatus.Version} available");
-                    syncStatus = await BlacklistManager.SetTargetVersion(remoteStatus, cancellationToken);
-                }
-                else
-                {
-                    Logger?.LogInformation($"Resuming download of version {remoteStatus.Version} from chunk {syncStatus.LastChunkSaved}");
-                }
-
-                // Downloading chunks
-                while (syncStatus.LastChunkSaved < syncStatus.ChunksCount)
-                {
-                    Logger?.LogInformation($"Downloading chunk {syncStatus.LastChunkSaved + 1} of {syncStatus.ChunksCount} " +
-                        $"for updating Clr from version {syncStatus.LocalVersion} to version {syncStatus.TargetVersion}");
-                    var chunk = await GetDrlChunk(syncStatus.LocalVersion, syncStatus.LastChunkSaved + 1, cancellationToken);
-
-                    syncStatus = await BlacklistManager.SaveChunk(chunk, cancellationToken);
-                }
-            }
-
-        }
-
-        /// <summary>
-        /// Get the Drl status from the server, given the current version stored on the local DB
-        /// </summary>
-        /// <param name="localVersion">The currently stored version on the local DB</param>
-        /// <param name="cancellationToken"></param>
-        /// <returns></returns>
-        private async Task<DrlStatusEntry> GetDrlStatus(int localVersion, CancellationToken cancellationToken = default)
-        {
-            try
-            {
-                Logger?.LogDebug($"Checking Drl for updates...");
-
-                var response = await HttpClient.GetAsync($"{BlacklistStatusUrl}?version={localVersion}", cancellationToken);
-                if (response.IsSuccessStatusCode)
-                {
-                    string content = await response.Content.ReadAsStringAsync();
-
-                    var result = JsonConvert.DeserializeObject<DrlStatusEntry>(content);
-
-                    if (result == null)
-                        throw new Exception($"Error wile deserializing {nameof(DrlStatusEntry)} from server");
-
-                    return result;
-                }
-                throw new Exception($"The remote server responded with code {response.StatusCode}: {response.ReasonPhrase}");
-            }
-            catch (Exception ex)
-            {
-                Logger?.LogError(ex, $"Error while Checking Drl version {localVersion} from server: {ex.Message}");
-                throw;
-            }
-        }
-
-        /// <summary>
-        /// Get a Drl chunk of data
-        /// </summary>
-        /// <param name="localVersion">The local version of the Drl</param>
-        /// <param name="chunk">The chunk to be downloaded for the requested version</param>
-        /// <param name="cancellationToken"></param>
-        /// <returns></returns>
-        private async Task<DrlChunkData> GetDrlChunk(int localVersion, int chunk, CancellationToken cancellationToken = default)
-        {
-            try
-            {
-                Logger?.LogDebug($"Checking Drl for updates...");
-
-                var response = await HttpClient.GetAsync($"{BlacklistChunkUrl}?version={localVersion}&chunk={chunk}", cancellationToken);
-                if (response.IsSuccessStatusCode)
-                {
-                    string content = await response.Content.ReadAsStringAsync();
-
-                    var result = JsonConvert.DeserializeObject<DrlChunkData>(content);
-
-                    if (result == null)
-                        throw new Exception($"Error wile deserializing {nameof(DrlChunkData)} from server");
-
-                    return result;
-                }
-                throw new Exception($"The remote server responded with code {response.StatusCode}: {response.ReasonPhrase}");
-            }
-            catch (Exception ex)
-            {
-                Logger?.LogError(ex, $"Error while getting Drl chunk {chunk} version {localVersion} from server: {ex.Message}");
-                throw;
-            }
-        }
-
-        #endregion
     }
 }

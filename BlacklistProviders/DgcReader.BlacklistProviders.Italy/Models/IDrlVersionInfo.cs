@@ -27,6 +27,11 @@ namespace DgcReader.BlacklistProviders.Italy.Models
         /// Total number of UCVIs in blacklist
         /// </summary>
         int TotalNumberUCVI { get; set; }
+
+        /// <summary>
+        /// Single chunk size in bytes
+        /// </summary>
+        public int SingleChunkSize { get; set; }
     }
 }
 

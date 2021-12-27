@@ -58,8 +58,9 @@ namespace DgcReader.BlacklistProviders.Italy
                 b.Property<int>("Id").ValueGeneratedNever();
                 b.HasKey("Id");
 
-                b.Property(e => e.LocalVersionId).HasMaxLength(24).IsRequired(false);
+                b.Property(e => e.CurrentVersionId).HasMaxLength(24).IsRequired(false);
                 b.Property(e => e.TargetVersionId).HasMaxLength(24).IsRequired(false);
+
             });
         }
 

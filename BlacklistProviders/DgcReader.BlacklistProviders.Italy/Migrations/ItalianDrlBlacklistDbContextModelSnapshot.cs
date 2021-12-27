@@ -30,23 +30,25 @@ namespace DgcReader.BlacklistProviders.Italy.Migrations
                 {
                     b.Property<int>("Id");
 
-                    b.Property<int>("ChunksCount");
+                    b.Property<int>("CurrentVersion");
+
+                    b.Property<string>("CurrentVersionId")
+                        .HasMaxLength(24);
 
                     b.Property<DateTime>("LastCheck");
 
                     b.Property<int>("LastChunkSaved");
 
-                    b.Property<int>("LocalVersion");
+                    b.Property<int>("TargetChunkSize");
 
-                    b.Property<string>("LocalVersionId")
-                        .HasMaxLength(24);
+                    b.Property<int>("TargetChunksCount");
+
+                    b.Property<int>("TargetTotalNumberUCVI");
 
                     b.Property<int>("TargetVersion");
 
                     b.Property<string>("TargetVersionId")
                         .HasMaxLength(24);
-
-                    b.Property<int>("TotalNumberUCVI");
 
                     b.HasKey("Id");
 

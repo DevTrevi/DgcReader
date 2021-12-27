@@ -24,14 +24,15 @@ namespace DgcReader.BlacklistProviders.Italy.Migrations
                 columns: table => new
                 {
                     Id = table.Column<int>(nullable: false),
-                    ChunksCount = table.Column<int>(nullable: false),
+                    CurrentVersion = table.Column<int>(nullable: false),
+                    CurrentVersionId = table.Column<string>(maxLength: 24, nullable: true),
                     LastCheck = table.Column<DateTime>(nullable: false),
                     LastChunkSaved = table.Column<int>(nullable: false),
-                    LocalVersion = table.Column<int>(nullable: false),
-                    LocalVersionId = table.Column<string>(maxLength: 24, nullable: true),
+                    TargetChunkSize = table.Column<int>(nullable: false),
+                    TargetChunksCount = table.Column<int>(nullable: false),
+                    TargetTotalNumberUCVI = table.Column<int>(nullable: false),
                     TargetVersion = table.Column<int>(nullable: false),
-                    TargetVersionId = table.Column<string>(maxLength: 24, nullable: true),
-                    TotalNumberUCVI = table.Column<int>(nullable: false)
+                    TargetVersionId = table.Column<string>(maxLength: 24, nullable: true)
                 },
                 constraints: table =>
                 {

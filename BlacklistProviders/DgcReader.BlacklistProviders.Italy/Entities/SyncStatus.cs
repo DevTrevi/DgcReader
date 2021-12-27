@@ -1,13 +1,15 @@
-﻿// Copyright (c) 2021 Davide Trevisan
-// Licensed under the Apache License, Version 2.0
+﻿using System;
 
-using System;
+// Copyright (c) 2021 Davide Trevisan
+// Licensed under the Apache License, Version 2.0
 
 namespace DgcReader.BlacklistProviders.Italy.Entities
 {
+    /// <summary>
+    /// Sync status info of the blacklist
+    /// </summary>
     public class SyncStatus
     {
-
         /// <summary>
         /// The current version of the Crl stored on the DB
         /// </summary>
@@ -19,9 +21,9 @@ namespace DgcReader.BlacklistProviders.Italy.Entities
         public string? LocalVersionId { get; set; }
 
         /// <summary>
-        /// The total number of UVCI expected for the current version of the Crl
+        /// The total number of UCVI expected for the current version of the Crl
         /// </summary>
-        public int TotalNumberUVCI { get; set; }
+        public int TotalNumberUCVI { get; set; }
 
         /// <summary>
         /// Total chunks count of the current version

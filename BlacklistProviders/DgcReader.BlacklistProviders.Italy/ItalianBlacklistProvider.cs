@@ -51,7 +51,7 @@ namespace DgcReader.BlacklistProviders.Italy
             HttpClient = httpClient;
             Logger = logger;
 
-            BlacklistManager = new ItalianBlacklistManager(_options);
+            BlacklistManager = new ItalianBlacklistManager(_options, logger);
             RefreshBlacklistTaskRunner = new SingleTaskRunner<bool>(async ct =>
             {
                 await UpdateFromServer(ct);
@@ -88,7 +88,7 @@ namespace DgcReader.BlacklistProviders.Italy
             HttpClient = httpClient;
             Logger = logger;
 
-            BlacklistManager = new ItalianBlacklistManager(_options);
+            BlacklistManager = new ItalianBlacklistManager(_options, logger);
             RefreshBlacklistTaskRunner = new SingleTaskRunner<bool>(async ct =>
             {
                 await UpdateFromServer(ct);
@@ -109,7 +109,7 @@ namespace DgcReader.BlacklistProviders.Italy
             ILogger<ItalianBlacklistProvider>? logger = null)
         {
             return new ItalianBlacklistProvider(httpClient,
-                options == null ? null : Microsoft.Extensions.Options.Options.Create(options),
+                options == null ? null : Options.Create(options),
                 logger);
         }
 #endif
@@ -149,7 +149,7 @@ namespace DgcReader.BlacklistProviders.Italy
                 }
             }
 
-            return await BlacklistManager.ContainsUVCI(certificateIdentifier, cancellationToken);
+            return await BlacklistManager.ContainsUCVI(certificateIdentifier, cancellationToken);
         }
 
         /// <inheritdoc/>
@@ -210,7 +210,7 @@ namespace DgcReader.BlacklistProviders.Italy
         /// <param name="localVersion">The currently stored version on the local DB</param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        private async Task<DrlCheckEntry> GetDrlStatus(int localVersion, CancellationToken cancellationToken = default)
+        private async Task<DrlStatusEntry> GetDrlStatus(int localVersion, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -221,10 +221,10 @@ namespace DgcReader.BlacklistProviders.Italy
                 {
                     string content = await response.Content.ReadAsStringAsync();
 
-                    var result = JsonConvert.DeserializeObject<DrlCheckEntry>(content);
+                    var result = JsonConvert.DeserializeObject<DrlStatusEntry>(content);
 
                     if (result == null)
-                        throw new Exception($"Error wile deserializing {nameof(DrlCheckEntry)} from server");
+                        throw new Exception($"Error wile deserializing {nameof(DrlStatusEntry)} from server");
 
                     return result;
                 }
@@ -244,7 +244,7 @@ namespace DgcReader.BlacklistProviders.Italy
         /// <param name="chunk">The chunk to be downloaded for the requested version</param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        private async Task<DrlEntry> GetDrlChunk(int localVersion, int chunk, CancellationToken cancellationToken = default)
+        private async Task<DrlChunkData> GetDrlChunk(int localVersion, int chunk, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -255,10 +255,10 @@ namespace DgcReader.BlacklistProviders.Italy
                 {
                     string content = await response.Content.ReadAsStringAsync();
 
-                    var result = JsonConvert.DeserializeObject<DrlEntry>(content);
+                    var result = JsonConvert.DeserializeObject<DrlChunkData>(content);
 
                     if (result == null)
-                        throw new Exception($"Error wile deserializing {nameof(DrlEntry)} from server");
+                        throw new Exception($"Error wile deserializing {nameof(DrlChunkData)} from server");
 
                     return result;
                 }

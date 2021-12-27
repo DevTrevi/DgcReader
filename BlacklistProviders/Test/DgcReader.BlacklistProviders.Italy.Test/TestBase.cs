@@ -7,7 +7,6 @@ namespace DgcReader.BlacklistProviders.Italy.Test
 {
     public abstract class TestBase
     {
-
         protected TestBase()
         {
             Configuration = LoadConfiguration();

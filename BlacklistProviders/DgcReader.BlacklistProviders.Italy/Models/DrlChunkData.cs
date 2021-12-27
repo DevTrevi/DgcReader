@@ -1,9 +1,17 @@
 ﻿using Newtonsoft.Json;
 using System;
 
+// Copyright (c) 2021 Davide Trevisan
+// Licensed under the Apache License, Version 2.0
+
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+
 namespace DgcReader.BlacklistProviders.Italy.Models
 {
-    public class DrlEntry : IDrlVersionInfo
+    /// <summary>
+    /// One chunk of data of a Drl version
+    /// </summary>
+    public class DrlChunkData : IDrlVersionInfo
     {
         /// <summary>
         /// Identifier of the blacklist version
@@ -36,14 +44,14 @@ namespace DgcReader.BlacklistProviders.Italy.Models
         public int SingleChunkSize { get; set; }
 
         /// <summary>
-        /// Total number of UVCIs in blacklist
+        /// Total number of UCVIs in blacklist
         /// </summary>
         [JsonProperty("totalNumberUCVI")]
         public int TotalNumberUCVI { get; set; }
 
         #region Full download
         /// <summary>
-        /// Revoked UVCIs for this chunk
+        /// Revoked UCVIs for this chunk
         /// </summary>
         [JsonProperty("revokedUcvi")]
         public string[] RevokedUcviList { get; set; }
@@ -79,7 +87,7 @@ namespace DgcReader.BlacklistProviders.Italy.Models
         public int? FromVersion { get; set; }
 
         /// <summary>
-        /// The UVCI list delta from previous version
+        /// The UCVI list delta from previous version
         /// </summary>
         [JsonProperty("delta")]
         public DrlDelta Delta { get; set; }
@@ -91,21 +99,24 @@ namespace DgcReader.BlacklistProviders.Italy.Models
         public override string ToString()
         {
             if (RevokedUcviList != null)
-                return $"{nameof(DrlEntry)} id {Id} - Chunk {Chunk}/{TotalChunks} - {RevokedUcviList?.Length ?? 0} entries";
-            return $"{nameof(DrlEntry)} id {Id} - Chunk {Chunk}/{TotalChunks} - {Delta}";
+                return $"{nameof(DrlChunkData)} id {Id} - Chunk {Chunk}/{TotalChunks} - {RevokedUcviList?.Length ?? 0} entries";
+            return $"{nameof(DrlChunkData)} id {Id} - Chunk {Chunk}/{TotalChunks} - {Delta}";
         }
     }
 
+    /// <summary>
+    /// Delta containing new and removed UCVIs from the previous version
+    /// </summary>
     public class DrlDelta
     {
         /// <summary>
-        /// UVCIs added from previous version
+        /// UCVIs added from previous version
         /// </summary>
         [JsonProperty("insertions")]
         public string[] Insertions { get; set; }
 
         /// <summary>
-        /// UVCIs deleted from previous version
+        /// UCVIs deleted from previous version
         /// </summary>
         [JsonProperty("deletions")]
         public string[] Deletions { get; set; }

@@ -9,18 +9,18 @@ namespace DgcReader.BlacklistProviders.Italy.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
-                name: "DgcReader_ItalianDrl_Blacklist",
+                name: "DgcReader_ItalianBlacklist_Blacklist",
                 columns: table => new
                 {
-                    HashedUvci = table.Column<string>(maxLength: 44, nullable: false)
+                    HashedUCVI = table.Column<string>(maxLength: 44, nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_DgcReader_ItalianDrl_Blacklist", x => x.HashedUvci);
+                    table.PrimaryKey("PK_DgcReader_ItalianBlacklist_Blacklist", x => x.HashedUCVI);
                 });
 
             migrationBuilder.CreateTable(
-                name: "DgcReader_ItalianDrl_SyncStatus",
+                name: "DgcReader_ItalianBlacklist_SyncStatus",
                 columns: table => new
                 {
                     Id = table.Column<int>(nullable: false),
@@ -31,21 +31,21 @@ namespace DgcReader.BlacklistProviders.Italy.Migrations
                     LocalVersionId = table.Column<string>(maxLength: 24, nullable: true),
                     TargetVersion = table.Column<int>(nullable: false),
                     TargetVersionId = table.Column<string>(maxLength: 24, nullable: true),
-                    TotalNumberUVCI = table.Column<int>(nullable: false)
+                    TotalNumberUCVI = table.Column<int>(nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_DgcReader_ItalianDrl_SyncStatus", x => x.Id);
+                    table.PrimaryKey("PK_DgcReader_ItalianBlacklist_SyncStatus", x => x.Id);
                 });
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "DgcReader_ItalianDrl_Blacklist");
+                name: "DgcReader_ItalianBlacklist_Blacklist");
 
             migrationBuilder.DropTable(
-                name: "DgcReader_ItalianDrl_SyncStatus");
+                name: "DgcReader_ItalianBlacklist_SyncStatus");
         }
     }
 }

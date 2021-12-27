@@ -3,10 +3,14 @@
 
 namespace DgcReader.BlacklistProviders.Italy.Entities
 {
+    /// <summary>
+    /// Entry of the blacklist, containing the hashed value of a blacklisted UCVI
+    /// </summary>
     public class BlacklistEntry
     {
-        public string HashedUvci { get; set; }
-        //public int AddInVersion { get; set; }
-        //public int Chunk { get; set; }
+        /// <summary>
+        /// The Sha256 hash of a UCVI
+        /// </summary>
+        public string HashedUCVI { get; set; } = "";
     }
 }

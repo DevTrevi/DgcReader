@@ -1,36 +1,16 @@
 ﻿using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+
+// Copyright (c) 2021 Davide Trevisan
+// Licensed under the Apache License, Version 2.0
+
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 
 namespace DgcReader.BlacklistProviders.Italy.Models
 {
-    public interface IDrlVersionInfo
-    {
-        /// <summary>
-        /// Identifier of the blacklist version
-        /// </summary>
-        string Id { get; set; }
-
-        /// <summary>
-        /// The version of the blacklist
-        /// </summary>
-        int Version { get; set; }
-
-        /// <summary>
-        /// Total chunks count
-        /// </summary>
-        int TotalChunks { get; set; }
-
-        /// <summary>
-        /// Total number of UVCIs in blacklist
-        /// </summary>
-        int TotalNumberUCVI { get; set; }
-    }
-
-    public class DrlCheckEntry : IDrlVersionInfo
+    /// <summary>
+    /// Status informations of the current Drl version compared to a previous one
+    /// </summary>
+    public class DrlStatusEntry : IDrlVersionInfo
     {
         /// <summary>
         /// Identifier of the Dlr version
@@ -87,7 +67,7 @@ namespace DgcReader.BlacklistProviders.Italy.Models
         public int TotalChunks { get; set; }
 
         /// <summary>
-        /// Total number of UVCIs in blacklist
+        /// Total number of UCVIs in blacklist
         /// </summary>
         [JsonProperty("totalNumberUCVI")]
         public int TotalNumberUCVI { get; set; }

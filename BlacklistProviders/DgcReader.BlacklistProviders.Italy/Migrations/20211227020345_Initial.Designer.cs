@@ -8,7 +8,7 @@ using DgcReader.BlacklistProviders.Italy;
 namespace DgcReader.BlacklistProviders.Italy.Migrations
 {
     [DbContext(typeof(ItalianBlacklistDbContext))]
-    [Migration("20211226150020_Initial")]
+    [Migration("20211227020345_Initial")]
     partial class Initial
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -18,13 +18,13 @@ namespace DgcReader.BlacklistProviders.Italy.Migrations
 
             modelBuilder.Entity("DgcReader.BlacklistProviders.Italy.Entities.BlacklistEntry", b =>
                 {
-                    b.Property<string>("HashedUvci")
+                    b.Property<string>("HashedUCVI")
                         .ValueGeneratedOnAdd()
                         .HasMaxLength(44);
 
-                    b.HasKey("HashedUvci");
+                    b.HasKey("HashedUCVI");
 
-                    b.ToTable("DgcReader_ItalianDrl_Blacklist");
+                    b.ToTable("DgcReader_ItalianBlacklist_Blacklist");
                 });
 
             modelBuilder.Entity("DgcReader.BlacklistProviders.Italy.Entities.SyncStatus", b =>
@@ -47,11 +47,11 @@ namespace DgcReader.BlacklistProviders.Italy.Migrations
                     b.Property<string>("TargetVersionId")
                         .HasMaxLength(24);
 
-                    b.Property<int>("TotalNumberUVCI");
+                    b.Property<int>("TotalNumberUCVI");
 
                     b.HasKey("Id");
 
-                    b.ToTable("DgcReader_ItalianDrl_SyncStatus");
+                    b.ToTable("DgcReader_ItalianBlacklist_SyncStatus");
                 });
         }
     }

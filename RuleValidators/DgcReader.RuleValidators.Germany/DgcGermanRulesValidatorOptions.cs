@@ -19,7 +19,7 @@ namespace DgcReader.RuleValidators.Germany
         /// <summary>
         /// If specified, prevent that every validation request causes a refresh attempt when the current rules list is expired.
         /// </summary>
-        public TimeSpan MinRefreshInterval { get; set; } = TimeSpan.FromHours(1);
+        public TimeSpan MinRefreshInterval { get; set; } = TimeSpan.FromMinutes(5);
 
         /// <summary>
         /// If true, allows to use the current rules list without waiting for the refresh task to complete.
@@ -38,6 +38,6 @@ namespace DgcReader.RuleValidators.Germany
         /// If a refresh is not possible when the refresh interval expires, the current file can be used until
         /// it passes the specified period. Default is 30 days
         /// </summary>
-        public TimeSpan MaxFileAge { get; set; } = TimeSpan.FromDays(30);
+        public TimeSpan MaxFileAge { get; set; } = TimeSpan.FromDays(15);
     }
 }

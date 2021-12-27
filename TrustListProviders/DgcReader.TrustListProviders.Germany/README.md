@@ -50,7 +50,7 @@ var trustListProvider = GermanTrustListProvider.Create(httpClient,
 - **RefreshInterval**: interval for checking for an updated trustlist from the server. Default value is 24 hours.
 - **MinRefreshInterval**: if specified, prevents that every validation request causes a refresh attempt when the current trustlist is expired.  
 For example, if the parameter is set to 5 minutes and the remote server is unavailable when the `RefreshInterval` is expired, subsequent validation requests won't try to download an updated trustlist for 5 minutes before making a new attempt. 
-Default value is 1 hour.
+Default value is 5 minutes.
 - **UseAvailableListWhileRefreshing**: if true, allows the provider to return the expired list loaded in memory, while downloading an updated list on a background Task.  
 This prevents the application to wait that the new full list of certificates is downloaded, extending by the time needed for the download the effective validitiy of the trustlist already loaded.  
 As result, the response time of the application will be nearly instantanious, except for the first download or if the trustlist has reached the `MaxFileAge` value.  

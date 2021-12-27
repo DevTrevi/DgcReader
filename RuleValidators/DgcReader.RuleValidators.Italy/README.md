@@ -64,7 +64,7 @@ var dgcReader = DgcReaderService.Create(
 - **RefreshInterval**: interval for checking for rules updates from the server. Default value is 24 hours.
 - **MinRefreshInterval**: if specified, prevents that every validation request causes a refresh attempt when the current rules are expired.  
 For example, if the parameter is set to 5 minutes and the remote server is unavailable when the `RefreshInterval` is expired, subsequent validation requests won't try to download the updated rules for 5 minutes before making a new attempt. 
-Default value is 1 hour.
+Default value is 5 minutes.
 - **UseAvailableValuesWhileRefreshing**: if true, allows the validator to use the expired rules already loaded in memory, while downloading the updated rules on a background Task.  
 This prevents the application to wait that the new rules are downloaded, extending by the time needed for the download the effective validitiy of the rules already loaded.  
 As result, the response time of the application will be nearly instantanious, except for the first download or if the rules have reached the `MaxFileAge` value.  

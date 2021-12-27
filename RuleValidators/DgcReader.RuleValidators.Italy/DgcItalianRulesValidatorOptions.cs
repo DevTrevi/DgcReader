@@ -19,7 +19,7 @@ namespace DgcReader.RuleValidators.Italy
         /// <summary>
         /// If specified, prevent that every validation request causes a refresh attempt when the current rules list is expired.
         /// </summary>
-        public TimeSpan MinRefreshInterval { get; set; } = TimeSpan.FromHours(1);
+        public TimeSpan MinRefreshInterval { get; set; } = TimeSpan.FromMinutes(5);
 
         /// <summary>
         /// If true, allows to use the current rules list without waiting for the refresh task to complete.

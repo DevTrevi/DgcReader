@@ -13,9 +13,9 @@ namespace DgcReader.BlacklistProviders.Italy
     public class ItalianDrlBlacklistProviderOptions
     {
         /// <summary>
-        /// Duration of the stored file before a refresh is requested. Default is 1 hour
+        /// Duration of the stored file before a refresh is requested. Default is 24 hours
         /// </summary>
-        public TimeSpan RefreshInterval { get; set; } = TimeSpan.FromHours(1);
+        public TimeSpan RefreshInterval { get; set; } = TimeSpan.FromHours(24);
 
         /// <summary>
         /// If specified, prevent that every validation request causes a refresh attempt when the current values needs to be updated.

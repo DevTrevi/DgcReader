@@ -16,6 +16,6 @@ namespace DgcReader.TrustListProviders.Abstractions
         public TimeSpan RefreshInterval { get; set; } = TimeSpan.FromHours(24);
 
         /// <inheritdoc />
-        public TimeSpan MinRefreshInterval { get; set; } = TimeSpan.FromHours(1);
+        public TimeSpan MinRefreshInterval { get; set; } = TimeSpan.FromMinutes(5);
     }
 }

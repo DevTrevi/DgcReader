@@ -15,7 +15,6 @@
     <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageProjectUrl>https://github.com/DevTrevi/DgcReader</PackageProjectUrl>
-    <PackageReleaseNotes>Implemented the italian "Super Greenpass" rules, added extension methods to specify the ValidationMode</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>

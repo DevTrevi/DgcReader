@@ -55,10 +55,11 @@ If you don't use the dependency injection, you can instantiate it directly:
 // Create an instance of the TrustListProvider (eg. ItalianTrustListProvider) and the other required services
 var httpClient = new HttpClient();
 var trustListProvider = new ItalianTrustListProvider(httpClient);
-var rulesValidator = new DgcItalianRulesValidator(httpClient);  // Note: this implementation is both a IRulesValidator and a IBlacklistProvider
+var blacklistProvider = new ItalianBlacklistProvider(httpClient);
+var rulesValidator = new DgcItalianRulesValidator(httpClient);
 
 // Create an instance of the DgcReaderService
-var dgcReader = DgcReaderService.Create(trustListProvider, rulesValidator, rulesValidator);
+var dgcReader = DgcReaderService.Create(trustListProvider, blacklistProvider, rulesValidator);
 ```
 
 Once instantiated and configured with at least the `ITrustListProvider` service, you can simply call one of the methods shown in c)
@@ -115,8 +116,9 @@ It support also registration of multiple TrustList providers and BlackList provi
 
 In order to support these new features, there are some breaking changes that must be taken into account when upgrading from version 1.x:
 - The `DgcReaderService` constructor now accepts multiple instances for each kind of service.  
-If you don't need to add multiple providers and you don't use dependency injection, you can simply use the `Create` factory method.
+If you don't need to add multiple providers per kind and you don't use dependency injection, you can simply use the `Create` factory method.
 - Methods `Verify` and `GetValidationResult` now requires to specify the acceptance country
+- Files stored by the providers are now organized in subfolders relative to the `BasePath` option
 - The `DgcValidationResult` and the exceptions has been reorganized in a cleaner way, and the `DgcResultStatus` values are less bound to countries specific rules.  
 If you need, you can still access specific informations or customized status for a specific implementation of a RuleValidator service by accessing the RulesValidation property of the result.  
 By checking the actual implementation, you will get all the details returned by the RuleProvider used for the validation:
@@ -173,8 +175,11 @@ These APIs were not fully implemented in previous versions of the framework, so 
 | Main package, containing the DgcReaderService         | [![NuGet version (DgcReader)](https://img.shields.io/nuget/vpre/DgcReader)](https://www.nuget.org/packages/DgcReader/) |
 | TrustList implementation for the Italian backend        | [![NuGet version (DgcReader.TrustListProviders.Italy)](https://img.shields.io/nuget/vpre/DgcReader.TrustListProviders.Italy)](https://www.nuget.org/packages/DgcReader.TrustListProviders.Italy/)  |
 | TrustList implementation for the Swedish backend        | [![NuGet version (DgcReader.TrustListProviders.Sweden)](https://img.shields.io/nuget/vpre/DgcReader.TrustListProviders.Sweden)](https://www.nuget.org/packages/DgcReader.TrustListProviders.Sweden/)  |
+| Implementation of the Italian Blacklist provider  | [![NuGet version (DgcReader.BlacklistProviders.Italy)](https://img.shields.io/nuget/vpre/DgcReader.BlacklistProviders.Italy)](https://www.nuget.org/packages/DgcReader.BlacklistProviders.Italy/) |
+| Implementation of the Italian validation rules| [![NuGet version (DgcReader.RuleValidators.Italy)](https://img.shields.io/nuget/vpre/DgcReader.RuleValidators.Italy)](https://www.nuget.org/packages/DgcReader.RuleValidators.Italy/)  |
+| Implementation of the German rules validation engine | [![NuGet version (DgcReader.RuleValidators.Germany)](https://img.shields.io/nuget/vpre/DgcReader.RuleValidators.Germany)](https://www.nuget.org/packages/DgcReader.RuleValidators.Germany/)  |
+| Abstractions for building providers and rules validators  | [![NuGet version (DgcReader.Providers.Abstractions)](https://img.shields.io/nuget/vpre/DgcReader.Providers.Abstractions)](https://www.nuget.org/packages/DgcReader.Providers.Abstractions/)  |
 | Abstractions for building TrustList providers | [![NuGet version (DgcReader.TrustListProviders.Abstractions)](https://img.shields.io/nuget/vpre/DgcReader.TrustListProviders.Abstractions)](https://www.nuget.org/packages/DgcReader.TrustListProviders.Abstractions/)  |
-| Implementation for the Italian validation rules| [![NuGet version (DgcReader.RuleValidators.Italy)](https://img.shields.io/nuget/vpre/DgcReader.RuleValidators.Italy)](https://www.nuget.org/packages/DgcReader.RuleValidators.Italy/)  |
 
 ## Extending the library
 

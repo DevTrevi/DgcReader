@@ -68,8 +68,7 @@ Default value is 5 minutes.
 This prevents the application to wait that the new values are downloaded.  
 As result, the response time of the application will be nearly instantanious, except for the first download or if the rules have reached the `MaxFileAge` value.  
 Otherwise, if the rules are expired, every validation request will wait untill the refresh task completes.
-- **BasePath**: base folder where the blacklist entries database will be created.
-The default value is `Directory.GetCurrentDirectory()`
+- **BasePath**: base folder where the blacklist database will be created. The default value is `Directory.GetCurrentDirectory()`
 - **MaxFileAge**: maximum duration of the database before a refresh of the rules is enforced.  
 If a refresh is not possible when the refresh interval expires, the current file can be used until it passes the specified period.  
 This allows the application to continue to operate even if the backend is temporary unavailable for any reason.

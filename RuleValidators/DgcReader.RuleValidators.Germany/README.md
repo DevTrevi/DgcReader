@@ -5,7 +5,7 @@
 
 Implementation of `IRulesValidator` for validating Digital Green Certificates using rules provided by the German backend.
 
-This is an unofficial porting of the **covpass-sdk** included in the [Digitaler-Impfnachweis / covpass-android](https://github.com/Digitaler-Impfnachweis/covpass-android) repository  
+This is an unofficial porting of the **covpass-sdk** included in the [Digitaler-Impfnachweis / covpass-android](https://github.com/Digitaler-Impfnachweis/covpass-android) repository.
 
 In addition to German rules, it supports validation for several other European Union countries. You can get a list of supported countries by calling the `GetSupportedCountries` method.
 
@@ -67,8 +67,7 @@ Default value is 1 hour.
 This prevents the application to wait that the new rules are downloaded, extending by the time needed for the download the effective validitiy of the rules already loaded.  
 As result, the response time of the application will be nearly instantanious, except for the first download or if the rules have reached the `MaxFileAge` value.  
 Otherwise, if the rules are expired, every validation request will wait untill the refresh task completes.
-- **BasePath**: base folder where the rules list will be saved.  
-The default value is `Directory.GetCurrentDirectory()`
+- **BasePath**: base folder where the rules list will be saved. The default value is `Directory.GetCurrentDirectory()`
 - **MaxFileAge**: maximum duration of the configuration file before is discarded.  
 If a refresh is not possible when the refresh interval expires, the current file can be used until it passes the specified period.  
 This allows the application to continue to operate even if the backend is temporary unavailable for any reason.

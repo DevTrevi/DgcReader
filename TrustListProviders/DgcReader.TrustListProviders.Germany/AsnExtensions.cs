@@ -13,6 +13,9 @@ using System.Formats.Asn1;
 
 namespace DgcReader.TrustListProviders.Germany
 {
+    /// <summary>
+    /// Helperm methods for ASN1
+    /// </summary>
     public static class AsnExtensions
     {
 #if NET452

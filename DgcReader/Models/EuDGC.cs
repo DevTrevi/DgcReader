@@ -49,8 +49,7 @@ namespace GreenpassReader.Models
         public VaccinationEntry[] Vaccinations { get; internal set; }
 
         /// <summary>
-        /// Version of the schema, according to Semantic versioning (ISO, https://semver.org/ version
-        /// 2.0.0 or newer)
+        /// Version of the schema, according to Semantic versioning (ISO, https://semver.org/ version 2.0.0 or newer)
         /// </summary>
         [JsonProperty("ver")]
         public string SchemaVersion { get; internal set; }
@@ -58,7 +57,6 @@ namespace GreenpassReader.Models
 
     /// <summary>
     /// Surname(s), given name(s) - in that order
-    ///
     /// Person name: Surname(s), given name(s) - in that order
     /// </summary>
     public class Name
@@ -155,7 +153,6 @@ namespace GreenpassReader.Models
         /// 2-letter ISO3166 code (RECOMMENDED) or a reference to an international
         /// organisation responsible for carrying out the test which the test
         /// was carried out (such as UNHCR or WHO)
-        /// This MUST be a coded value from the value set country-2-codes.json
         /// </summary>
         [JsonProperty("co")]
         public string Country { get; internal set; }
@@ -167,7 +164,7 @@ namespace GreenpassReader.Models
         public string Issuer { get; internal set; }
 
         /// <summary>
-        /// A coded value from the value set disease-agent-targeted.json
+        /// Coded value of the targeted disease agent
         /// </summary>
         [JsonProperty("tg")]
         public string TargetedDiseaseAgent { get; internal set; }
@@ -211,14 +208,12 @@ namespace GreenpassReader.Models
 
         /// <summary>
         /// Test Result
-        /// A coded value from the value set test-result.json
         /// </summary>
         [JsonProperty("tr")]
         public string TestResult { get; internal set; }
 
         /// <summary>
         /// Type of Test
-        /// A coded value from the value set test-type.json
         /// </summary>
         [JsonProperty("tt")]
         public string TestType { get; internal set; }
@@ -240,7 +235,6 @@ namespace GreenpassReader.Models
         /// 2-letter ISO3166 code (RECOMMENDED) or a reference to an international
         /// organisation responsible for carrying out the test which the test
         /// was carried out (such as UNHCR or WHO)
-        ///A coded value from the value set country-2-codes.json
         /// </summary>
         [JsonProperty("co")]
         public string Country { get; internal set; }
@@ -252,8 +246,7 @@ namespace GreenpassReader.Models
         public string Issuer { get; internal set; }
 
         /// <summary>
-        /// Disease or agent targeted
-        /// A coded value from the value set disease-agent-targeted.json
+        /// Coded value of the targeted disease agent
         /// </summary>
         [JsonProperty("tg")]
         public string TargetedDiseaseAgent { get; internal set; }
@@ -280,7 +273,6 @@ namespace GreenpassReader.Models
         /// <summary>
         /// Vaccine medicinal product
         /// Medicinal product used for this specific dose of vaccination.
-        /// A coded value from the value set vaccine-medicinal-product.json
         /// </summary>
         [JsonProperty("mp")]
         public string MedicinalProduct { get; internal set; }
@@ -298,7 +290,6 @@ namespace GreenpassReader.Models
         /// <summary>
         /// Vaccine or prophylaxis
         /// Type of the vaccine or prophylaxis used.
-        /// A coded value from the value set vaccine-prophylaxis.json
         /// </summary>
         [JsonProperty("vp")]
         public string VaccineOrProphylaxis { get; internal set; }

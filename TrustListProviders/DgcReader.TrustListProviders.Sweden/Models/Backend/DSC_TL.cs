@@ -86,7 +86,7 @@ namespace DgcReader.TrustListProviders.Sweden.Models
     {
         /// <summary>
         /// List of eku
-        /// 
+        ///
         /// </summary>
         [JsonProperty("eku")]
         public Dictionary<string, object> Eku { get; set; }

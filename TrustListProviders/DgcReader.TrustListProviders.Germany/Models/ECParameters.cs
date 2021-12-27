@@ -12,6 +12,7 @@ namespace DgcReader.TrustListProviders.Germany.Models
     public class ECParameters : IECParameters
     {
         /// <inheritdoc/>
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         public ECParameters()
         {
         }
@@ -31,18 +32,19 @@ namespace DgcReader.TrustListProviders.Germany.Models
             Curve = p.Curve.Oid.Value;
             CurveFriendlyName = p.Curve.Oid.FriendlyName;
 
-            X = p.Q.X?.ToArray();
-            Y = p.Q.Y?.ToArray();
+            X = p.Q.X?.ToArray() ?? new byte[0];
+            Y = p.Q.Y?.ToArray() ?? new byte[0];
         }
 #endif
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 
         /// <inheritdoc />
         [JsonProperty("cf", NullValueHandling = NullValueHandling.Ignore)]
-        public string CurveFriendlyName { get; set; }
+        public string? CurveFriendlyName { get; set; }
 
         /// <inheritdoc />
         [JsonProperty("c", NullValueHandling = NullValueHandling.Ignore)]
-        public string Curve { get; set; }
+        public string? Curve { get; set; }
 
         /// <inheritdoc />
         [JsonProperty("x")]

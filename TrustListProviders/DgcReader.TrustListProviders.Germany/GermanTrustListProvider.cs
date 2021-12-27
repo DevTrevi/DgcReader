@@ -149,13 +149,14 @@ namespace DgcReader.TrustListProviders.Germany
                     cancellationToken.ThrowIfCancellationRequested();
 
                     var cert = new X509Certificate2(data.RawData);
+
                     var keyAlgo = cert.GetKeyAlgorithm();
                     var keyAlgoOid = Oid.FromOidValue(keyAlgo, OidGroup.PublicKeyAlgorithm);
 
                     var certData = new CertificateData
                     {
                         Kid = data.Kid,
-                        KeyAlgorithm = keyAlgoOid.FriendlyName,
+                        KeyAlgorithm = keyAlgoOid?.FriendlyName,
                         SignatureAlgo = cert.SignatureAlgorithm.FriendlyName,
                         Thumbprint = data.Thumbprint,
                         Timestamp = data.Timestamp,
@@ -306,7 +307,7 @@ namespace DgcReader.TrustListProviders.Germany
                     if (result == null)
                         throw new DgcException("Unable to deserialize the Trustlist");
 
-                    Logger?.LogDebug($"{result?.Certificates.Count()} read in {DateTime.Now - start}");
+                    Logger?.LogDebug($"{result.Certificates.Count()} read in {DateTime.Now - start}");
 
                     return result;
                 }

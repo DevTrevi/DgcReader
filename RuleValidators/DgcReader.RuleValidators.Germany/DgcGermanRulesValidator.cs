@@ -45,6 +45,9 @@ namespace DgcReader.RuleValidators.Germany
         private readonly DefaultCertLogicEngine _certLogicEngine;
         private readonly CovPassGetRulesUseCase _rulesUseCase;
 
+        /// <summary>
+        /// Json serializer settings for the validator
+        /// </summary>
         public static readonly JsonSerializerSettings JsonSerializerSettings = new JsonSerializerSettings
         {
             MetadataPropertyHandling = MetadataPropertyHandling.Ignore,
@@ -105,6 +108,7 @@ namespace DgcReader.RuleValidators.Germany
             ILogger<DgcGermanRulesValidator>? logger = null)
         {
             Options = options?.Value ?? new DgcGermanRulesValidatorOptions();
+            Logger = logger;
 
             // Valueset providers
             _ruleIdentifiersProvider = new RuleIdentifiersProvider(httpClient, Options, logger);

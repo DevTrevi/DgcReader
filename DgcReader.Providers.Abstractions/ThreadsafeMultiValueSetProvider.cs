@@ -35,13 +35,12 @@ namespace DgcReader.Providers.Abstractions
         /// <summary>
         /// The task that is currently executing the <see cref="RefreshValueSet"/> method
         /// </summary>
-        private readonly IDictionary<TKey, SingleTaskRunner<T?>> _refreshTasks = new Dictionary<TKey, SingleTaskRunner<T>>();
+        private readonly IDictionary<TKey, SingleTaskRunner<T?>> _refreshTasks = new Dictionary<TKey, SingleTaskRunner<T?>>();
 
         /// <summary>
-        /// Semaphore controlling access to <see cref="_refreshTask"/>
+        /// Semaphore controlling access to <see cref="_refreshTasks"/>
         /// </summary>
         private readonly SemaphoreSlim _refreshTaskSemaphore = new SemaphoreSlim(1, 1);
-        private CancellationTokenSource? _refreshTaskCancellation;
 
         /// <summary>
         /// Constructor
@@ -295,23 +294,13 @@ namespace DgcReader.Providers.Abstractions
 
         }
 
-        private void CancelRefreshTaskExecution()
-        {
-            if (_refreshTaskCancellation == null)
-                return;
-
-            if (!_refreshTaskCancellation.IsCancellationRequested &&
-                _refreshTaskCancellation.Token.CanBeCanceled)
-            {
-                Logger?.LogWarning($"Requesting cancellation for the refresh task");
-                _refreshTaskCancellation.Cancel();
-            }
-        }
-
         /// <inheritdoc/>
         public virtual void Dispose()
         {
-            CancelRefreshTaskExecution();
+            foreach(var runner in _refreshTasks.Values)
+            {
+                runner.Dispose();
+            }
         }
         #endregion
     }

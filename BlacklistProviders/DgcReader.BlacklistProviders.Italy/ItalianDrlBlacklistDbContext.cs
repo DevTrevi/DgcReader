@@ -75,14 +75,14 @@ namespace DgcReader.BlacklistProviders.Italy
         public DbSet<SyncStatus> SyncStatus { get; private set; }
     }
 
-    /// <summary>
-    /// Workaround for Migrations EFCore 1.x
-    /// </summary>
-    public class Program
-    {
-        /// <inheritdoc/>
-        public static void Main(string[] args)
-        {
-        }
-    }
+    ///// <summary>
+    ///// Workaround for Migrations EFCore 1.x
+    ///// </summary>
+    //public class Program
+    //{
+    //    /// <inheritdoc/>
+    //    public static void Main(string[] args)
+    //    {
+    //    }
+    //}
 }

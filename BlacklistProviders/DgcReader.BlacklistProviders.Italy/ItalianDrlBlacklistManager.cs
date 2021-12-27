@@ -36,7 +36,7 @@ namespace DgcReader.BlacklistProviders.Italy
         private ILogger? Logger { get; }
 
         private bool _dbVersionChecked;
-        private SyncStatus _syncStatus;
+        private SyncStatus? _syncStatus;
 
         /// <summary>
         /// Constructor

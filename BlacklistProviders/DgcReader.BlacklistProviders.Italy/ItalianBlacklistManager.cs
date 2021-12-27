@@ -265,13 +265,13 @@ namespace DgcReader.BlacklistProviders.Italy
                 Directory.CreateDirectory(GetCacheFolder());
 
             // Configuring db context options
-            if (!Options.DatabaseOptions.IsConfigured)
+            if (!Options.DbContext.IsConfigured)
             {
                 var connString = $"Data Source={GetCacheFilePath()}";
-                Options.DatabaseOptions.UseSqlite(connString);
+                Options.DbContext.UseSqlite(connString);
             }
 
-            var ctx = new ItalianBlacklistDbContext(Options.DatabaseOptions.Options);
+            var ctx = new ItalianBlacklistDbContext(Options.DbContext.Options);
 
             // Check if db should be updated
             if (!_dbVersionChecked)

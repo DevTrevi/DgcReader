@@ -73,6 +73,16 @@ Otherwise, if the rules are expired, every validation request will wait untill t
 If a refresh is not possible when the refresh interval expires, the current file can be used until it passes the specified period.  
 This allows the application to continue to operate even if the backend is temporary unavailable for any reason.
 Default value is 15 days.
+- **DbContext**: configures the options for the DbContext. Allows to specify all the options supported by EF Core, including specifying a different database from the default Sqllite
+ ``` csharp
+// Example of configuration using Microsoft Sql Server
+services.AddDgcReader()
+    .AddItalianBlacklistProvider(o =>
+    {
+        o.DbContext.UseSqlServer("Data Source=localhost;Initial Catalog=DgcReader_ItalianBlacklist;persist security info=True;Integrated Security=True;MultipleActiveResultSets=True");
+    });
+
+```
 
 ## Forcing the update of the values
 If the application needs to update the values at a specific time (i.e. by a scheduled task, or when a user press a *"Refresh"* button), you can simply call the `RefreshBlacklist` function of the provider.

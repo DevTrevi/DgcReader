@@ -42,8 +42,8 @@ namespace DgcReader.BlacklistProviders.Italy
         public string BasePath { get; set; } = Directory.GetCurrentDirectory();
 
         /// <summary>
-        /// Options for configuring the DbContext for the provider
+        /// Options for configuring the DbContext
         /// </summary>
-        public DbContextOptionsBuilder DatabaseOptions { get; private set; } = new DbContextOptionsBuilder();
+        public DbContextOptionsBuilder DbContext { get; private set; } = new DbContextOptionsBuilder();
     }
 }

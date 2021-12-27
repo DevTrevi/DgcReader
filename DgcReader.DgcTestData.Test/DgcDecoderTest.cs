@@ -7,6 +7,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using DgcReader.Interfaces.TrustListProviders;
+using System.Security.Cryptography.X509Certificates;
 #if NET452
 using System.Net.Http;
 using Microsoft.Extensions.Configuration;
@@ -33,8 +34,8 @@ namespace DgcReader.DgcTestData.Test
             var path = Configuration.GetSection("DgcTestDataRepositoryPath").Value;
             var loader = new CertificatesTestsLoader(path);
             var trustListProvider = new TestTrustListProvider(loader);
-            DgcReader = new DgcReaderService(trustListProvider, null);
-            
+            DgcReader = DgcReaderService.Create(trustListProvider);
+
             TestEntries = await loader.LoadTestEntries();
 #else
             DgcReader = ServiceProvider.GetRequiredService<DgcReaderService>();
@@ -100,11 +101,13 @@ namespace DgcReader.DgcTestData.Test
                     {
                         var clock = entry.TestContext.ValidationClock ?? System.DateTimeOffset.Now;
 
-                        var result = await DgcReader.Verify(entry.PREFIX, clock);
+                        var certificate = new X509Certificate2(entry.TestContext.Certificate);
+
+                        var result = await DgcReader.Verify(entry.PREFIX, null, clock);
 
                         Assert.IsNotNull(result);
                         Assert.IsNotNull(result.Dgc);
-                        Assert.IsTrue(result.HasValidSignature);
+                        Assert.IsTrue(result.Signature.HasValidSignature);
                     }
                     catch (DgcSignatureExpiredException e)
                     {
@@ -152,17 +155,17 @@ namespace DgcReader.DgcTestData.Test
                     {
                         var clock = entry.TestContext.ValidationClock ?? System.DateTimeOffset.Now;
 
-                        var result = await DgcReader.GetValidationResult(entry.PREFIX, clock);
+                        var result = await DgcReader.GetValidationResult(entry.PREFIX, null, clock);
 
                         Assert.IsNotNull(result);
                         Assert.IsNotNull(result.Dgc);
-                        Assert.IsTrue(result.HasValidSignature);
+                        Assert.IsTrue(result.Signature.HasValidSignature);
 
                         if (entry.ExpectedResults.ContainsKey(ExpectedResultsKeys.EXPECTEDEXPIRATIONCHECK))
                         {
                             if (entry.ExpectedResults[ExpectedResultsKeys.EXPECTEDEXPIRATIONCHECK])
                             {
-                                Assert.AreEqual(result.HasValidSignature, entry.ExpectedResults[ExpectedResultsKeys.EXPECTEDEXPIRATIONCHECK]);
+                                Assert.AreEqual(result.Signature.HasValidSignature, entry.ExpectedResults[ExpectedResultsKeys.EXPECTEDEXPIRATIONCHECK]);
                             }
                         }
                     }

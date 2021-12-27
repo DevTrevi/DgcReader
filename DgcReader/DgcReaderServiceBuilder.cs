@@ -7,9 +7,20 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Microsoft.Extensions.DependencyInjection
 {
+    /// <summary>
+    /// Builder exposing methods for configuring the <see cref="DgcReaderService"/>
+    /// </summary>
     public class DgcReaderServiceBuilder
     {
+        /// <summary>
+        /// Returns the services collection
+        /// </summary>
         public IServiceCollection Services { get; }
+
+        /// <summary>
+        /// Initializes a new instance of <see cref="DgcReaderServiceBuilder"/>
+        /// </summary>
+        /// <param name="services"></param>
         public DgcReaderServiceBuilder(IServiceCollection services)
         {
             Services = services;

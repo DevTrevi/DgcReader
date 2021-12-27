@@ -8,7 +8,7 @@ Implementation of `IRulesValidator` for validating Digital Green Certificates ag
 The `DgcItalianRulesValidator` implements also the `IBlacklistProvider` interface, and can be used for both purposes.
 
 Starting from version 1.3.0, the library has been included in the [list of verified SDKs by Italian authorities (Ministero della salute)](https://github.com/ministero-salute/it-dgc-verificac19-sdk-onboarding).  
-The approval only refers to the main module `DgcReader` in combination with this provider (`DgcReader.RuleValidators.Italy`) and `DgcReader.TrustListProviders.Italy`.
+The approval only refers to the main module `DgcReader` in combination with the Italian providers included in the project (`DgcReader.RuleValidators.Italy`, `DgcReader.BlacklistProviders.Italy` and `DgcReader.TrustListProviders.Italy` )
 
 ## Usage
 
@@ -50,7 +50,7 @@ var rulesValidator = DgcItalianRulesValidator.Create(httpClient,
 
 
 // Then you should pass it as a parameter to the DgcReaderService constructor:
-var dgcReader = new DgcReaderService(
+var dgcReader = DgcReaderService.Create(
     trustListProvider, 
     rulesValidator,     // <-- Note: the DgcItalianRulesValidator is both a Blacklist provider and a rules validator
     rulesValidator      // <-- The rules validator service
@@ -64,14 +64,13 @@ var dgcReader = new DgcReaderService(
 - **RefreshInterval**: interval for checking for rules updates from the server. Default value is 24 hours.
 - **MinRefreshInterval**: if specified, prevents that every validation request causes a refresh attempt when the current rules are expired.  
 For example, if the parameter is set to 5 minutes and the remote server is unavailable when the `RefreshInterval` is expired, subsequent validation requests won't try to download the updated rules for 5 minutes before making a new attempt. 
-Default value is 1 hour.
-- **UseAvailableListWhileRefreshing**: if true, allows the validator to use the expired rules already loaded in memory, while downloading the updated rules on a background Task.  
+Default value is 5 minutes.
+- **UseAvailableValuesWhileRefreshing**: if true, allows the validator to use the expired rules already loaded in memory, while downloading the updated rules on a background Task.  
 This prevents the application to wait that the new rules are downloaded, extending by the time needed for the download the effective validitiy of the rules already loaded.  
 As result, the response time of the application will be nearly instantanious, except for the first download or if the rules have reached the `MaxFileAge` value.  
 Otherwise, if the rules are expired, every validation request will wait untill the refresh task completes.
 - **BasePath**: base folder where the rules list will be saved.  
 The default value is `Directory.GetCurrentDirectory()`
-- **TrustListFileName**: the file name used for the rules list file name. Default is `dgc-rules-it.json`
 - **MaxFileAge**: maximum duration of the configuration file before is discarded.  
 If a refresh is not possible when the refresh interval expires, the current file can be used until it passes the specified period.  
 This allows the application to continue to operate even if the backend is temporary unavailable for any reason.
@@ -126,14 +125,6 @@ public void ConfigureServices(IServiceCollection services)
 }
 ```
 
-Or you can use it as an `IBlacklistProvider` **only** (i.e. in combination with a rule validator for a different country that has no blacklist providers available):
-
- ``` csharp
-public void ConfigureServices(IServiceCollection services)
-{
-    ...
-    services.AddDgcReader()
-        .AddItalianTrustListProvider()
-        .AddItalianBlacklistProvider();
-}
-```
+------
+Copyright &copy; 2021 Davide Trevisan  
+Licensed under the Apache License, Version 2.0

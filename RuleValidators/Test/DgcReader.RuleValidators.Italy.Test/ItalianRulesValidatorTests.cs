@@ -6,6 +6,9 @@ using DgcReader.RuleValidators.Italy;
 using DgcReader;
 using System.Threading.Tasks;
 using System.Collections.Generic;
+using DgcReader.Exceptions;
+using GreenpassReader.Models;
+using DgcReader.Interfaces.RulesValidators;
 
 #if NETFRAMEWORK
 using System.Net;
@@ -44,8 +47,7 @@ namespace DgcReader.RuleValidators.Italy.Test
         {
             try
             {
-                var test = await Validator.RefreshRulesList();
-
+                await Validator.RefreshRules();
             }
             catch (Exception e)
             {
@@ -55,8 +57,44 @@ namespace DgcReader.RuleValidators.Italy.Test
 
         }
 
+        [TestMethod]
+        public async Task TestUnsupportedCountry()
+        {
+            var country = "DE";
+            var supported = await Validator.SupportsCountry(country);
+
+            Assert.IsFalse(supported);
+        }
+
+        [TestMethod]
+        public async Task TestSupportedCountry()
+        {
+            var country = "IT";
+            var supported = await Validator.SupportsCountry(country);
+
+            Assert.IsTrue(supported);
+        }
+
 
 #if !NET452
+
+        [TestMethod]
+        public async Task TestGetDgcItalianRulesValidatorService()
+        {
+            var service = ServiceProvider.GetService<DgcItalianRulesValidator>();
+            Assert.IsNotNull(service);
+        }
+
+        [TestMethod]
+        public async Task TestGetIRulesValidatorSerice()
+        {
+            var interfaceService = ServiceProvider.GetService<IRulesValidator>();
+            Assert.IsNotNull(interfaceService);
+
+            var service = ServiceProvider.GetService<DgcItalianRulesValidator>();
+            Assert.AreSame(service, interfaceService);
+        }
+
         protected override void ConfigureServices(IServiceCollection services)
         {
             base.ConfigureServices(services);

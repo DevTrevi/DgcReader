@@ -24,6 +24,6 @@ namespace DgcReader.RuleValidators.Italy.Models
         /// Validation rules
         /// </summary>
         [JsonProperty("rules")]
-        public IEnumerable<RuleSetting> Rules { get; set; }
+        public IEnumerable<RuleSetting> Rules { get; set; } = new RuleSetting[0];
     }
 }

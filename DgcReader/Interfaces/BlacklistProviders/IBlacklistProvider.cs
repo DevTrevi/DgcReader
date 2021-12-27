@@ -7,6 +7,9 @@ using System.Threading.Tasks;
 
 namespace DgcReader.Interfaces.BlacklistProviders
 {
+    /// <summary>
+    /// Blacklist provider for checking blacklisted DGC identifiers
+    /// </summary>
     public interface IBlacklistProvider
     {
         /// <summary>
@@ -18,15 +21,9 @@ namespace DgcReader.Interfaces.BlacklistProviders
         Task<bool> IsBlacklisted(string certificateIdentifier, CancellationToken cancellationToken = default);
 
         /// <summary>
-        /// Get all the blacklisted keys
-        /// </summary>
-        /// <returns>The blacklist</returns>
-        Task<IEnumerable<string>?> GetBlacklist(CancellationToken cancellationToken = default);
-
-        /// <summary>
         /// Force the refresh of the Blacklist from the server
         /// </summary>
         /// <returns>The updated blacklist</returns>
-        Task<IEnumerable<string>?> RefreshBlacklist(CancellationToken cancellationToken = default);
+        Task RefreshBlacklist(CancellationToken cancellationToken = default);
     }
 }

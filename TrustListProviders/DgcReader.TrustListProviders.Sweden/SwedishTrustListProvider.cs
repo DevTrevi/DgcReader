@@ -42,6 +42,8 @@ namespace DgcReader.TrustListProviders.Sweden
     public class SwedishTrustListProvider : ThreadsafeTrustListProvider<SwedishTrustListProviderOptions>
     {
         private const string ProductionTrustListRestUrl = "https://dgcg.covidbevis.se/tp/trust-list";
+        private const string ProviderDataFolder = "DgcReaderData\\TrustLists\\Sweden";
+        private const string FileName = "trustlist-se.json";
 
         private readonly HttpClient _httpClient;
 
@@ -204,7 +206,7 @@ namespace DgcReader.TrustListProviders.Sweden
         /// <inheritdoc/>
         protected override Task<ITrustList?> LoadCache(CancellationToken cancellationToken = default)
         {
-            var filePath = GetTrustListFilePath();
+            var filePath = GetCacheFilePath();
             TrustList? trustList = null;
             try
             {
@@ -251,7 +253,9 @@ namespace DgcReader.TrustListProviders.Sweden
             var t = (TrustList)trustList;
             if (t != null && t.Certificates?.Any() == true && t.Expiration > DateTime.Now)
             {
-                var filePath = GetTrustListFilePath();
+                var filePath = GetCacheFilePath();
+                if (!Directory.Exists(GetCacheFolder()))
+                    Directory.CreateDirectory(GetCacheFolder());
                 var json = JsonConvert.SerializeObject(trustList, JsonSettings);
 
                 File.WriteAllText(filePath, json);
@@ -353,10 +357,8 @@ namespace DgcReader.TrustListProviders.Sweden
             return new BigInteger(1, Convert.FromBase64String(value));
         }
 
-        private string GetTrustListFilePath()
-        {
-            return Path.Combine(Options.BasePath, Options.TrustListFileName);
-        }
+        private string GetCacheFolder() => Path.Combine(Options.BasePath, ProviderDataFolder);
+        private string GetCacheFilePath() => Path.Combine(GetCacheFolder(), FileName);
 
 
 

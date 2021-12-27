@@ -12,20 +12,26 @@ namespace DgcReader.RuleValidators.Italy
     public class DgcItalianRulesValidatorOptions
     {
         /// <summary>
+        /// Duration of the stored file before a refresh is requested. Default is 24 hours
+        /// </summary>
+        public TimeSpan RefreshInterval { get; set; } = TimeSpan.FromHours(24);
+
+        /// <summary>
+        /// If specified, prevent that every validation request causes a refresh attempt when the current rules list is expired.
+        /// </summary>
+        public TimeSpan MinRefreshInterval { get; set; } = TimeSpan.FromMinutes(5);
+
+        /// <summary>
+        /// If true, allows to use the current rules list without waiting for the refresh task to complete.
+        /// Otherwise, if the list is expired, every rules valdation request will wait untill the refresh task completes.
+        /// </summary>
+        public bool UseAvailableValuesWhileRefreshing { get; set; } = true;
+
+        /// <summary>
         /// Base path where the rules file will be stored
         /// Default <see cref="Directory.GetCurrentDirectory()"/>
         /// </summary>
         public string BasePath { get; set; } = Directory.GetCurrentDirectory();
-
-        /// <summary>
-        /// The file name used for the rules file name. Default is dgc-rules-it.json
-        /// </summary>
-        public string RulesListFileName { get; set; } = "dgc-rules-it.json";
-
-        /// <summary>
-        /// Duration of the stored file before a refresh is requested. Default is 24 hours
-        /// </summary>
-        public TimeSpan RefreshInterval { get; set; } = TimeSpan.FromHours(24);
 
         /// <summary>
         /// Maximum duration of the configuration file before is discarded.
@@ -35,17 +41,9 @@ namespace DgcReader.RuleValidators.Italy
         public TimeSpan MaxFileAge { get; set; } = TimeSpan.FromDays(15);
 
         /// <summary>
-        /// If specified, prevent that every validation request causes a refresh attempt when the current rules list is expired.
-        /// </summary>
-        public TimeSpan MinRefreshInterval { get; set; } = TimeSpan.FromHours(1);
-
-        /// <summary>
         /// If true, validates the rules even if the reference SDK version is obsolete
         /// </summary>
         public bool IgnoreMinimumSdkVersion { get; set; } = false;
-
-        /// <inheritdoc />
-        public bool UseAvailableListWhileRefreshing { get; set; } = true;
 
         /// <summary>
         /// The verification mode used in order to validate the DGC.
@@ -54,7 +52,9 @@ namespace DgcReader.RuleValidators.Italy
         public ValidationMode? ValidationMode { get; set; } = null;
     }
 
-
+    /// <summary>
+    /// Validation modes supported by the provider, according to the official SDK specifications
+    /// </summary>
     public enum ValidationMode
     {
         /// <summary>

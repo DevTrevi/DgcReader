@@ -8,6 +8,7 @@ namespace DgcReader.RuleValidators.Italy.Const
     /// </summary>
     public static class SettingNames
     {
+#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
         public const string VaccineEndDayComplete = "vaccine_end_day_complete";
         public const string VaccineStartDayComplete = "vaccine_start_day_complete";
         public const string VaccineEndDayNotComplete = "vaccine_end_day_not_complete";
@@ -25,5 +26,6 @@ namespace DgcReader.RuleValidators.Italy.Const
         public const string SdkMinVersion = "sdk";
 
         public const string Blacklist = "black_list_uvci";
+#pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
     }
 }

@@ -11,9 +11,22 @@ using System.Linq;
 
 namespace Microsoft.Extensions.DependencyInjection
 {
+    /// <summary>
+    /// Builder exposing methods for configuring the <see cref="DgcItalianRulesValidator"/> service
+    /// </summary>
     public class DgcItalianRulesValidatorServiceBuilder
     {
+        /// <summary>
+        /// Returns the services collection
+        /// </summary>
         public IServiceCollection Services { get; }
+
+        /// <summary>
+        /// Initializes a new instance of <see cref="DgcItalianRulesValidatorServiceBuilder"/>
+        /// </summary>
+        /// <param name="services"></param>
+        /// <param name="useAsRulesValidator"></param>
+        /// <param name="useAsBlacklistProvider"></param>
         public DgcItalianRulesValidatorServiceBuilder(IServiceCollection services, bool useAsRulesValidator, bool useAsBlacklistProvider)
         {
             Services = services;
@@ -25,6 +38,12 @@ namespace Microsoft.Extensions.DependencyInjection
             this.UseAsBlacklistProvider(useAsBlacklistProvider);
         }
 
+        /// <summary>
+        /// Configures the <see cref="DgcItalianRulesValidator"/> service
+        /// </summary>
+        /// <param name="configuration">The delegate used to configure the options</param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentNullException"></exception>
         public DgcItalianRulesValidatorServiceBuilder Configure(Action<DgcItalianRulesValidatorOptions> configuration)
         {
             if (configuration is null)
@@ -38,34 +57,48 @@ namespace Microsoft.Extensions.DependencyInjection
         }
 
 
-        static readonly Func<IServiceProvider, DgcItalianRulesValidator> _blacklistProviderFactory = sp => sp.GetService<DgcItalianRulesValidator>();
+        static readonly Func<IServiceProvider, DgcItalianRulesValidator> _blacklistProviderFactory = sp => sp.GetRequiredService<DgcItalianRulesValidator>();
+
+        /// <summary>
+        /// If true, register the <see cref="DgcItalianRulesValidator"/> service to be used as a <see cref="IBlacklistProvider"/>.
+        /// Otherwise, removes the registration for the <see cref="IBlacklistProvider"/> interface
+        /// </summary>
+        /// <param name="useAsBlacklistProvider"></param>
+        /// <returns></returns>
         public DgcItalianRulesValidatorServiceBuilder UseAsBlacklistProvider(bool useAsBlacklistProvider = true)
         {
+            var sd = Services.FirstOrDefault(s => s.ServiceType == typeof(IBlacklistProvider) && s.ImplementationFactory == _blacklistProviderFactory);
             if (useAsBlacklistProvider)
             {
-                Services.RemoveAll<IBlacklistProvider>();
-                Services.AddSingleton<IBlacklistProvider, DgcItalianRulesValidator>(_blacklistProviderFactory);
+                if (sd == null)
+                    Services.AddSingleton<IBlacklistProvider, DgcItalianRulesValidator>(_blacklistProviderFactory);
             }
             else
             {
-                var sd = Services.FirstOrDefault(s => s.ServiceType == typeof(IBlacklistProvider) && s.ImplementationFactory == _blacklistProviderFactory);
                 if (sd != null)
                     Services.Remove(sd);
             }
             return this;
         }
 
-        static readonly Func<IServiceProvider, DgcItalianRulesValidator> _rulesValidatorFactory = sp => sp.GetService<DgcItalianRulesValidator>();
+        static readonly Func<IServiceProvider, DgcItalianRulesValidator> _rulesValidatorFactory = sp => sp.GetRequiredService<DgcItalianRulesValidator>();
+
+        /// <summary>
+        /// If true, register the <see cref="DgcItalianRulesValidator"/> service to be used as a <see cref="IRulesValidator"/>.
+        /// Otherwise, removes the registration for the <see cref="IRulesValidator"/> interface
+        /// </summary>
+        /// <param name="useAsRulesValidator"></param>
+        /// <returns></returns>
         public DgcItalianRulesValidatorServiceBuilder UseAsRulesValidator(bool useAsRulesValidator = true)
         {
+            var sd = Services.FirstOrDefault(s => s.ServiceType == typeof(IRulesValidator) && s.ImplementationFactory == _rulesValidatorFactory);
             if (useAsRulesValidator)
             {
-                Services.RemoveAll<IRulesValidator>();
-                Services.AddSingleton<IRulesValidator, DgcItalianRulesValidator>(_rulesValidatorFactory);
+                if (sd == null)
+                    Services.AddSingleton<IRulesValidator, DgcItalianRulesValidator>(_rulesValidatorFactory);
             }
             else
             {
-                var sd = Services.FirstOrDefault(s => s.ServiceType == typeof(IRulesValidator) && s.ImplementationFactory == _rulesValidatorFactory);
                 if (sd != null)
                     Services.Remove(sd);
             }

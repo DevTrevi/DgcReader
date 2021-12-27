@@ -12,6 +12,8 @@ using Microsoft.Extensions.Logging;
 using DgcReader.Interfaces.RulesValidators;
 using DgcReader.Interfaces.TrustListProviders;
 using DgcReader.Interfaces.BlacklistProviders;
+using System.Linq;
+using System.Collections.Generic;
 using System.Threading;
 
 // Copyright (c) 2021 Davide Trevisan
@@ -25,36 +27,36 @@ namespace DgcReader
     public class DgcReaderService
     {
         /// <summary>
-        /// The registered TrustList provider
+        /// The registered TrustList providers
         /// </summary>
-        public readonly ITrustListProvider? TrustListProvider;
+        public readonly IEnumerable<ITrustListProvider> TrustListProviders;
 
         /// <summary>
-        /// The registered BlackList provider
+        /// The registered BlackList providers
         /// </summary>
-        public readonly IBlacklistProvider? BlackListProvider;
+        public readonly IEnumerable<IBlacklistProvider> BlackListProviders;
 
         /// <summary>
-        /// The registered rules validator
+        /// The registered rule validators
         /// </summary>
-        public readonly IRulesValidator? RulesValidator;
+        public readonly IEnumerable<IRulesValidator> RulesValidators;
         private readonly ILogger? Logger;
 
         /// <summary>
-        /// Instantiate the DGCDecoderService
+        /// Instantiate the DgcReaderService
         /// </summary>
-        /// <param name="trustListProvider">The provider used to retrieve the valid public keys for signature validations</param>
-        /// <param name="blackListProvider">The provider used to check if a certificate is blacklisted</param>
-        /// <param name="rulesValidator">The service used to validate the rules for a specific country</param>
+        /// <param name="trustListProviders">The provider used to retrieve the valid public keys for signature validations</param>
+        /// <param name="blackListProviders">The provider used to check if a certificate is blacklisted</param>
+        /// <param name="rulesValidators">The service used to validate the rules for a specific country</param>
         /// <param name="logger"></param>
-        public DgcReaderService(ITrustListProvider? trustListProvider = null,
-            IBlacklistProvider? blackListProvider = null,
-            IRulesValidator? rulesValidator = null,
+        public DgcReaderService(IEnumerable<ITrustListProvider>? trustListProviders = null,
+            IEnumerable<IBlacklistProvider>? blackListProviders = null,
+            IEnumerable<IRulesValidator>? rulesValidators = null,
             ILogger<DgcReaderService>? logger = null)
         {
-            TrustListProvider = trustListProvider;
-            BlackListProvider = blackListProvider;
-            RulesValidator = rulesValidator;
+            TrustListProviders = trustListProviders ?? Enumerable.Empty<ITrustListProvider>();
+            BlackListProviders = blackListProviders ?? Enumerable.Empty<IBlacklistProvider>();
+            RulesValidators = rulesValidators ?? Enumerable.Empty<IRulesValidator>();
             Logger = logger;
         }
 
@@ -63,10 +65,11 @@ namespace DgcReader
         /// Informations about signature validity and expiration can be found in the returned result
         /// </summary>
         /// <param name="qrCodeData">DGC raw data from the QRCode</param>
+        /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        public Task<SignedDgc> Decode(string qrCodeData)
+        public Task<SignedDgc> Decode(string qrCodeData, CancellationToken cancellationToken = default)
         {
-            return Decode(qrCodeData, DateTimeOffset.Now);
+            return Decode(qrCodeData, DateTimeOffset.Now, cancellationToken);
         }
 
         /// <summary>
@@ -74,9 +77,10 @@ namespace DgcReader
         /// Informations about signature validity and expiration can be found in the returned result
         /// </summary>
         /// <param name="qrCodeData">DGC raw data from the QRCode</param>
-        /// <param name="validationInstant">The instant of validation of the object </param>
+        /// <param name="validationInstant">The validation instant of the DGC</param>
+        /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        public async Task<SignedDgc> Decode(string qrCodeData, DateTimeOffset validationInstant)
+        public async Task<SignedDgc> Decode(string qrCodeData, DateTimeOffset validationInstant, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -84,13 +88,13 @@ namespace DgcReader
 
                 // Step 1: decode
                 var cose = DecodeCoseObject(qrCodeData);
-                var dgc = GetSignedDgc(cose);
+                result.Dgc = GetDgc(cose);
 
                 // Step 2: check signature
                 try
                 {
-                    await VerifySignature(cose, validationInstant);
-                    result.HasValidSignature = true;
+                    var signatureValidation = await GetSignatureValidationResult(cose, validationInstant, false, cancellationToken);
+                    result.HasValidSignature = signatureValidation.HasValidSignature;
                 }
                 catch (Exception e)
                 {
@@ -114,59 +118,64 @@ namespace DgcReader
         /// Decodes the DGC data, verifying signature, blacklist and rules if a provider is available.
         /// </summary>
         /// <param name="qrCodeData">The QRCode data of the DGC</param>
+        /// <param name="acceptanceCountryCode">The 2-letter ISO country of the acceptance country. This information is mandatory in order to perform the rules validation</param>
         /// <param name="throwOnError">If true, throw an exception if the validation fails</param>
+        /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        public Task<DgcValidationResult> Verify(string qrCodeData, bool throwOnError = true)
+        public Task<DgcValidationResult> Verify(string qrCodeData, string acceptanceCountryCode, bool throwOnError = true, CancellationToken cancellationToken = default)
         {
-            return Verify(qrCodeData, DateTimeOffset.Now, throwOnError);
+            return Verify(qrCodeData, acceptanceCountryCode, DateTimeOffset.Now, throwOnError, cancellationToken);
         }
 
         /// <summary>
         /// Decodes the DGC data, verifying signature, blacklist and rules if a provider is available.
-        /// This overload is intended for testing purposes only
         /// </summary>
         /// <param name="qrCodeData">The QRCode data of the DGC</param>
-        /// <param name="validationInstant">The instant of validation of the object </param>
+        /// <param name="acceptanceCountryCode">The 2-letter ISO country of the acceptance country. This information is mandatory in order to perform the rules validation</param>
+        /// <param name="validationInstant">The validation instant of the DGC</param>
         /// <param name="throwOnError">If true, throw an exception if the validation fails</param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
         /// <exception cref="DgcException"></exception>
-        public Task<DgcValidationResult> Verify(string qrCodeData, DateTimeOffset validationInstant, bool throwOnError = true, CancellationToken cancellationToken = default)
+        public async Task<DgcValidationResult> Verify(
+            string qrCodeData,
+            string acceptanceCountryCode,
+            DateTimeOffset validationInstant,
+            bool throwOnError = true,
+            CancellationToken cancellationToken = default)
         {
-
-            Func<EuDGC, DateTimeOffset, CancellationToken, Task<IRuleValidationResult>>? rulesValidatorFunction = null;
-            if (RulesValidator != null)
-                rulesValidatorFunction = RulesValidator.GetRulesValidationResult;
-
-            return Verify(qrCodeData,
+            return await Verify(qrCodeData,
+                acceptanceCountryCode,
                 validationInstant,
-                rulesValidatorFunction,
+                GetRulesValidationResult,
                 throwOnError,
                 cancellationToken);
-        }
 
+        }
 
         /// <summary>
         /// Decodes the DGC data, verifying signature, blacklist and rules if a provider is available.
-        /// This overload is intended for internal use only, and should not be used directly
         /// </summary>
         /// <param name="qrCodeData">The QRCode data of the DGC</param>
-        /// <param name="validationInstant">The instant of validation of the object </param>
+        /// <param name="acceptanceCountryCode">The 2-letter ISO country of the acceptance country. This information is mandatory in order to perform the rules validation</param>
+        /// <param name="validationInstant">The validation instant of the DGC</param>
         /// <param name="rulesValidatorFunction">The specific function to be called for rules validation</param>
         /// <param name="throwOnError">If true, throw an exception if the validation fails</param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
         /// <exception cref="DgcException"></exception>
-        public async Task<DgcValidationResult> Verify(string qrCodeData,
+        public async Task<DgcValidationResult> Verify(
+            string qrCodeData,
+            string acceptanceCountryCode,
             DateTimeOffset validationInstant,
-            Func<EuDGC, DateTimeOffset, CancellationToken, Task<IRuleValidationResult>>? rulesValidatorFunction,
+            Func<EuDGC, string, DateTimeOffset, bool, CancellationToken, Task<IRulesValidationResult?>>? rulesValidatorFunction,
             bool throwOnError = true,
             CancellationToken cancellationToken = default)
         {
             var result = new DgcValidationResult()
             {
                 ValidationInstant = validationInstant,
-                Status = DgcResultStatus.NotEuDCC,
+                AcceptanceCountry = acceptanceCountryCode,
             };
 
             try
@@ -177,95 +186,38 @@ namespace DgcReader
                     var cose = DecodeCoseObject(qrCodeData);
 
                     // Step 1: Decoding data
-                    var signedDgc = GetSignedDgc(cose);
-
-                    result.Issuer = signedDgc.Issuer;
-                    result.IssuedDate = signedDgc.IssuedDate;
-                    result.SignatureExpiration = signedDgc.ExpirationDate;
-                    result.Dgc = signedDgc.Dgc;
+                    result.Dgc = GetDgc(cose);
 
                     // Step 2: check signature
-                    // Checking signature first, throwing exceptions if not valid
-                    await VerifySignature(cose, validationInstant);
-
-                    // Signature already checked
-                    result.HasValidSignature = true;
-                    result.Status = DgcResultStatus.NeedRulesVerification;
+                    result.Signature = await GetSignatureValidationResult(cose, validationInstant, throwOnError);
 
                     // Step 3: check blacklist
-                    if (BlackListProvider != null)
-                    {
-                        var certEntry = result.Dgc.GetCertificateEntry();
-                        var blacklisted = await BlackListProvider.IsBlacklisted(certEntry.CertificateIdentifier, cancellationToken);
-
-                        // Check performed
-                        result.BlacklistVerified = true;
-                        if (blacklisted)
-                        {
-                            throw new DgcBlackListException($"The certificate is blacklisted", certEntry.CertificateIdentifier);
-                        }
-                    }
-                    else
-                    {
-                        Logger?.LogWarning($"No blacklist provider is registered, blacklist validation is skipped");
-                    }
+                    result.Blacklist = await GetBlacklistValidationResult(result.Dgc, throwOnError);
 
                     // Step 4: check country rules
                     if (rulesValidatorFunction != null)
                     {
-                        var rulesResult = await rulesValidatorFunction.Invoke(result.Dgc, result.ValidationInstant, cancellationToken);
-                        result.ValidFrom = rulesResult.ValidFrom;
-                        result.ValidUntil = rulesResult.ValidUntil;
-                        result.RulesVerificationCountry = rulesResult.RulesVerificationCountry;
-                        result.Status = rulesResult.Status;
-                        result.StatusMessage = rulesResult.StatusMessage;
+                        result.RulesValidation =
+                            await rulesValidatorFunction.Invoke(
+                                result.Dgc,
+                                acceptanceCountryCode,
+                                validationInstant,
+                                throwOnError,
+                                cancellationToken);
 
-                        if (throwOnError)
-                        {
-                            if (rulesResult.Status != DgcResultStatus.Valid &&
-                                rulesResult.Status != DgcResultStatus.PartiallyValid)
-                            {
-                                var message = rulesResult.StatusMessage;
-                                if (string.IsNullOrEmpty(message))
-                                    message = GetDgcResultStatusDescription(rulesResult.Status);
-
-                                throw new DgcRulesValidationException(message, rulesResult);
-                            }
-                        }
-                    }
-                    else
-                    {
-                        result.Status = DgcResultStatus.NeedRulesVerification;
-                        Logger?.LogWarning($"No rules validator is registered, rules validation is skipped");
+                        // If no message set, use message from rules validation
+                        if (string.IsNullOrEmpty(result.StatusMessage))
+                            result.StatusMessage = result.RulesValidation?.StatusMessage;
                     }
 
-                }
-                catch (DgcSignatureValidationException)
-                {
-                    result.Status = DgcResultStatus.InvalidSignature;
-                    throw;
-                }
-                catch (DgcBlackListException)
-                {
-                    result.Status = DgcResultStatus.Blacklisted;
-                    throw;
-                }
-                catch (DgcRulesValidationException e)
-                {
-                    result.ValidFrom = e.ValidFrom;
-                    result.ValidUntil = e.ValidUntil;
-                    result.RulesVerificationCountry = e.RulesVerificationCountry;
-                    result.Status = e.Status;
-                    throw;
                 }
                 catch (DgcException)
                 {
-                    result.Status = DgcResultStatus.NotValid;
+                    // Managed exception, rethrow as is
                     throw;
                 }
                 catch (Exception e)
                 {
-                    result.Status = DgcResultStatus.NotValid;
                     throw new DgcException(e.Message, e);
                 }
             }
@@ -285,10 +237,8 @@ namespace DgcReader
 
             if (result.Status == DgcResultStatus.Valid)
                 Logger?.LogInformation($"Validation succeded: {result.StatusMessage}");
-            else if (result.Status == DgcResultStatus.PartiallyValid)
-                Logger?.LogWarning($"Validation succeded: {result.StatusMessage}");
-            else if (result.Status == DgcResultStatus.NeedRulesVerification && RulesValidator == null)
-                Logger?.LogWarning($"Validation succeded: {result.StatusMessage}");
+            else if (result.Status == DgcResultStatus.NeedRulesVerification)
+                Logger?.LogWarning($"Validation succeded without rules verification: {result.StatusMessage}");
             else
                 Logger?.LogError($"Validation failed: {result.StatusMessage}");
 
@@ -301,10 +251,12 @@ namespace DgcReader
         /// A result is always returned
         /// </summary>
         /// <param name="qrCodeData">The QRCode data of the DGC</param>
+        /// <param name="acceptanceCountryCode">The 2-letter ISO country of the acceptance country. This information is mandatory in order to perform the rules validation</param>
+        /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        public Task<DgcValidationResult> GetValidationResult(string qrCodeData)
+        public Task<DgcValidationResult> GetValidationResult(string qrCodeData, string acceptanceCountryCode, CancellationToken cancellationToken = default)
         {
-            return Verify(qrCodeData, false);
+            return Verify(qrCodeData, acceptanceCountryCode, false, cancellationToken);
         }
 
         /// <summary>
@@ -312,11 +264,40 @@ namespace DgcReader
         /// A result is always returned
         /// </summary>
         /// <param name="qrCodeData">The QRCode data of the DGC</param>
-        /// <param name="validationInstant">The instant of validation of the object </param>
+        /// <param name="acceptanceCountryCode">The 2-letter ISO country of the acceptance country. This information is mandatory in order to perform the rules validation</param>
+        /// <param name="validationInstant">The validation instant of the DGC</param>
+        /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        public Task<DgcValidationResult> GetValidationResult(string qrCodeData, DateTimeOffset validationInstant)
+        public Task<DgcValidationResult> GetValidationResult(string qrCodeData, string acceptanceCountryCode, DateTimeOffset validationInstant, CancellationToken cancellationToken = default)
         {
-            return Verify(qrCodeData, validationInstant, false);
+            return Verify(qrCodeData, acceptanceCountryCode, validationInstant, false, cancellationToken);
+        }
+
+        /// <summary>
+        /// Return the list of 2-letter iso country codes for the supported acceptance countries for rules verification
+        /// The array is computed by checking all the countries supported by every registered IRulesValidator
+        /// </summary>
+        /// <returns></returns>
+        public async Task<IEnumerable<string>> GetSupportedCountries(CancellationToken cancellationToken = default)
+        {
+            if (RulesValidators?.Any() != true)
+                return Enumerable.Empty<string>();
+
+            var temp = new List<string>();
+            foreach (var ruleValidator in RulesValidators)
+            {
+                try
+                {
+                    var countryCodes = await ruleValidator.GetSupportedCountries(cancellationToken);
+                    temp.AddRange(countryCodes.Select(r => r.ToUpperInvariant()));
+                }
+                catch (Exception e)
+                {
+                    Logger.LogWarning($"Error while getting supported countries for provider {ruleValidator}: {e}");
+                }
+            }
+
+            return temp.Where(r => !string.IsNullOrEmpty(r)).OrderBy(r => r).ToArray();
         }
 
         #region Private
@@ -353,15 +334,14 @@ namespace DgcReader
         /// Verify the signature of the COSE object
         /// </summary>
         /// <param name="cose"></param>
-        /// <param name="validationInstant">The instant of validation of the object </param>
+        /// <param name="validationInstant">The validation instant of the DGC</param>
+        /// <param name="throwOnError">If true, throw an exception if the validation fails</param>
+        /// <param name="cancellationToken"></param>
         /// <returns></returns>
         /// <exception cref="DgcSignatureValidationException"></exception>
-        private async Task VerifySignature(CoseSign1_Object cose, DateTimeOffset validationInstant)
+        private async Task<SignatureValidationResult> GetSignatureValidationResult(CoseSign1_Object cose, DateTimeOffset validationInstant, bool throwOnError, CancellationToken cancellationToken = default)
         {
-            if (TrustListProvider == null)
-            {
-                throw new DgcSignatureValidationException($"No trustlist provider is registered for signature validation");
-            }
+            var context = new SignatureValidationResult();
             try
             {
                 var cwt = cose.GetCwt();
@@ -369,80 +349,206 @@ namespace DgcReader
                 if (cwt == null)
                     throw new DgcSignatureValidationException($"Unable to get Cwt object");
 
-                var issuer = cwt.GetIssuer();
-                var issueDate = cwt.GetIssuedAt();
-                var expiration = cwt.GetExpiration();
+                context.Issuer = cwt.GetIssuer();
+                context.IssuedDate = cwt.GetIssuedAt();
+                context.SignatureExpiration = cwt.GetExpiration();
 
                 var kid = cose.GetKeyIdentifier();
                 if (kid == null)
                 {
-                    throw new DgcSignatureValidationException("Signed DGC does not contain kid - cannot find certificate",
-                        issuer: issuer, issueDate: issueDate, expirationDate: expiration);
+                    throw new DgcSignatureValidationException("Signed DGC does not contain kid - cannot find certificate", result: context);
                 }
                 string kidStr = Convert.ToBase64String(kid);
+                context.CertificateKid = kidStr;
 
-                // Try by kid and country
-                var publicKeyData = await TrustListProvider.GetByKid(kidStr, issuer);
-
-                // If not found, try Kid only
-                // Sometimes the issuer of the CBOR is different from the ISO code fo the country
-                if (publicKeyData == null)
-                    publicKeyData = await TrustListProvider.GetByKid(kidStr);
-
-                if (publicKeyData == null)
-                    throw new DgcUnknownSignerException($"No signer certificate could be found for kid {kidStr}", kidStr,
-                        issuer, issueDate, expiration);
-
-                try
+                // Search for the public key from the registered TrustList providers
+                if (TrustListProviders?.Any() != true)
                 {
-                    // Checking signature
-                    cose.VerifySignature(publicKeyData);
-
-                    // Check signature validity dates
-                    if (issueDate != null && issueDate > validationInstant)
-                    {
-                        throw new DgcSignatureExpiredException($"The signed object is not valid yet",
-                            publicKeyData, issuer, issueDate, expiration);
-                    }
-                    if (expiration == null)
-                    {
-                        Logger?.LogWarning($"Expiration is not set, assuming is not expired");
-                    }
-                    else if (expiration < validationInstant)
-                    {
-                        throw new DgcSignatureExpiredException($"The signed object has expired on {expiration}",
-                            publicKeyData, issuer, issueDate, expiration);
-                    }
-
-                    Logger?.LogDebug($"HCERT signature verification succeeded using certificate {publicKeyData.Kid}");
+                    throw new DgcException($"No trustlist provider is registered for signature validation");
                 }
-                catch (DgcSignatureValidationException e)
+                var publicKeyData = await GetSignaturePublicKey(kidStr, context.Issuer, cancellationToken);
+                if (publicKeyData == null)
+                    throw new DgcUnknownSignerException($"No signer certificate could be found for kid {kidStr}", result: context);
+
+                context.PublicKeyData = publicKeyData;
+
+                // Checking signature
+                cose.VerifySignature(publicKeyData);
+
+                // Check signature validity dates
+                if (context.IssuedDate != null && context.IssuedDate > validationInstant)
                 {
-                    // Add context information if missing
-                    e.Issuer = issuer;
-                    e.IssueDate = issueDate;
-                    e.ExpirationDate = expiration;
-
-                    Logger?.LogWarning($"HCERT signature verification failed using certificate {publicKeyData.Kid} - {e.Message}");
-                    // throw the original exception
-                    throw;
+                    throw new DgcSignatureExpiredException($"The signed object is not valid yet", result: context);
                 }
+                if (context.SignatureExpiration == null)
+                {
+                    Logger?.LogWarning($"Expiration is not set, assuming is not expired");
+                }
+                else if (context.SignatureExpiration < validationInstant)
+                {
+                    throw new DgcSignatureExpiredException($"The signed object has expired on {context.SignatureExpiration}", context);
+                }
+
+                Logger?.LogDebug($"HCERT signature verification succeeded using certificate {publicKeyData.Kid}");
+                context.HasValidSignature = true;
             }
-            catch (DgcSignatureValidationException) { throw; }
             catch (Exception e)
             {
                 // Wrap unmanaged exceptions as DgcSignatureValidationException
                 Logger?.LogWarning($"HCERT signature verification failed: {e.Message}");
-                throw new DgcSignatureValidationException(e.Message, e);
+                if (throwOnError)
+                {
+                    if (e is DgcSignatureValidationException)
+                        throw;
+
+                    throw new DgcSignatureValidationException(e.Message, e, context);
+                }
             }
+
+            return context;
         }
 
         /// <summary>
-        /// Extract the data from the COSE object
+        /// Verify if te certificate is included in a blacklist. If true, throws an exception
+        /// </summary>
+        /// <param name="dgc">The DGC</param>
+        /// <param name="throwOnError">If true, throw an exception if the validation fails</param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        /// <exception cref="DgcBlackListException"></exception>
+        private async Task<BlacklistValidationResult> GetBlacklistValidationResult(EuDGC dgc, bool throwOnError, CancellationToken cancellationToken = default)
+        {
+            var context = new BlacklistValidationResult()
+            {
+                BlacklistVerified = false,
+                IsBlacklisted = null,
+            };
+
+            if (BlackListProviders?.Any() == true)
+            {
+                var certEntry = dgc.GetCertificateEntry();
+
+                // Tracking the validated CertificateIdentifier
+                context.CertificateIdentifier = certEntry.CertificateIdentifier;
+
+                foreach (var blacklistProvider in BlackListProviders)
+                {
+                    var blacklisted = await blacklistProvider.IsBlacklisted(certEntry.CertificateIdentifier, cancellationToken);
+
+                    // At least one check performed
+                    context.BlacklistVerified = true;
+
+                    if (blacklisted)
+                    {
+                        context.IsBlacklisted = true;
+                        context.BlacklistMatchProviderType = blacklistProvider.GetType();
+
+                        Logger?.LogWarning($"The certificate is blacklisted");
+                        if (throwOnError)
+                            throw new DgcBlackListException($"The certificate is blacklisted", context);
+
+                        return context;
+                    }
+                }
+                context.IsBlacklisted = false;
+            }
+            else
+            {
+                context.BlacklistVerified = false;
+                context.IsBlacklisted = null;
+                Logger?.LogWarning($"No blacklist provider is registered, blacklist validation is skipped");
+            }
+
+            return context;
+        }
+
+        /// <summary>
+        /// Validates the rules for the specified acceptance country.
+        /// This overload is intended for internal use only, and should not be used directly
+        /// </summary>
+        /// <param name="dgc">The DGC</param>
+        /// <param name="acceptanceCountryCode">The 2-letter iso code of the acceptance country</param>
+        /// <param name="validationInstant">The validation instant of the DGC</param>
+        /// <param name="throwOnError">If true, throw an exception if the validation fails</param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        /// <exception cref="DgcRulesValidationException"></exception>
+        private async Task<IRulesValidationResult?> GetRulesValidationResult(
+            EuDGC dgc,
+            string acceptanceCountryCode,
+            DateTimeOffset validationInstant,
+            bool throwOnError,
+            CancellationToken cancellationToken = default)
+        {
+            if (string.IsNullOrEmpty(acceptanceCountryCode))
+            {
+                Logger?.LogWarning($"No acceptance country code specified, rules validation is skipped");
+                return null;
+            }
+
+            if (RulesValidators == null)
+            {
+                Logger?.LogWarning($"No rules validators registered, rules validation is skipped");
+                return null;
+            }
+
+            IRulesValidationResult? rulesResult = null;
+            foreach (var validator in RulesValidators)
+            {
+                if (await validator.SupportsCountry(acceptanceCountryCode, cancellationToken))
+                {
+                    rulesResult = await validator.GetRulesValidationResult(dgc, validationInstant, acceptanceCountryCode, cancellationToken);
+
+                    switch (rulesResult.Status)
+                    {
+                        case DgcResultStatus.Valid:
+                            // If valid, returns the result
+                            return rulesResult;
+                        case DgcResultStatus.NeedRulesVerification:
+                        case DgcResultStatus.OpenResult:
+                            // If result is "Open", try next validator if multiple validators for this country exists
+                            continue;
+                        default:
+                            // With any other result, return the result or throw an exception
+                            if (throwOnError)
+                            {
+                                var message = rulesResult.StatusMessage;
+                                if (string.IsNullOrEmpty(message))
+                                    message = GetDgcResultStatusDescription(rulesResult.Status);
+
+                                throw new DgcRulesValidationException(message, rulesResult);
+                            }
+
+                            return rulesResult;
+                    }
+                }
+            }
+
+            // No result or Open result after checking supported validators
+            if (rulesResult == null)
+            {
+                Logger?.LogWarning($"No rules validator is registered for acceptance country {acceptanceCountryCode}, rules validation is skipped");
+                return null;
+            }
+
+            // Result is not null, it will certainly be an Open result
+            if (throwOnError)
+            {
+                var message = rulesResult.StatusMessage;
+                if (string.IsNullOrEmpty(message))
+                    message = GetDgcResultStatusDescription(rulesResult.Status);
+
+                throw new DgcRulesValidationException(message, rulesResult);
+            }
+            return rulesResult;
+        }
+
+        /// <summary>
+        /// Extract the DGC data from the COSE object
         /// </summary>
         /// <param name="cose"></param>
         /// <returns></returns>
-        private SignedDgc GetSignedDgc(CoseSign1_Object cose)
+        private EuDGC GetDgc(CoseSign1_Object cose)
         {
             var cwt = cose.GetCwt();
             if (cwt == null)
@@ -457,15 +563,7 @@ namespace DgcReader
             if (dgc == null)
                 throw new DgcException($"Unable to get DGC data from cwt");
 
-            var result = new SignedDgc
-            {
-                Issuer = cwt.GetIssuer(),
-                IssuedDate = cwt.GetIssuedAt(),
-                ExpirationDate = cwt.GetExpiration(),
-                Dgc = dgc,
-            };
-
-            return result;
+            return dgc;
         }
 
         private static byte[] Base45Decoding(byte[] encodedData)
@@ -522,12 +620,10 @@ namespace DgcReader
                     return "Certificate is blacklisted";
                 case DgcResultStatus.NeedRulesVerification:
                     return "Country rules has not been verified for the certificate";
+                case DgcResultStatus.OpenResult:
+                    return "Validation could not determine a definitive result";
                 case DgcResultStatus.NotValid:
                     return "Certificate is not valid";
-                case DgcResultStatus.NotValidYet:
-                    return $"Certificate is not valid yet";
-                case DgcResultStatus.PartiallyValid:
-                    return "Certificate is valid in the country of verification, but may be not valid in other countries";
                 case DgcResultStatus.Valid:
                     return "Certificate is valid";
                 default:
@@ -535,6 +631,86 @@ namespace DgcReader
             }
         }
 
+        /// <summary>
+        /// Return the public key data for the signing certificate
+        /// </summary>
+        /// <param name="kid">The KID of the certificate</param>
+        /// <param name="issuingCountryCode">2-letter iso code of the issuer country</param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        private async Task<ITrustedCertificateData?> GetSignaturePublicKey(string kid, string? issuingCountryCode, CancellationToken cancellationToken = default)
+        {
+            // If multiple providers are registered, search the public key in every provider
+            foreach (var provider in TrustListProviders)
+            {
+                // Try by kid and country
+                var publicKeyData = await provider.GetByKid(kid, issuingCountryCode, cancellationToken);
+
+                // If not found, try Kid only
+                // Sometimes the issuer of the CBOR is different from the ISO code fo the country
+                if (publicKeyData == null)
+                    publicKeyData = await provider.GetByKid(kid, cancellationToken: cancellationToken);
+
+
+                if (publicKeyData == null)
+                {
+                    Logger?.LogWarning($"Public key data for {kid} from country {issuingCountryCode} not found using {provider}");
+                }
+                else
+                {
+                    Logger?.LogDebug($"Public key data for {kid} from country {issuingCountryCode} found using {provider}");
+                    return publicKeyData;
+                }
+            }
+            return null;
+        }
+
+        #endregion
+
+        #region Factory methods
+
+        /// <summary>
+        /// Instantiate the DgcReaderService
+        /// </summary>
+        /// <param name="trustListProvider">The provider used to retrieve the valid public keys for signature validations</param>
+        /// <param name="blackListProvider">The provider used to check if a certificate is blacklisted</param>
+        /// <param name="rulesValidator">The service used to validate the rules for a specific country</param>
+        /// <param name="logger"></param>
+        public static DgcReaderService Create(ITrustListProvider? trustListProvider = null,
+            IBlacklistProvider? blackListProvider = null,
+            IRulesValidator? rulesValidator = null,
+            ILogger<DgcReaderService>? logger = null)
+        {
+            var trustListProviders = new List<ITrustListProvider>();
+            if (trustListProvider != null)
+                trustListProviders.Add(trustListProvider);
+
+            var blackListProviders = new List<IBlacklistProvider>();
+            if (blackListProvider != null)
+                blackListProviders.Add(blackListProvider);
+
+            var rulesValidators = new List<IRulesValidator>();
+            if (rulesValidator != null)
+                rulesValidators.Add(rulesValidator);
+
+
+            return new DgcReaderService(trustListProviders, blackListProviders, rulesValidators, logger);
+        }
+
+        /// <summary>
+        /// Instantiate the DgcReaderService
+        /// </summary>
+        /// <param name="trustListProviders">The providers used to retrieve the valid public keys for signature validations</param>
+        /// <param name="blackListProviders">The providers used to check if a certificate is blacklisted</param>
+        /// <param name="rulesValidators">The services used to validate the rules for a specific country</param>
+        /// <param name="logger"></param>
+        public static DgcReaderService Create(IEnumerable<ITrustListProvider>? trustListProviders = null,
+            IEnumerable<IBlacklistProvider>? blackListProviders = null,
+            IEnumerable<IRulesValidator>? rulesValidators = null,
+            ILogger<DgcReaderService>? logger = null)
+        {
+            return new DgcReaderService(trustListProviders, blackListProviders, rulesValidators, logger);
+        }
         #endregion
     }
 }

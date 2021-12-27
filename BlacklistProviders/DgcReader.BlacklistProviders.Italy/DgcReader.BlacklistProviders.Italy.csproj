@@ -1,0 +1,53 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<!-- Workaround for migrations EFCore 1.x -->
+		<!--<OutputType>Exe</OutputType>-->
+		<TargetFrameworks>net452;net47;netstandard2.0;netstandard2.1</TargetFrameworks>
+		<LangVersion>Latest</LangVersion>
+		<Nullable>enable</Nullable>
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+		<Authors>Davide Trevisan</Authors>
+		<Copyright>Copyright © 2021 Davide Trevisan</Copyright>
+		<RepositoryUrl>https://github.com/DevTrevi/DGCReader</RepositoryUrl>
+		<PackageTags>DGC DCC DigitalGreenCertificate DigitalCovidCertificate Greenpass VerificaC19 Blacklist DRL</PackageTags>
+		<Description>Blacklist provider implementation using the official Italian backend APIs. This provider is included in the list of verified SDKs by Italian authorities</Description>
+		<Version>2.0.0</Version>
+		<PackageLicenseExpression> Apache-2.0</PackageLicenseExpression>
+		<PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
+		<PackageProjectUrl>https://github.com/DevTrevi/DgcReader</PackageProjectUrl>
+	</PropertyGroup>
+
+	<ItemGroup>
+	  <ProjectReference Include="..\..\DgcReader.Providers.Abstractions\DgcReader.Providers.Abstractions.csproj" />
+	  <ProjectReference Include="..\..\DgcReader\DgcReader.csproj" />
+	</ItemGroup>
+
+	<ItemGroup Condition="'$(TargetFramework)' == 'net452'">
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="1.1.6"/>
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="1.1.6" />
+	</ItemGroup>
+
+	<ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0' OR '$(TargetFramework)' == 'net47'">
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="3.1.22" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="3.1.22" />
+		<PackageReference Include="Microsoft.Extensions.Options" Version="5.0.0" />
+		<PackageReference Include="Microsoft.Extensions.Http" Version="5.0.0" />
+	</ItemGroup>
+
+	<ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.1'">
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="5.0.13" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="5.0.13" />
+		<PackageReference Include="Microsoft.Extensions.Options" Version="5.0.0" />
+		<PackageReference Include="Microsoft.Extensions.Http" Version="5.0.0" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Include="README.md">
+			<Pack>True</Pack>
+			<PackagePath>\</PackagePath>
+		</None>
+	</ItemGroup>
+
+</Project>

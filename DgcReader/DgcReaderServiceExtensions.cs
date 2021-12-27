@@ -1,5 +1,5 @@
 ﻿#if NETSTANDARD2_0_OR_GREATER || NET5_0_OR_GREATER || NET47_OR_GREATER
-using Microsoft.Extensions.DependencyInjection;
+using DgcReader;
 using System;
 
 // Copyright (c) 2021 Davide Trevisan
@@ -7,8 +7,17 @@ using System;
 
 namespace Microsoft.Extensions.DependencyInjection
 {
+    /// <summary>
+    /// Exposes extensions allowing to register the DgcReaderService
+    /// </summary>
     public static class DgcReaderServiceExtensions
     {
+        /// <summary>
+        /// Registers the <see cref="DgcReaderService"/> in the DI container
+        /// </summary>
+        /// <param name="services"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentNullException"></exception>
         public static DgcReaderServiceBuilder AddDgcReader(this IServiceCollection services)
         {
             if (services is null)

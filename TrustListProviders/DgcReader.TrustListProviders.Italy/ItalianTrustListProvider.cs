@@ -44,6 +44,9 @@ namespace DgcReader.TrustListProviders.Italy
         private const string CertUpdateUrl = "https://get.dgc.gov.it/v1/dgc/signercertificate/update";
         private const string CertStatusUrl = "https://get.dgc.gov.it/v1/dgc/signercertificate/status";
 
+        private const string ProviderDataFolder = "DgcReaderData\\TrustLists\\Italy";
+        private const string FileName = "trustlist-it.json";
+
         private readonly HttpClient _httpClient;
 
         private static readonly JsonSerializerSettings JsonSettings = new JsonSerializerSettings
@@ -124,9 +127,9 @@ namespace DgcReader.TrustListProviders.Italy
         /// <inheritdoc/>
         public override bool SupportsCertificates => true;
 
-#endregion
+        #endregion
 
-#region Implementation of TrustListProviderBase
+        #region Implementation of TrustListProviderBase
 
         /// <inheritdoc/>
         protected override async Task<ITrustList> GetTrustListFromServer(CancellationToken cancellationToken = default)
@@ -164,7 +167,7 @@ namespace DgcReader.TrustListProviders.Italy
 
                     var subjectCOmponents = ParseCertSubject(cert.Subject);
                     if (subjectCOmponents.ContainsKey("C"))
-                        certData.Country = subjectCOmponents["C"][0];
+                        certData.Country = subjectCOmponents["C"][0] ?? "";
 
 
 
@@ -183,11 +186,7 @@ namespace DgcReader.TrustListProviders.Italy
                     var rsaKeyParams = publicKeyParameters as RsaKeyParameters;
                     if (rsaKeyParams != null)
                     {
-                        certData.RSA = new Models.RSAParameters()
-                        {
-                            Exponent = rsaKeyParams.Exponent.ToByteArray(),
-                            Modulus = rsaKeyParams.Modulus.ToByteArray(),
-                        };
+                        certData.RSA = new Models.RSAParameters(rsaKeyParams);
                     }
 #else
 
@@ -227,7 +226,7 @@ namespace DgcReader.TrustListProviders.Italy
         /// <inheritdoc/>
         protected override Task<ITrustList?> LoadCache(CancellationToken cancellationToken = default)
         {
-            var filePath = GetTrustListFilePath();
+            var filePath = GetCacheFilePath();
             TrustList? trustList = null;
             try
             {
@@ -268,15 +267,17 @@ namespace DgcReader.TrustListProviders.Italy
         /// <inheritdoc/>
         protected override Task UpdateCache(ITrustList trustList, CancellationToken cancellationToken = default)
         {
-            var filePath = GetTrustListFilePath();
+            var filePath = GetCacheFilePath();
+            if (!Directory.Exists(GetCacheFolder()))
+                Directory.CreateDirectory(GetCacheFolder());
             var json = JsonConvert.SerializeObject(trustList, JsonSettings);
 
             File.WriteAllText(filePath, json);
             return Task.FromResult(0);
         }
-#endregion
+        #endregion
 
-#region Private
+        #region Private
 
         private async Task<string[]> FetchCertificatesStatus(CancellationToken cancellationToken = default)
         {
@@ -292,7 +293,7 @@ namespace DgcReader.TrustListProviders.Italy
                     var results = JsonConvert.DeserializeObject<string[]>(content);
 
                     Logger?.LogDebug($"{results?.Length} read in {DateTime.Now - start}");
-                    return results ?? new string [0];
+                    return results ?? new string[0];
                 }
 
                 throw new Exception($"The remote server responded with code {response.StatusCode}: {response.ReasonPhrase}");
@@ -320,7 +321,7 @@ namespace DgcReader.TrustListProviders.Italy
                 var certStart = DateTime.Now;
                 var result = await FetchCertificate(resumeToken, cancellationToken);
                 Logger?.LogDebug($"Cert. with resume token {resumeToken}, kid {result.Kid} downloaded in {DateTime.Now - certStart} ");
-                if (!string.IsNullOrEmpty(result.Kid) && result.Certificate != null)
+                if (result.Kid != null && !string.IsNullOrEmpty(result.Kid) && result.Certificate != null)
                 {
                     if (validKeys.Contains(result.Kid))
                     {
@@ -390,7 +391,7 @@ namespace DgcReader.TrustListProviders.Italy
             }
         }
 
-        private IDictionary<string, string[]> ParseCertSubject(string subject)
+        private IDictionary<string, string?[]> ParseCertSubject(string subject)
         {
             try
             {
@@ -399,15 +400,14 @@ namespace DgcReader.TrustListProviders.Italy
                     {
                         if (!r.Contains('='))
                         {
-
-                            return new KeyValuePair<string, string>(r.Trim(), null);
+                            return new KeyValuePair<string, string?>(r.Trim(), null);
                         }
                         var idx = r.IndexOf('=');
-                        return new KeyValuePair<string, string>(r.Remove(idx).Trim(),
+                        return new KeyValuePair<string, string?>(r.Remove(idx).Trim(),
                             r.Substring(idx + 1).Trim());
                     });
 
-                return new ReadOnlyDictionary<string, string[]>(
+                return new ReadOnlyDictionary<string, string?[]>(
                     entries.GroupBy(r => r.Key)
                     .ToDictionary(r => r.Key, r => r.Select(g => g.Value).ToArray()));
             }
@@ -418,12 +418,10 @@ namespace DgcReader.TrustListProviders.Italy
             }
         }
 
-        private string GetTrustListFilePath()
-        {
-            return Path.Combine(Options.BasePath, Options.TrustListFileName);
-        }
+        private string GetCacheFolder() => Path.Combine(Options.BasePath, ProviderDataFolder);
+        private string GetCacheFilePath() => Path.Combine(GetCacheFolder(), FileName);
 
 
-#endregion
+        #endregion
     }
 }

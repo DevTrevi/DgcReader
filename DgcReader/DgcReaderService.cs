@@ -204,6 +204,10 @@ namespace DgcReader
                                 validationInstant,
                                 throwOnError,
                                 cancellationToken);
+
+                        // If no message set, use message from rules validation
+                        if (string.IsNullOrEmpty(result.StatusMessage))
+                            result.StatusMessage = result.RulesValidation?.StatusMessage;
                     }
 
                 }

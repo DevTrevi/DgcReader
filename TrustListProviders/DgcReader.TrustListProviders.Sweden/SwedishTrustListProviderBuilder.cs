@@ -2,6 +2,7 @@
 using DgcReader.Interfaces.TrustListProviders;
 using DgcReader.TrustListProviders.Sweden;
 using System;
+using System.Linq;
 
 // Copyright (c) 2021 Davide Trevisan
 // Licensed under the Apache License, Version 2.0
@@ -13,6 +14,8 @@ namespace Microsoft.Extensions.DependencyInjection
     /// </summary>
     public class SwedishTrustListProviderBuilder
     {
+        static readonly Func<IServiceProvider, SwedishTrustListProvider> _providerFactory = sp => sp.GetRequiredService<SwedishTrustListProvider>();
+
         /// <summary>
         /// Returns the services collection
         /// </summary>
@@ -29,7 +32,10 @@ namespace Microsoft.Extensions.DependencyInjection
             Services.AddHttpClient();
 
             Services.AddSingleton<SwedishTrustListProvider>();
-            Services.AddSingleton<ITrustListProvider, SwedishTrustListProvider>(sp => sp.GetRequiredService<SwedishTrustListProvider>());
+
+            var sd = Services.FirstOrDefault(s => s.ServiceType == typeof(ITrustListProvider) && s.ImplementationFactory == _providerFactory);
+            if (sd == null)
+                Services.AddSingleton<ITrustListProvider, SwedishTrustListProvider>(_providerFactory);
         }
 
         /// <summary>

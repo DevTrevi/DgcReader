@@ -67,13 +67,14 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <returns></returns>
         public DgcItalianRulesValidatorServiceBuilder UseAsBlacklistProvider(bool useAsBlacklistProvider = true)
         {
+            var sd = Services.FirstOrDefault(s => s.ServiceType == typeof(IBlacklistProvider) && s.ImplementationFactory == _blacklistProviderFactory);
             if (useAsBlacklistProvider)
             {
-                Services.AddSingleton<IBlacklistProvider, DgcItalianRulesValidator>(_blacklistProviderFactory);
+                if (sd == null)
+                    Services.AddSingleton<IBlacklistProvider, DgcItalianRulesValidator>(_blacklistProviderFactory);
             }
             else
             {
-                var sd = Services.FirstOrDefault(s => s.ServiceType == typeof(IBlacklistProvider) && s.ImplementationFactory == _blacklistProviderFactory);
                 if (sd != null)
                     Services.Remove(sd);
             }
@@ -90,13 +91,14 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <returns></returns>
         public DgcItalianRulesValidatorServiceBuilder UseAsRulesValidator(bool useAsRulesValidator = true)
         {
+            var sd = Services.FirstOrDefault(s => s.ServiceType == typeof(IRulesValidator) && s.ImplementationFactory == _rulesValidatorFactory);
             if (useAsRulesValidator)
             {
-                Services.AddSingleton<IRulesValidator, DgcItalianRulesValidator>(_rulesValidatorFactory);
+                if (sd == null)
+                    Services.AddSingleton<IRulesValidator, DgcItalianRulesValidator>(_rulesValidatorFactory);
             }
             else
             {
-                var sd = Services.FirstOrDefault(s => s.ServiceType == typeof(IRulesValidator) && s.ImplementationFactory == _rulesValidatorFactory);
                 if (sd != null)
                     Services.Remove(sd);
             }

@@ -2,6 +2,8 @@
 using DgcReader.BlacklistProviders.Italy;
 using DgcReader.Interfaces.BlacklistProviders;
 using System;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using System.Linq;
 
 // Copyright (c) 2021 Davide Trevisan
 // Licensed under the Apache License, Version 2.0
@@ -13,6 +15,8 @@ namespace Microsoft.Extensions.DependencyInjection
     /// </summary>
     public class ItalianDrlBlacklistProviderBuilder
     {
+        static readonly Func<IServiceProvider, ItalianDrlBlacklistProvider> _providerFactory = sp => sp.GetRequiredService<ItalianDrlBlacklistProvider>();
+
         /// <summary>
         /// Returns the services collection
         /// </summary>
@@ -28,8 +32,11 @@ namespace Microsoft.Extensions.DependencyInjection
 
             Services.AddHttpClient();
 
-            Services.AddSingleton<ItalianDrlBlacklistProvider>();
-            Services.AddSingleton<IBlacklistProvider, ItalianDrlBlacklistProvider>(sp => sp.GetRequiredService<ItalianDrlBlacklistProvider>());
+            Services.TryAddSingleton<ItalianDrlBlacklistProvider>();
+
+            var sd = Services.FirstOrDefault(s => s.ServiceType == typeof(IBlacklistProvider) && s.ImplementationFactory == _providerFactory);
+            if (sd == null)
+                Services.AddSingleton<IBlacklistProvider, ItalianDrlBlacklistProvider>(_providerFactory);
         }
 
 

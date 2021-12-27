@@ -3,6 +3,7 @@ using DgcReader.Interfaces.RulesValidators;
 using DgcReader.RuleValidators.Germany;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using System;
+using System.Linq;
 
 // Copyright (c) 2021 Davide Trevisan
 // Licensed under the Apache License, Version 2.0
@@ -14,6 +15,8 @@ namespace Microsoft.Extensions.DependencyInjection
     /// </summary>
     public class DgcGermanRulesValidatorServiceBuilder
     {
+        static readonly Func<IServiceProvider, DgcGermanRulesValidator> _providerFactory = sp => sp.GetRequiredService<DgcGermanRulesValidator>();
+
         /// <summary>
         /// Returns the services collection
         /// </summary>
@@ -30,7 +33,10 @@ namespace Microsoft.Extensions.DependencyInjection
             Services.AddHttpClient();
 
             Services.TryAddSingleton<DgcGermanRulesValidator>();
-            Services.AddSingleton<IRulesValidator, DgcGermanRulesValidator>(sp => sp.GetRequiredService<DgcGermanRulesValidator>());
+
+            var sd = Services.FirstOrDefault(s => s.ServiceType == typeof(IRulesValidator) && s.ImplementationFactory == _providerFactory);
+            if (sd == null)
+                Services.AddSingleton<IRulesValidator, DgcGermanRulesValidator>(_providerFactory);
         }
 
         /// <summary>

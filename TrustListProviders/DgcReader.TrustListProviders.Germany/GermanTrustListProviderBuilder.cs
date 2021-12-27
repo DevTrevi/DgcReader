@@ -2,6 +2,7 @@
 using DgcReader.Interfaces.TrustListProviders;
 using DgcReader.TrustListProviders.Germany;
 using System;
+using System.Linq;
 
 // Copyright (c) 2021 Davide Trevisan
 // Licensed under the Apache License, Version 2.0
@@ -13,6 +14,8 @@ namespace Microsoft.Extensions.DependencyInjection
     /// </summary>
     public class GermanTrustListProviderBuilder
     {
+        static readonly Func<IServiceProvider, GermanTrustListProvider> _providerFactory = sp => sp.GetRequiredService<GermanTrustListProvider>();
+
         /// <summary>
         /// Returns the services collection
         /// </summary>
@@ -29,7 +32,10 @@ namespace Microsoft.Extensions.DependencyInjection
             Services.AddHttpClient();
 
             Services.AddSingleton<GermanTrustListProvider>();
-            Services.AddSingleton<ITrustListProvider, GermanTrustListProvider>(sp => sp.GetRequiredService<GermanTrustListProvider>());
+
+            var sd = Services.FirstOrDefault(s => s.ServiceType == typeof(ITrustListProvider) && s.ImplementationFactory == _providerFactory);
+            if (sd == null)
+                Services.AddSingleton<ITrustListProvider, GermanTrustListProvider>(_providerFactory);
 
         }
 

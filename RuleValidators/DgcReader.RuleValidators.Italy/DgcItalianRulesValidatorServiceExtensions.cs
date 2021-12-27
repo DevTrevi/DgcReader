@@ -1,4 +1,6 @@
 ﻿#if NETSTANDARD2_0_OR_GREATER || NET5_0_OR_GREATER || NET47_OR_GREATER
+using DgcReader.Interfaces.BlacklistProviders;
+using DgcReader.Interfaces.RulesValidators;
 using DgcReader.RuleValidators.Italy;
 using System;
 
@@ -16,10 +18,10 @@ namespace Microsoft.Extensions.DependencyInjection
         /// Registers the <see cref="DgcItalianRulesValidator"/> service in the DI container
         /// </summary>
         /// <param name="services"></param>
-        /// <param name="registerAsBlacklistProvider">If true, register the validator as a Blacklist provider</param>
+        /// <param name="registerAsBlacklistProvider"></param>
         /// <returns></returns>
         /// <exception cref="ArgumentNullException"></exception>
-        public static DgcItalianRulesValidatorServiceBuilder AddItalianRulesValidator(this IServiceCollection services, bool registerAsBlacklistProvider = false)
+        public static DgcItalianRulesValidatorServiceBuilder AddItalianRulesValidator(this IServiceCollection services, bool registerAsBlacklistProvider = true)
         {
             if (services is null)
             {
@@ -47,6 +49,60 @@ namespace Microsoft.Extensions.DependencyInjection
 
             return services;
         }
+
+        ///// <summary>
+        ///// Registers the <see cref="DgcItalianRulesValidator"/> service in the DI container as a <see cref="IBlacklistProvider"/>
+        ///// </summary>
+        ///// <param name="services"></param>
+        ///// <returns></returns>
+        ///// <exception cref="ArgumentNullException"></exception>
+        //public static DgcItalianRulesValidatorServiceBuilder AddItalianBlacklistProvider(this IServiceCollection services)
+        //{
+        //    if (services is null)
+        //        throw new ArgumentNullException(nameof(services));
+
+        //    return new DgcItalianRulesValidatorServiceBuilder(services, false, true);
+        //}
+
+        ///// <summary>
+        ///// Registers the <see cref="DgcItalianRulesValidator"/> service in the DI container as a <see cref="IBlacklistProvider"/>
+        ///// </summary>
+        ///// <param name="services"></param>
+        ///// <param name="configuration"></param>
+        ///// <returns></returns>
+        ///// <exception cref="ArgumentNullException"></exception>
+        //public static IServiceCollection AddItalianBlacklistProvider(this IServiceCollection services,
+        //    Action<DgcItalianRulesValidatorOptions> configuration)
+        //{
+        //    if (services is null)
+        //        throw new ArgumentNullException(nameof(services));
+        //    if (configuration is null)
+        //        throw new ArgumentNullException(nameof(configuration));
+
+        //    services.AddItalianBlacklistProvider().Configure(configuration);
+
+        //    return services;
+        //}
+
+        ///// <summary>
+        ///// Registers the <see cref="DgcItalianRulesValidator"/> service in the DI container as a <see cref="IBlacklistProvider"/>
+        ///// </summary>
+        ///// <param name="services"></param>
+        ///// <param name="configuration"></param>
+        ///// <returns></returns>
+        ///// <exception cref="ArgumentNullException"></exception>
+        //public static IServiceCollection AddItalianBlacklistProvider(this IServiceCollection services,
+        //    Action<DgcItalianRulesValidatorServiceBuilder> configuration)
+        //{
+        //    if (services is null)
+        //        throw new ArgumentNullException(nameof(services));
+        //    if (configuration is null)
+        //        throw new ArgumentNullException(nameof(configuration));
+
+        //    configuration(services.AddItalianBlacklistProvider());
+
+        //    return services;
+        //}
 
         // Extensions for DgcReaderServiceBuilder
 
@@ -89,6 +145,48 @@ namespace Microsoft.Extensions.DependencyInjection
 
             return dgcBuilder;
         }
+
+        ///// <inheritdoc cref="AddItalianBlacklistProvider(IServiceCollection)"/>
+        //public static DgcReaderServiceBuilder AddItalianBlacklistProvider(this DgcReaderServiceBuilder dgcBuilder)
+        //{
+        //    if (dgcBuilder is null)
+        //        throw new ArgumentNullException(nameof(dgcBuilder));
+
+        //    dgcBuilder.Services.AddItalianBlacklistProvider();
+
+        //    return dgcBuilder;
+        //}
+
+        ///// <inheritdoc cref="AddItalianBlacklistProvider(IServiceCollection)"/>
+        //public static DgcReaderServiceBuilder AddItalianBlacklistProvider(this DgcReaderServiceBuilder dgcBuilder,
+        //    Action<DgcItalianRulesValidatorOptions> configuration)
+        //{
+        //    if (dgcBuilder is null)
+        //        throw new ArgumentNullException(nameof(dgcBuilder));
+        //    if (configuration is null)
+        //        throw new ArgumentNullException(nameof(configuration));
+
+        //    dgcBuilder.AddItalianBlacklistProvider();
+        //    dgcBuilder.Services.Configure(configuration);
+
+        //    return dgcBuilder;
+        //}
+
+        ///// <inheritdoc cref="AddItalianBlacklistProvider(IServiceCollection)"/>
+        //public static DgcReaderServiceBuilder AddItalianBlacklistProvider(this DgcReaderServiceBuilder dgcBuilder,
+        //    Action<DgcItalianRulesValidatorServiceBuilder> configuration)
+        //{
+        //    if (dgcBuilder is null)
+        //        throw new ArgumentNullException(nameof(dgcBuilder));
+        //    if (configuration is null)
+        //        throw new ArgumentNullException(nameof(configuration));
+
+        //    var builder = dgcBuilder.Services.AddItalianBlacklistProvider();
+        //    configuration(builder);
+
+        //    return dgcBuilder;
+        //}
+
     }
 }
 

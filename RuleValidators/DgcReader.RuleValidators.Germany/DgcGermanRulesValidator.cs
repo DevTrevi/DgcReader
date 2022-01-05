@@ -146,7 +146,12 @@ namespace DgcReader.RuleValidators.Germany
         #region Implementation of IRulesValidator
 
         /// <inheritdoc/>
-        public async Task<IRulesValidationResult> GetRulesValidationResult(EuDGC dgc, DateTimeOffset validationInstant, string countryCode = "DE", CancellationToken cancellationToken = default)
+        public async Task<IRulesValidationResult> GetRulesValidationResult(EuDGC dgc,
+            DateTimeOffset validationInstant,
+            string countryCode = "DE",
+            SignatureValidationResult? validationResult = null,
+            BlacklistValidationResult? blacklistValidationResult = null,
+            CancellationToken cancellationToken = default)
         {
             if (!await SupportsCountry(countryCode))
                 throw new DgcException($"Rules validation for country {countryCode} is not supported by this provider");

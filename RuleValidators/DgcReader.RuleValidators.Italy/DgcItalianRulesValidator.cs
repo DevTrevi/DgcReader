@@ -12,6 +12,7 @@ using DgcReader.Interfaces.RulesValidators;
 using DgcReader.Interfaces.BlacklistProviders;
 using DgcReader.RuleValidators.Italy.Providers;
 using DgcReader.Exceptions;
+using DgcReader.Models;
 
 #if NETSTANDARD2_0_OR_GREATER || NET5_0_OR_GREATER || NET47_OR_GREATER
 using Microsoft.Extensions.Options;
@@ -101,7 +102,12 @@ namespace DgcReader.RuleValidators.Italy
         #region Implementation of IRulesValidator
 
         /// <inheritdoc/>
-        public async Task<IRulesValidationResult> GetRulesValidationResult(EuDGC dgc, DateTimeOffset validationInstant, string countryCode = "IT", CancellationToken cancellationToken = default)
+        public async Task<IRulesValidationResult> GetRulesValidationResult(EuDGC dgc,
+            DateTimeOffset validationInstant,
+            string countryCode = "IT",
+            SignatureValidationResult? signatureValidationResult = null,
+            BlacklistValidationResult? blacklistValidationResult = null,
+            CancellationToken cancellationToken = default)
         {
             if (!await SupportsCountry(countryCode))
             {
@@ -123,6 +129,8 @@ namespace DgcReader.RuleValidators.Italy
             return await this.GetRulesValidationResult(dgc,
                 validationInstant,
                 Options.ValidationMode ?? ValidationMode.Basic3G,
+                signatureValidationResult,
+                blacklistValidationResult,
                 cancellationToken);
         }
 
@@ -185,9 +193,16 @@ namespace DgcReader.RuleValidators.Italy
         /// <param name="dgc"></param>
         /// <param name="validationInstant"></param>
         /// <param name="validationMode">The Italian validation mode to be used</param>
+        /// <param name="signatureValidationResult">The result from the signature validation step</param>
+        /// <param name="blacklistValidationResult">The result from the blacklist validation step</param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        public async Task<IRulesValidationResult> GetRulesValidationResult(EuDGC dgc, DateTimeOffset validationInstant, ValidationMode validationMode, CancellationToken cancellationToken = default)
+        public async Task<IRulesValidationResult> GetRulesValidationResult(EuDGC dgc,
+            DateTimeOffset validationInstant,
+            ValidationMode validationMode,
+            SignatureValidationResult? signatureValidationResult = null,
+            BlacklistValidationResult? blacklistValidationResult = null,
+            CancellationToken cancellationToken = default)
         {
             var result = new ItalianRulesValidationResult
             {

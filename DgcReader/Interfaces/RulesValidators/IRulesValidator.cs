@@ -1,4 +1,5 @@
-﻿using GreenpassReader.Models;
+﻿using DgcReader.Models;
+using GreenpassReader.Models;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -20,9 +21,16 @@ namespace DgcReader.Interfaces.RulesValidators
         /// <param name="dgc"></param>
         /// <param name="validationInstant">The validation instant when the DGC is validated</param>
         /// <param name="countryCode">The 2-letter ISO country code for which to request rules validation</param>
+        /// <param name="signatureValidationResult">The result from the signature validation step</param>
+        /// <param name="blacklistValidationResult">The result from the blacklist validation step</param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        Task<IRulesValidationResult> GetRulesValidationResult(EuDGC dgc, DateTimeOffset validationInstant, string countryCode, CancellationToken cancellationToken = default);
+        Task<IRulesValidationResult> GetRulesValidationResult(EuDGC dgc,
+            DateTimeOffset validationInstant,
+            string countryCode,
+            SignatureValidationResult? signatureValidationResult,
+            BlacklistValidationResult? blacklistValidationResult,
+            CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Refresh the validation rules used by the prodvider from server

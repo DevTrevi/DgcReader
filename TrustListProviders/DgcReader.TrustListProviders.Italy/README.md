@@ -66,7 +66,7 @@ If a refresh is not possible when the refresh interval expires, the current file
 This allows the application to continue to operate even if the backend is temporary unavailable for any reason.
 Default value is 15 days.
 - **SaveCertificate**: if true, the full .cer certificate downloaded is saved into the json file instead of only the public key parameters.  
-This option is disabled by default, and can be activated for diagnostic purposes.
+This option is enabled by default, and is required by the Italian rules validator in order to perform some checks.
 
 ## Forcing the update of the trustlist
 If the application needs to update the trustlist at a specific time (i.e. by a scheduled task, or when a user press a *"Refresh"* button), you can simply call the `RefreshTrustList` function of the provider.

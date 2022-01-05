@@ -2,11 +2,12 @@ using System;
 using System.Diagnostics;
 using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using DgcReader.TrustListProviders.Italy;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using DgcReader.Interfaces.TrustListProviders;
 using System.Net.Http;
+using System.Security.Cryptography.X509Certificates;
+using System.Security.Cryptography;
 
 #if NETFRAMEWORK
 using System.Net;
@@ -28,6 +29,7 @@ namespace DgcReader.TrustListProviders.Italy.Test
             MaxFileAge = TimeSpan.FromMinutes(2),
             MinRefreshInterval = TimeSpan.Zero,
             RefreshInterval = TimeSpan.FromSeconds(10),
+            SaveCertificate = true,
         };
         ITrustListProvider TrustListProvider {  get; set;}
 
@@ -106,6 +108,34 @@ namespace DgcReader.TrustListProviders.Italy.Test
             catch (Exception e)
             {
 
+                throw;
+            }
+
+        }
+
+        [TestMethod]
+        public async Task TestExtendedKeyIdentifiers()
+        {
+            try
+            {
+                var trustlist = await TrustListProvider.GetTrustList();
+
+                var enhancedKeysCerts = new List<(ITrustedCertificateData Data, X509Certificate2 Certificate)>();
+                foreach(var data in trustlist)
+                {
+                    var cert = new X509Certificate2(data.Certificate);
+                    var enhanced = cert.Extensions.OfType<X509EnhancedKeyUsageExtension>().ToArray();
+
+                    if (enhanced.Any())
+                    {
+                        enhancedKeysCerts.Add((data, cert));
+                    }
+                }
+
+                Assert.IsTrue(enhancedKeysCerts.Any());
+            }
+            catch (Exception e)
+            {
                 throw;
             }
 

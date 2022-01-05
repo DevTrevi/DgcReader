@@ -15,7 +15,7 @@ namespace DgcReader.RuleValidators.Italy.Models
         /// <summary>
         /// Validation status according to the official Italian SDK
         /// </summary>
-        public DgcItalianResultStatus ItalianStatus { get; internal set; }
+        public DgcItalianResultStatus ItalianStatus { get; internal set; } = DgcItalianResultStatus.NotValidated;
 
         #region Implementation of IRulesValidationResult
         /// <summary>
@@ -62,6 +62,11 @@ namespace DgcReader.RuleValidators.Italy.Models
     public enum DgcItalianResultStatus
     {
         /// <summary>
+        /// The certificate has not been validated by the Italian rules validator
+        /// </summary>
+        NotValidated,
+
+        /// <summary>
         /// The certificate is not a valid EU DCC
         /// </summary>
         NotEuDCC,
@@ -72,14 +77,9 @@ namespace DgcReader.RuleValidators.Italy.Models
         InvalidSignature,
 
         /// <summary>
-        /// The certificate is blacklisted
+        /// The certificate is blacklisted or temporarily revoked
         /// </summary>
-        Blacklisted,
-
-        /// <summary>
-        /// The certificate has a valid signature, but needs to be verified against the hosting country rules.
-        /// </summary>
-        NeedRulesVerification,
+        Revoked,
 
         /// <summary>
         /// The certificate is not valid
@@ -90,6 +90,11 @@ namespace DgcReader.RuleValidators.Italy.Models
         /// The certificate is not valid yet
         /// </summary>
         NotValidYet,
+
+        /// <summary>
+        /// Certificate is not enough for the required validation mode, and needs to be integrated by a test
+        /// </summary>
+        TestNeeded,
 
         /// <summary>
         /// The certificate is valid

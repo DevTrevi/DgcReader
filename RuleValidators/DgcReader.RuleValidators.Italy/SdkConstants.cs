@@ -17,7 +17,7 @@ namespace DgcReader.RuleValidators.Italy
         /// <summary>
         /// The version of the sdk used as reference for implementing the rules.
         /// </summary>
-        public const string ReferenceSdkMinVersion = "1.1.0";
+        public const string ReferenceSdkMinVersion = "1.1.1";
 
         /// <summary>
         /// The version of the app used as reference for implementing the rules.

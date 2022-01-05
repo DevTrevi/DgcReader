@@ -13,6 +13,8 @@ using DgcReader.Interfaces.BlacklistProviders;
 using DgcReader.RuleValidators.Italy.Providers;
 using DgcReader.Exceptions;
 using DgcReader.Models;
+using System.Security.Cryptography.X509Certificates;
+using System.Security.Cryptography;
 
 #if NETSTANDARD2_0_OR_GREATER || NET5_0_OR_GREATER || NET47_OR_GREATER
 using Microsoft.Extensions.Options;
@@ -245,15 +247,15 @@ namespace DgcReader.RuleValidators.Italy
 
                 if (dgc.Recoveries?.Any(r => r.TargetedDiseaseAgent == DiseaseAgents.Covid19) == true)
                 {
-                    CheckRecoveryStatements(dgc, result, rules);
+                    CheckRecoveryStatements(dgc, result, rules, signatureValidationResult);
                 }
                 else if (dgc.Tests?.Any(r => r.TargetedDiseaseAgent == DiseaseAgents.Covid19) == true)
                 {
-                    CheckTests(dgc, result, rules);
+                    CheckTests(dgc, result, rules, signatureValidationResult);
                 }
                 else if (dgc.Vaccinations?.Any(r => r.TargetedDiseaseAgent == DiseaseAgents.Covid19) == true)
                 {
-                    CheckVaccinations(dgc, result, rules);
+                    CheckVaccinations(dgc, result, rules, signatureValidationResult);
                 }
                 else
                 {
@@ -299,7 +301,9 @@ namespace DgcReader.RuleValidators.Italy
         /// <param name="dgc"></param>
         /// <param name="result">The output result compiled by the function</param>
         /// <param name="rules"></param>
-        private void CheckVaccinations(EuDGC dgc, ItalianRulesValidationResult result, IEnumerable<RuleSetting> rules)
+        /// <param name="signatureValidation">The result from the signature validation step</param
+        private void CheckVaccinations(EuDGC dgc, ItalianRulesValidationResult result, IEnumerable<RuleSetting> rules,
+            SignatureValidationResult? signatureValidation)
         {
             var vaccination = dgc.Vaccinations.Last(r => r.TargetedDiseaseAgent == DiseaseAgents.Covid19);
 
@@ -361,7 +365,9 @@ namespace DgcReader.RuleValidators.Italy
         /// <param name="dgc"></param>
         /// <param name="result">The output result compiled by the function</param>
         /// <param name="rules"></param>
-        private void CheckTests(EuDGC dgc, ItalianRulesValidationResult result, IEnumerable<RuleSetting> rules)
+        /// <param name="signatureValidation">The result from the signature validation step</param>
+        private void CheckTests(EuDGC dgc, ItalianRulesValidationResult result, IEnumerable<RuleSetting> rules,
+            SignatureValidationResult? signatureValidation)
         {
             var test = dgc.Tests.Last(r => r.TargetedDiseaseAgent == DiseaseAgents.Covid19);
 
@@ -413,14 +419,19 @@ namespace DgcReader.RuleValidators.Italy
         /// <param name="dgc"></param>
         /// <param name="result">The output result compiled by the function</param>
         /// <param name="rules"></param>
-        private void CheckRecoveryStatements(EuDGC dgc, ItalianRulesValidationResult result, IEnumerable<RuleSetting> rules)
+        /// <param name="signatureValidation">The result from the signature validation step</param>
+        private void CheckRecoveryStatements(EuDGC dgc, ItalianRulesValidationResult result, IEnumerable<RuleSetting> rules,
+            SignatureValidationResult? signatureValidation)
         {
             var recovery = dgc.Recoveries.Last(r => r.TargetedDiseaseAgent == DiseaseAgents.Covid19);
 
             int startDay, endDay;
 
-            startDay = rules.GetRuleInteger(SettingNames.RecoveryCertStartDay);
-            endDay = rules.GetRuleInteger(SettingNames.RecoveryCertEndDay);
+            // Check if is PV (post-vaccination) recovery by checking signer certificate
+            var isPvRecovery = IsRecoveryPvSignature(signatureValidation);
+
+            startDay = rules.GetRuleInteger(isPvRecovery ? SettingNames.RecoveryPvCertStartDay : SettingNames.RecoveryCertStartDay);
+            endDay = rules.GetRuleInteger(isPvRecovery ? SettingNames.RecoveryPvCertEndDay : SettingNames.RecoveryCertEndDay);
 
             result.ValidFrom = recovery.ValidFrom.Date.AddDays(startDay);
             result.ValidUntil = recovery.ValidUntil.Date;
@@ -470,7 +481,6 @@ namespace DgcReader.RuleValidators.Italy
                             $"Please update the package with the latest implementation in order to get a reliable result";
                     }
                 }
-
             }
 
             if (obsolete)
@@ -495,6 +505,59 @@ namespace DgcReader.RuleValidators.Italy
         }
 
 
+        /// <summary>
+        /// Read the extended key usage identifiers from the signer certificate
+        /// </summary>
+        /// <param name="signatureValidation"></param>
+        /// <returns></returns>
+        private IEnumerable<string> GetExtendedKeyUsages(SignatureValidationResult? signatureValidation)
+        {
+            if (signatureValidation == null)
+            {
+                Logger?.LogWarning("Unable to get extended key usage: No signature validation result available");
+                return Enumerable.Empty<string>();
+            }
+
+            if (signatureValidation.PublicKeyData?.Certificate == null)
+            {
+                Logger?.LogWarning("Unable to get extended key usage: Certificate is not available. " +
+                    "Try to use a TrustListProvider capable of returning signer certificates, or enable the sotrage of certificates in the current TrustListProvider");
+
+                return Enumerable.Empty<string>();
+            }
+            try
+            {
+                var certificate = new X509Certificate2(signatureValidation.PublicKeyData.Certificate);
+                var enhancedKeyExtensions = certificate.Extensions.OfType<X509EnhancedKeyUsageExtension>();
+
+                return enhancedKeyExtensions
+                    .SelectMany(e => e.EnhancedKeyUsages.OfType<Oid>().Select(r => r.Value))
+                    .ToArray();
+            }
+            catch (Exception e)
+            {
+                Logger?.LogError(e, $"Error while parsing signer certificate: {e.Message}");
+                return Enumerable.Empty<string>();
+            }
+        }
+
+        /// <summary>
+        /// Check if the signer certificate is one of the signer of post-vaccination certificates
+        /// </summary>
+        /// <param name="signatureValidationResult"></param>
+        /// <returns></returns>
+        private bool IsRecoveryPvSignature(SignatureValidationResult? signatureValidationResult)
+        {
+            var extendedKeyUsages = GetExtendedKeyUsages(signatureValidationResult);
+
+            if (signatureValidationResult == null)
+                return false;
+
+            if (signatureValidationResult.Issuer != "IT")
+                return false;
+
+            return extendedKeyUsages.Any(usage => CertificateExtendedKeyUsageIdentifiers.RecoveryIssuersIds.Contains(usage));
+        }
 
         #endregion
     }

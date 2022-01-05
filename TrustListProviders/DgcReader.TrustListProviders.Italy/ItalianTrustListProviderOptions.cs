@@ -26,8 +26,8 @@ namespace DgcReader.TrustListProviders.Italy
         public TimeSpan MaxFileAge { get; set; } = TimeSpan.FromDays(15);
 
         /// <summary>
-        /// If true, the full certificate is stored in the list after parsing. Default is false
+        /// If true, the full certificate is stored in the list after parsing. Default is true
         /// </summary>
-        public bool SaveCertificate { get; set; } = false;
+        public bool SaveCertificate { get; set; } = true;
     }
 }

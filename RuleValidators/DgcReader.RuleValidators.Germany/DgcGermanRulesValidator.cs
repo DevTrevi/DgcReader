@@ -267,11 +267,9 @@ namespace DgcReader.RuleValidators.Germany
             }
             else
             {
-                var supportedCountries = await GetSupportedCountries();
-                foreach (var country in supportedCountries.Distinct().ToArray())
-                {
-                    await _rulesProvider.RefreshValueSet(country, cancellationToken);
-                }
+                // Full refresh: updates all the rules and valuesets from server
+                await RefreshAllRules();
+                await RefreshValuesets();
             }
         }
 
@@ -282,6 +280,44 @@ namespace DgcReader.RuleValidators.Germany
             return supportedCountries.Any(r=>r.Equals(countryCode, StringComparison.InvariantCultureIgnoreCase));
         }
 
+        #endregion
+
+        #region Public methods
+
+        /// <summary>
+        /// Refresh all the valuesets (and their identifiers)
+        /// </summary>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        public async Task RefreshValuesets(CancellationToken cancellationToken = default)
+        {
+            var identifiers = await _valueSetIdentifiersProvider.RefreshValueSet(cancellationToken);
+            if (identifiers == null)
+                return;
+
+            foreach(var identifier in identifiers.Identifiers)
+            {
+                await _valueSetsProvider.RefreshValueSet(identifier.Id, cancellationToken);
+            }
+        }
+
+        /// <summary>
+        /// Refresh all the rules (and their identifiers)
+        /// </summary>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        public async Task RefreshAllRules(CancellationToken cancellationToken = default)
+        {
+            var identifiers = await _ruleIdentifiersProvider.RefreshValueSet(cancellationToken);
+            if (identifiers == null)
+                return;
+
+            var countries = await GetSupportedCountries();
+            foreach (var country in countries)
+            {
+                await _rulesProvider.RefreshValueSet(country, cancellationToken);
+            }
+        }
         #endregion
 
         #region Private

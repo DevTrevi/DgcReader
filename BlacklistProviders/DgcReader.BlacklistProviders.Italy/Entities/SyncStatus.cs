@@ -11,6 +11,11 @@ namespace DgcReader.BlacklistProviders.Italy.Entities
     public class SyncStatus
     {
         /// <summary>
+        /// PK - Always 0 (single row)
+        /// </summary>
+        public int Id { get; set; } = 0;
+
+        /// <summary>
         /// The current version of the Crl stored on the DB
         /// </summary>
         public int CurrentVersion { get; set; }

@@ -23,6 +23,7 @@ namespace DgcReader.BlacklistProviders.Italy.Test
         {
             MinRefreshInterval = TimeSpan.Zero,
             RefreshInterval = TimeSpan.FromSeconds(10),
+            UseAvailableValuesWhileRefreshing = false,
         };
         IBlacklistProvider BlacklistProvider { get; set; }
 
@@ -105,6 +106,7 @@ namespace DgcReader.BlacklistProviders.Italy.Test
                     o.RefreshInterval = Options.RefreshInterval;
                     o.MinRefreshInterval = Options.MinRefreshInterval;
                     o.BasePath = Options.BasePath;
+                    o.UseAvailableValuesWhileRefreshing = Options.UseAvailableValuesWhileRefreshing;
                 });
         }
 #endif

@@ -71,6 +71,36 @@ namespace DgcReader.RuleValidators.Germany.Test
 
         }
 
+        [TestMethod]
+        public async Task TestRefreshAllRules()
+        {
+            try
+            {
+                await Validator.RefreshAllRules();
+            }
+            catch (Exception e)
+            {
+
+                throw;
+            }
+
+        }
+
+        [TestMethod]
+        public async Task TestRefreshValuesets()
+        {
+            try
+            {
+                await Validator.RefreshValuesets();
+            }
+            catch (Exception e)
+            {
+
+                throw;
+            }
+
+        }
+
 
 
 

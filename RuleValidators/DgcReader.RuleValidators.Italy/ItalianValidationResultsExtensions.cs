@@ -72,7 +72,7 @@ namespace DgcReader
             CancellationToken cancellationToken = default)
         {
             return await dgcReaderService.Verify(qrCodeData, "IT", validationInstant,
-                async (dgc, countryCode, validationInstant, throwOnError ,cancellationToken) =>
+                async (dgc, countryCode, validationInstant, signatureValidation, blacklistValidation, throwOnError, cancellationToken) =>
                 {
                     var italianValidator = dgcReaderService.RulesValidators.OfType<DgcItalianRulesValidator>().FirstOrDefault();
                     if (italianValidator == null)
@@ -81,7 +81,13 @@ namespace DgcReader
                     }
 
                     // Call the overload with validationMode parameter
-                    return await italianValidator.GetRulesValidationResult(dgc, validationInstant, validationMode, cancellationToken);
+                    return await italianValidator.GetRulesValidationResult(dgc,
+                        validationInstant,
+                        validationMode,
+                        signatureValidation,
+                        blacklistValidation,
+                        cancellationToken);
+
                 }, throwOnError, cancellationToken);
         }
 

@@ -20,20 +20,21 @@ namespace DgcReader
         {
             switch (status)
             {
+                case DgcItalianResultStatus.NotValidated:
+                    return DgcResultStatus.NeedRulesVerification;
+
                 case DgcItalianResultStatus.NotEuDCC:
                     return DgcResultStatus.NotEuDCC;
 
                 case DgcItalianResultStatus.InvalidSignature:
                     return DgcResultStatus.InvalidSignature;
 
-                case DgcItalianResultStatus.Blacklisted:
+                case DgcItalianResultStatus.Revoked:
                     return DgcResultStatus.Blacklisted;
-
-                case DgcItalianResultStatus.NeedRulesVerification:
-                    return DgcResultStatus.NeedRulesVerification;
 
                 case DgcItalianResultStatus.NotValid:
                 case DgcItalianResultStatus.NotValidYet:
+                case DgcItalianResultStatus.TestNeeded:
                     return DgcResultStatus.NotValid;
 
                 case DgcItalianResultStatus.Valid:

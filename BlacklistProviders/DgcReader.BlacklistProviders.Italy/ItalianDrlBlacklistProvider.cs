@@ -19,7 +19,7 @@ namespace DgcReader.BlacklistProviders.Italy
     /// <summary>
     /// Blacklist provider using the Italian backend
     /// </summary>
-    public class ItalianDrlBlacklistProvider : IBlacklistProvider
+    public class ItalianDrlBlacklistProvider : IBlacklistProvider, IDisposable
     {
         private readonly ItalianDrlBlacklistProviderOptions Options;
         private readonly ILogger<ItalianDrlBlacklistProvider>? Logger;
@@ -154,5 +154,10 @@ namespace DgcReader.BlacklistProviders.Italy
         }
         #endregion
 
+        /// <inheritdoc/>
+        public void Dispose()
+        {
+            RefreshBlacklistTaskRunner.Dispose();
+        }
     }
 }

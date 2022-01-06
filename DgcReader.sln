@@ -52,7 +52,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DgcReader.BlacklistProvider
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Test", "Test", "{1240A31E-C3AB-428E-80E6-48CD29CD1E2B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DgcReader.BlacklistProviders.Italy.Test", "BlacklistProviders\Test\DgcReader.BlacklistProviders.Italy.Test\DgcReader.BlacklistProviders.Italy.Test.csproj", "{2A0B4B80-E3F2-4A07-B45C-8543464E40E4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DgcReader.BlacklistProviders.Italy.Test", "BlacklistProviders\Test\DgcReader.BlacklistProviders.Italy.Test\DgcReader.BlacklistProviders.Italy.Test.csproj", "{2A0B4B80-E3F2-4A07-B45C-8543464E40E4}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

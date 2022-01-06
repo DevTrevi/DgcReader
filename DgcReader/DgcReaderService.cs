@@ -168,7 +168,7 @@ namespace DgcReader
             string qrCodeData,
             string acceptanceCountryCode,
             DateTimeOffset validationInstant,
-            Func<EuDGC, string, DateTimeOffset, bool, CancellationToken, Task<IRulesValidationResult?>>? rulesValidatorFunction,
+            Func<EuDGC, string, DateTimeOffset, SignatureValidationResult, BlacklistValidationResult, bool, CancellationToken, Task<IRulesValidationResult?>>? rulesValidatorFunction,
             bool throwOnError = true,
             CancellationToken cancellationToken = default)
         {
@@ -202,6 +202,8 @@ namespace DgcReader
                                 result.Dgc,
                                 acceptanceCountryCode,
                                 validationInstant,
+                                result.Signature,
+                                result.Blacklist,
                                 throwOnError,
                                 cancellationToken);
 
@@ -469,6 +471,8 @@ namespace DgcReader
         /// <param name="dgc">The DGC</param>
         /// <param name="acceptanceCountryCode">The 2-letter iso code of the acceptance country</param>
         /// <param name="validationInstant">The validation instant of the DGC</param>
+        /// <param name="signatureValidationResult">The result from the signature validation step</param>
+        /// <param name="blacklistValidationResult">The result from the blacklist validation step</param>
         /// <param name="throwOnError">If true, throw an exception if the validation fails</param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
@@ -477,6 +481,8 @@ namespace DgcReader
             EuDGC dgc,
             string acceptanceCountryCode,
             DateTimeOffset validationInstant,
+            SignatureValidationResult signatureValidationResult,
+            BlacklistValidationResult blacklistValidationResult,
             bool throwOnError,
             CancellationToken cancellationToken = default)
         {
@@ -497,7 +503,12 @@ namespace DgcReader
             {
                 if (await validator.SupportsCountry(acceptanceCountryCode, cancellationToken))
                 {
-                    rulesResult = await validator.GetRulesValidationResult(dgc, validationInstant, acceptanceCountryCode, cancellationToken);
+                    rulesResult = await validator.GetRulesValidationResult(dgc,
+                        validationInstant,
+                        acceptanceCountryCode,
+                        signatureValidationResult,
+                        blacklistValidationResult,
+                        cancellationToken);
 
                     switch (rulesResult.Status)
                     {

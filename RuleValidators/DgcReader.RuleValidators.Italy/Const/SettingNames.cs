@@ -21,6 +21,8 @@ namespace DgcReader.RuleValidators.Italy.Const
 
         public const string RecoveryCertStartDay = "recovery_cert_start_day";
         public const string RecoveryCertEndDay = "recovery_cert_end_day";
+        public const string RecoveryPvCertStartDay = "recovery_pv_cert_start_day";
+        public const string RecoveryPvCertEndDay = "recovery_pv_cert_end_day";
 
         public const string AndroidAppMinVersion = "android";
         public const string SdkMinVersion = "sdk";

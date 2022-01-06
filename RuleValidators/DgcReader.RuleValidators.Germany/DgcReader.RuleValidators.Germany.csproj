@@ -10,7 +10,7 @@
 		<RepositoryUrl>https://github.com/DevTrevi/DGCReader</RepositoryUrl>
 		<PackageTags>DGC DCC DigitalGreenCertificate DigitalCovidCertificate Greenpass</PackageTags>
 		<Description>Unofficial implementation of the German rules for validating a Digital Green Certificate</Description>
-		<Version>2.0.0</Version>
+		<Version>2.1.0</Version>
 		<PackageLicenseExpression> Apache-2.0</PackageLicenseExpression>
 		<PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
@@ -29,9 +29,6 @@
 		<ProjectReference Include="..\..\DgcReader.Providers.Abstractions\DgcReader.Providers.Abstractions.csproj" />
 		<ProjectReference Include="..\..\DgcReader\DgcReader.csproj" />
 	</ItemGroup>
-
-
-
 
 	<ItemGroup>
 		<PackageReference Include="JsonLogic.Net" Version="1.1.11" />

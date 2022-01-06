@@ -310,13 +310,6 @@ namespace DgcReader.RuleValidators.Italy
             var vaccination = dgc.Vaccinations.Last(r => r.TargetedDiseaseAgent == DiseaseAgents.Covid19);
             if (vaccination == null) return;
 
-            // Exception: Checking sputnik not from San Marino
-            if (vaccination.MedicinalProduct == VaccineProducts.Sputnik && vaccination.Country != "SM")
-            {
-                result.ItalianStatus = DgcItalianResultStatus.NotValid;
-                return;
-            }
-
             int startDay, endDay;
             if (vaccination.DoseNumber > 0 && vaccination.TotalDoseSeries > 0)
             {
@@ -354,6 +347,14 @@ namespace DgcReader.RuleValidators.Italy
                 }
 
                 // Calculate the status
+
+                // Exception: Checking sputnik not from San Marino
+                if (vaccination.MedicinalProduct == VaccineProducts.Sputnik && vaccination.Country != "SM")
+                {
+                    result.ItalianStatus = DgcItalianResultStatus.NotValid;
+                    return;
+                }
+
                 if (result.ValidFrom > result.ValidationInstant)
                     result.ItalianStatus = DgcItalianResultStatus.NotValidYet;
                 else if (result.ValidUntil < result.ValidationInstant)

@@ -28,7 +28,7 @@ namespace DgcReader.TrustListProviders.Germany
         /// <summary>
         /// If true, the full certificate is stored in the list after parsing. Default is false
         /// </summary>
-        public bool SaveCertificate { get; set; } = false;
+        public bool SaveCertificate { get; set; } = true;
 
         /// <summary>
         /// If true, the signature of the certificate will be stored in the list. Default is false

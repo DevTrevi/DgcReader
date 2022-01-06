@@ -62,7 +62,7 @@ If a refresh is not possible when the refresh interval expires, the current file
 This allows the application to continue to operate even if the backend is temporary unavailable for any reason.
 Default value is 15 days.
 - **SaveCertificate**: if true, the full .cer certificate downloaded is saved into the json file instead of only the public key parameters.  
-This option is disabled by default, and can be activated for diagnostic purposes.
+This option is enabled by default, as may be required by some rule validators in order to perform additional checks.
 - **SaveSignature**: if true, the signature of the certificate entry will be stored into the json file. This option is disabled by default, and can be activated for diagnostic purposes.
 
 ## Forcing the update of the trustlist

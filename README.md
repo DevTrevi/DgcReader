@@ -3,7 +3,7 @@
 
 ### Extensible .NET library for decoding and validating European Digital Green Certificates
 [![NuGet version (DgcReader)](https://img.shields.io/nuget/vpre/DgcReader?label=DgcReader)](https://www.nuget.org/packages/DgcReader/)
-
+[![CodeQL](https://github.com/DevTrevi/DgcReader/actions/workflows/codeql-analysis.yml/badge.svg?branch=master)](https://github.com/DevTrevi/DgcReader/actions/workflows/codeql-analysis.yml)
 
 ## Summary
 The library allows to decode and validate any EU Digital Green Certificate, providing some abstractions to easily implement specific providers for every country backend. 

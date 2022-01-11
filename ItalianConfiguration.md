@@ -85,9 +85,8 @@ public static DgcReaderService CreateInstance()
     var rulesValidator = DgcItalianRulesValidator.Create(httpClient);
 
     var dgcReader = DgcReaderService.Create(
-        trustListProviders: new ITrustListProvider[] { ItalianTrustListProvider.Create(httpClient) },
-        // Note: both services must be registered as IBlacklistProvider!!
-        blackListProviders: new IBlacklistProvider[] { rulesValidator, drlBlacklistProvider },
+        trustListProviders: new ITrustListProvider[] { trustListProvider },
+        blackListProviders: new IBlacklistProvider[] { rulesValidator, drlBlacklistProvider },  // Note: both services must be registered as IBlacklistProvider!!
         rulesValidators: new IRulesValidator[] { rulesValidator });
 
     return dgcReader;

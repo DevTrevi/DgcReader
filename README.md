@@ -11,7 +11,8 @@ The library allows to decode and validate any EU Digital Green Certificate, prov
 It supports any kind of project compatible with .NET Standard 2.0 and also legacy applications from .NET Framework 4.5.2 onwards.
 
 Starting from version 1.3.0, the library has been included in the [list of verified SDKs by Italian authorities (Ministero della salute)](https://github.com/ministero-salute/it-dgc-verificac19-sdk-onboarding).  
-The approval only refers to the main module `DgcReader` in combination with `DgcReader.TrustListProviders.Italy` and `DgcReader.RuleValidators.Italy`, using configuration parameters compliant with the current Italian regulations.  
+The approval only refers to the main module `DgcReader` in combination with the Italian providers included in the project (`DgcReader.RuleValidators.Italy`, `DgcReader.BlacklistProviders.Italy` and `DgcReader.TrustListProviders.Italy` )  
+Please refer to [this guide](./ItalianConfiguration.md) in order to correctly configure the required services.
  
 For usage in different countries, please refer to the [disclaimer](#disclaimer) and to the specific documentation of each project.
 
@@ -49,22 +50,25 @@ var dgcReader = ServiceCollection.GetService<DgcReaderService>();
 
 If you don't use the dependency injection, you can instantiate it directly:
 
-#### a) Use a `TrustListProvider`and `RulesValidator`:
+#### a) Use factory methods:
 
 ``` csharp
 // Create an instance of the TrustListProvider (eg. ItalianTrustListProvider) and the other required services
 var httpClient = new HttpClient();
 var trustListProvider = new ItalianTrustListProvider(httpClient);
-var blacklistProvider = new ItalianDrlBlacklistProvider(httpClient);
+var drlBlacklistProvider = new ItalianDrlBlacklistProvider(httpClient);
 var rulesValidator = new DgcItalianRulesValidator(httpClient);
 
 // Create an instance of the DgcReaderService
-var dgcReader = DgcReaderService.Create(trustListProvider, blacklistProvider, rulesValidator);
+var dgcReader = DgcReaderService.Create(
+        trustListProviders: new[] { trustListProvider },
+        blackListProviders: new IBlacklistProvider[] { rulesValidator, drlBlacklistProvider },
+        rulesValidators: new[] { rulesValidator });
 ```
 
 Once instantiated and configured with at least the `ITrustListProvider` service, you can simply call one of the methods shown in c)
 
-#### b) Use the `DgcReaderService` without arguments (i.e. **no** `TrustListProvider`and `RulesValidator`):
+#### b) Use the `DgcReaderService` for decoding only (no validation):
 
 This lets you decode all the QR code data without verification, but still gives you a quick idea about how the library works.
 You can use the open source [EU Digital Green Test Certificates](https://github.com/eu-digital-green-certificates/dgc-testdata) or your personal certificate.

@@ -11,7 +11,7 @@ This guide explains how to correctly configure the library in order to validate 
 In order to perform a full validation, you will need to install **all** the following packages:
 
 | Name | Description | Version |
-| |-----------------------------------------------|-----------------------------------|
+|------|-----------------------------------------------|-----------------------------------|
 | DgcReader | Main package, containing the DgcReaderService         | [![NuGet version (DgcReader)](https://img.shields.io/nuget/vpre/DgcReader)](https://www.nuget.org/packages/DgcReader/) |
 | DgcReader.TrustListProviders.Italy | TrustList implementation for the Italian backend        | [![NuGet version (DgcReader.TrustListProviders.Italy)](https://img.shields.io/nuget/vpre/DgcReader.TrustListProviders.Italy)](https://www.nuget.org/packages/DgcReader.TrustListProviders.Italy/)  |
 | DgcReader.BlacklistProviders.Italy | Implementation of the Italian Blacklist provider for revoked certificates  | [![NuGet version (DgcReader.BlacklistProviders.Italy)](https://img.shields.io/nuget/vpre/DgcReader.BlacklistProviders.Italy)](https://www.nuget.org/packages/DgcReader.BlacklistProviders.Italy/) |
@@ -85,9 +85,8 @@ public static DgcReaderService CreateInstance()
     var rulesValidator = DgcItalianRulesValidator.Create(httpClient);
 
     var dgcReader = DgcReaderService.Create(
-        trustListProviders: new ITrustListProvider[] { ItalianTrustListProvider.Create(httpClient) },
-        // Note: both services must be registered as IBlacklistProvider!!
-        blackListProviders: new IBlacklistProvider[] { rulesValidator, drlBlacklistProvider },
+        trustListProviders: new ITrustListProvider[] { trustListProvider },
+        blackListProviders: new IBlacklistProvider[] { rulesValidator, drlBlacklistProvider },  // Note: both services must be registered as IBlacklistProvider!!
         rulesValidators: new IRulesValidator[] { rulesValidator });
 
     return dgcReader;

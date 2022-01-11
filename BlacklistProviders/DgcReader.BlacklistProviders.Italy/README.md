@@ -7,7 +7,8 @@ Implementation of `IBlacklistProvider` for verify revoked certificates.
 You can find more details about the DRL specification in the [official documentation](https://github.com/ministero-salute/it-dgc-documentation/blob/master/DRL.md)
 
 Starting from version 1.3.0, the library has been included in the [list of verified SDKs by Italian authorities (Ministero della salute)](https://github.com/ministero-salute/it-dgc-verificac19-sdk-onboarding).  
-The approval only refers to the main module `DgcReader` in combination with the Italian providers included in the project (`DgcReader.RuleValidators.Italy`, `DgcReader.BlacklistProviders.Italy` and `DgcReader.TrustListProviders.Italy` )
+The approval only refers to the main module `DgcReader` in combination with the Italian providers included in the project (`DgcReader.RuleValidators.Italy`, `DgcReader.BlacklistProviders.Italy` and `DgcReader.TrustListProviders.Italy` )  
+Please refer to [this guide](../../ItalianConfiguration.md) in order to correctly configure the required services.
 
 ## Usage
 
@@ -41,7 +42,7 @@ var blacklistProvider = new ItalianDrlBlacklistProvider(httpClient);
 // Or you can use the ItalianDrlBlacklistProvider.Create facory method
 // This will help you to unwrap the IOptions interface when you specify 
 // custom options for the provider:
-var blacklistProvider = ItalianDrlBlacklistProvider.Create(httpClient, 
+var drlBlacklistProvider = ItalianDrlBlacklistProvider.Create(httpClient, 
     new ItalianDrlBlacklistProviderOptions {
         RefreshInterval = TimeSpan.FromHours(24),
         MinRefreshInterval = TimeSpan.FromHours(1),
@@ -51,10 +52,9 @@ var blacklistProvider = ItalianDrlBlacklistProvider.Create(httpClient,
 
 // Then you should pass it as a parameter to the DgcReaderService constructor:
 var dgcReader = DgcReaderService.Create(
-    trustListProvider, 
-    blacklistProvider,     
-    rulesValidator      
-);
+    trustListProviders: new ITrustListProvider[] { trustListProvider },
+    blackListProviders: new IBlacklistProvider[] { rulesValidator, drlBlacklistProvider },  // Note: both services must be registered as IBlacklistProvider!!
+    rulesValidators: new IRulesValidator[] { rulesValidator });
 
 ```
 

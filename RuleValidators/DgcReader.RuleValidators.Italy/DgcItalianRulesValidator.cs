@@ -375,11 +375,18 @@ namespace DgcReader.RuleValidators.Italy
                             // J&J: required full cycle with at least 2 doses, other vaccines 3 doses
                             var boostedDoseNumber = vaccination.MedicinalProduct == VaccineProducts.JeJVacineCode ? 2 : 3;
 
-                            // If less thant the minimum "booster" doses, requires a test
-                            if (vaccination.DoseNumber < boostedDoseNumber)
-                                result.ItalianStatus = DgcItalianResultStatus.TestNeeded;
-                            else
+
+                            if (vaccination.DoseNumber > vaccination.TotalDoseSeries ||
+                                vaccination.DoseNumber >= boostedDoseNumber)
+                            {
+                                // If dose number is higher than total dose series, or minimum booster dose number reached
                                 result.ItalianStatus = DgcItalianResultStatus.Valid;
+                            }
+                            else
+                            {
+                                // Otherwise, if less thant the minimum "booster" doses, requires a test
+                                result.ItalianStatus = DgcItalianResultStatus.TestNeeded;
+                            }
                         }
                         else
                         {

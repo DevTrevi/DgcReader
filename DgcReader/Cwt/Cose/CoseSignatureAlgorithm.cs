@@ -37,7 +37,7 @@ namespace DgcReader.Cwt.Cose
         }
 
 
-#if NET452
+#if NET452 || NETSTANDARD
         /// <summary>
         /// Get the AlgorithmName to be used by the BouncyCastle verifyier
         /// </summary>

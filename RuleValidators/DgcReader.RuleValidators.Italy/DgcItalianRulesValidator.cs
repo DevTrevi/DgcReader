@@ -13,8 +13,6 @@ using DgcReader.Interfaces.BlacklistProviders;
 using DgcReader.RuleValidators.Italy.Providers;
 using DgcReader.Exceptions;
 using DgcReader.Models;
-using System.Security.Cryptography.X509Certificates;
-using System.Security.Cryptography;
 
 #if NETSTANDARD2_0_OR_GREATER || NET5_0_OR_GREATER || NET47_OR_GREATER
 using Microsoft.Extensions.Options;
@@ -559,41 +557,7 @@ namespace DgcReader.RuleValidators.Italy
         }
 
 
-        /// <summary>
-        /// Read the extended key usage identifiers from the signer certificate
-        /// </summary>
-        /// <param name="signatureValidation"></param>
-        /// <returns></returns>
-        private IEnumerable<string> GetExtendedKeyUsages(SignatureValidationResult? signatureValidation)
-        {
-            if (signatureValidation == null)
-            {
-                Logger?.LogWarning("Unable to get extended key usage: No signature validation result available");
-                return Enumerable.Empty<string>();
-            }
 
-            if (signatureValidation.PublicKeyData?.Certificate == null)
-            {
-                Logger?.LogWarning("Unable to get extended key usage: Certificate is not available. " +
-                    "Try to use a TrustListProvider capable of returning signer certificates, or enable the sotrage of certificates in the current TrustListProvider");
-
-                return Enumerable.Empty<string>();
-            }
-            try
-            {
-                var certificate = new X509Certificate2(signatureValidation.PublicKeyData.Certificate);
-                var enhancedKeyExtensions = certificate.Extensions.OfType<X509EnhancedKeyUsageExtension>();
-
-                return enhancedKeyExtensions
-                    .SelectMany(e => e.EnhancedKeyUsages.OfType<Oid>().Select(r => r.Value))
-                    .ToArray();
-            }
-            catch (Exception e)
-            {
-                Logger?.LogError(e, $"Error while parsing signer certificate: {e.Message}");
-                return Enumerable.Empty<string>();
-            }
-        }
 
         /// <summary>
         /// Check if the signer certificate is one of the signer of post-vaccination certificates
@@ -602,7 +566,7 @@ namespace DgcReader.RuleValidators.Italy
         /// <returns></returns>
         private bool IsRecoveryPvSignature(SignatureValidationResult? signatureValidationResult)
         {
-            var extendedKeyUsages = GetExtendedKeyUsages(signatureValidationResult);
+            var extendedKeyUsages = CertificateExtendedKeyUsageUtils.GetExtendedKeyUsages(signatureValidationResult, Logger);
 
             if (signatureValidationResult == null)
                 return false;
@@ -613,6 +577,6 @@ namespace DgcReader.RuleValidators.Italy
             return extendedKeyUsages.Any(usage => CertificateExtendedKeyUsageIdentifiers.RecoveryIssuersIds.Contains(usage));
         }
 
-        #endregion
+#endregion
     }
 }

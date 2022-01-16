@@ -1,4 +1,4 @@
-﻿#if NET452
+﻿#if NET452 || NETSTANDARD
 
 using System;
 using System.Collections.Generic;
@@ -20,7 +20,7 @@ namespace DgcReader.Cwt.Cose
 
         /**
          * Converts the supplied bytes into the ASN.1 DER encoding for an unsigned integer.
-         * 
+         *
          * @param i
          *          the byte array to convert
          * @return the DER encoding
@@ -53,7 +53,7 @@ namespace DgcReader.Cwt.Cose
 
         /**
          * Convert the supplied input to an ASN.1 Sequence.
-         * 
+         *
          * @param seq
          *          the data in the sequence
          * @return the DER encoding

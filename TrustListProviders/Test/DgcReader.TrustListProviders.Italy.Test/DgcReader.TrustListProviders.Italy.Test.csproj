@@ -49,6 +49,6 @@
     <PackageReference Include="Microsoft.Extensions.Logging.Configuration" Version="5.0.0" />
   </ItemGroup>
 
-  
+
 
 </Project>

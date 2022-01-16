@@ -63,6 +63,15 @@ namespace DgcReader.TrustListProviders.Italy
                     X = p.Q.X?.ToArray() ?? new byte[0],
                     Y = p.Q.Y?.ToArray() ?? new byte[0],
                 };
+
+#if NET47_OR_GREATER
+                // Fix for .NET Framework
+                if (string.IsNullOrEmpty(certData.EC.Curve))
+                {
+                    certData.EC.Curve = p.Curve.GetOidValue();
+                }
+#endif
+
             }
 
             var rsa = cert.GetRSAPublicKey();
@@ -80,8 +89,6 @@ namespace DgcReader.TrustListProviders.Italy
         }
 
 #else
-        const string PemHeader = "-----BEGIN CERTIFICATE-----";
-        const string PemFooter = "-----END CERTIFICATE-----";
 
         /// <summary>
         /// Parse the certificate, returning the object that will be stored by the provider
@@ -134,6 +141,8 @@ namespace DgcReader.TrustListProviders.Italy
 
         private static byte[] AddPemHeaders(byte[] certificateData)
         {
+            const string PemHeader = "-----BEGIN CERTIFICATE-----";
+            const string PemFooter = "-----END CERTIFICATE-----";
 
             var decoded = Encoding.ASCII.GetString(certificateData);
             if (!decoded.StartsWith(PemHeader) && !decoded.EndsWith(PemFooter))

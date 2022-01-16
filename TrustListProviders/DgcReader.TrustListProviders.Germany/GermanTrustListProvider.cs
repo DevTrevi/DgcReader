@@ -13,24 +13,11 @@ using DgcReader.TrustListProviders.Abstractions.Interfaces;
 using Microsoft.Extensions.Logging;
 using DgcReader.TrustListProviders.Germany.Models;
 using DgcReader.TrustListProviders.Germany.Backend;
-using System.Text;
-using DgcReader.TrustListProviders.Germany.Resources;
 using DgcReader.Exceptions;
-using System.Security.Cryptography;
-using System.Security.Cryptography.X509Certificates;
 
 #if NETSTANDARD2_0_OR_GREATER || NET5_0_OR_GREATER || NET47_OR_GREATER
 using Microsoft.Extensions.Options;
 #endif
-
-#if NETFRAMEWORK || NETSTANDARD2_0
-using Org.BouncyCastle.X509;
-using Org.BouncyCastle.Crypto.Parameters;
-using Org.BouncyCastle.OpenSsl;
-using Org.BouncyCastle.Security;
-#endif
-
-
 
 // Copyright (c) 2021 Davide Trevisan
 // Licensed under the Apache License, Version 2.0
@@ -148,20 +135,8 @@ namespace DgcReader.TrustListProviders.Germany
                 {
                     cancellationToken.ThrowIfCancellationRequested();
 
-                    var cert = new X509Certificate2(data.RawData);
 
-                    var keyAlgo = cert.GetKeyAlgorithm();
-                    var keyAlgoOid = Oid.FromOidValue(keyAlgo, OidGroup.PublicKeyAlgorithm);
-
-                    var certData = new CertificateData
-                    {
-                        Kid = data.Kid,
-                        KeyAlgorithm = keyAlgoOid?.FriendlyName,
-                        SignatureAlgo = cert.SignatureAlgorithm.FriendlyName,
-                        Thumbprint = data.Thumbprint,
-                        Timestamp = data.Timestamp,
-                        Country = data.Country,
-                    };
+                    var certData = X509CertificatesUtils.GetCertificateData(data, Logger);
 
                     if (Options.SaveCertificate)
                     {
@@ -172,44 +147,6 @@ namespace DgcReader.TrustListProviders.Germany
                     {
                         certData.Signature = data.Signature;
                     }
-
-
-#if NET452
-
-                    var certBouncyCastle = new X509CertificateParser().ReadCertificate(cert.RawData);
-                    var publicKeyParameters = certBouncyCastle.GetPublicKey();
-
-
-                    var ecParameters = publicKeyParameters as ECPublicKeyParameters;
-                    if (ecParameters != null)
-                    {
-                        certData.EC = new ECParameters(ecParameters);
-                    }
-
-                    var rsaKeyParams = publicKeyParameters as RsaKeyParameters;
-                    if (rsaKeyParams != null)
-                    {
-                        certData.RSA = new Models.RSAParameters()
-                        {
-                            Exponent = rsaKeyParams.Exponent.ToByteArray(),
-                            Modulus = rsaKeyParams.Modulus.ToByteArray(),
-                        };
-                    }
-#else
-
-                    var ecdsa = cert.GetECDsaPublicKey();
-                    if (ecdsa != null)
-                    {
-
-                        certData.EC = new Models.ECParameters(ecdsa.ExportParameters(false));
-                    }
-
-                    var rsa = cert.GetRSAPublicKey();
-                    if (rsa != null)
-                    {
-                        certData.RSA = new Models.RSAParameters(rsa.ExportParameters(false));
-                    }
-#endif
 
                     certificates.Add(certData);
                 }
@@ -299,7 +236,7 @@ namespace DgcReader.TrustListProviders.Germany
                     var thumbprint = rawContent.Remove(rawContent.IndexOf("{")).Trim();
                     var content = rawContent.Substring(thumbprint.Length).Trim();
 
-                    if (!VerifyTrustlistSignature(content, thumbprint))
+                    if (!X509CertificatesUtils.VerifyTrustlistSignature(content, thumbprint))
                         throw new DgcException("Invalid Trustlist signature");
 
                     var result = JsonConvert.DeserializeObject<GermanyTrustList>(content);
@@ -323,42 +260,6 @@ namespace DgcReader.TrustListProviders.Germany
 
         private string GetCacheFolder() => Path.Combine(Options.BasePath, ProviderDataFolder);
         private string GetCacheFilePath() => Path.Combine(GetCacheFolder(), FileName);
-
-        private bool VerifyTrustlistSignature(string data, string signature)
-        {
-#if NETFRAMEWORK || NETSTANDARD2_0
-            using (var textReader = new StringReader(Encoding.ASCII.GetString(PublicKeys.dsc_list_signing_key)))
-            {
-                var pemReader = new PemReader(textReader);
-                var pem = pemReader.ReadObject();
-                var pubKeyParameters = (ECPublicKeyParameters)pem;
-
-                var keyBytes = SubjectPublicKeyInfoFactory.CreateSubjectPublicKeyInfo(pubKeyParameters).GetEncoded();
-                var pubkey = PublicKeyFactory.CreateKey(keyBytes);
-
-
-                var signedData = Encoding.ASCII.GetBytes(data);
-                var thumbprintData = Convert.FromBase64String(signature);
-                // If ECDSA, convert signature in DER format
-                thumbprintData = AsnExtensions.ToDerSignature(thumbprintData);
-
-                // Check signature
-                var verifier = SignerUtilities.GetSigner("SHA256withECDSA");
-                verifier.Init(false, pubkey);
-                verifier.BlockUpdate(signedData, 0, signedData.Length);
-                var result = verifier.VerifySignature(thumbprintData);
-                return result;
-            }
-#else
-            using (var textReader = new StringReader(Encoding.ASCII.GetString(PublicKeys.dsc_list_signing_key)))
-            {
-                var ecdsa = ECDsa.Create();
-                ecdsa.ImportFromPem(textReader.ReadToEnd());
-                var derSignature = AsnExtensions.ToDerSignature(Convert.FromBase64String(signature));
-                return ecdsa.VerifyData(Encoding.ASCII.GetBytes(data), derSignature, HashAlgorithmName.SHA256, DSASignatureFormat.Rfc3279DerSequence);
-            }
-#endif
-        }
 
         #endregion
     }

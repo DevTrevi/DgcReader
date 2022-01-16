@@ -15,19 +15,8 @@ using DgcReader.TrustListProviders.Abstractions.Interfaces;
 using Microsoft.Extensions.Logging;
 
 #if NETSTANDARD2_0_OR_GREATER || NET5_0_OR_GREATER || NET47_OR_GREATER
-using System.Security.Cryptography;
-using System.Security.Cryptography.X509Certificates;
 using Microsoft.Extensions.Options;
 #endif
-
-#if NET452
-using Org.BouncyCastle.X509;
-using Org.BouncyCastle.Crypto.Parameters;
-using System.Security.Cryptography;
-using System.Security.Cryptography.X509Certificates;
-#endif
-
-
 
 // Copyright (c) 2021 Davide Trevisan
 // Licensed under the Apache License, Version 2.0
@@ -149,61 +138,12 @@ namespace DgcReader.TrustListProviders.Italy
                 {
                     cancellationToken.ThrowIfCancellationRequested();
 
-                    var cert = new X509Certificate2(data.Value);
-                    var keyAlgo = cert.GetKeyAlgorithm();
-                    var keyAlgoOid = Oid.FromOidValue(keyAlgo, OidGroup.PublicKeyAlgorithm);
-
-                    var certData = new CertificateData
-                    {
-                        Kid = data.Key,
-                        KeyAlgorithm = keyAlgoOid.FriendlyName,
-                        SignatureAlgo = cert.SignatureAlgorithm.FriendlyName,
-                    };
+                    var certData = X509CertificatesUtils.GetCertificateData(data.Key, data.Value, Logger);
 
                     if (Options.SaveCertificate)
                     {
                         certData.Certificate = data.Value;
                     }
-
-                    var subjectCOmponents = ParseCertSubject(cert.Subject);
-                    if (subjectCOmponents.ContainsKey("C"))
-                        certData.Country = subjectCOmponents["C"][0] ?? "";
-
-
-
-#if NET452
-
-                    var certBouncyCastle = new X509CertificateParser().ReadCertificate(cert.RawData);
-                    var publicKeyParameters = certBouncyCastle.GetPublicKey();
-
-
-                    var ecParameters = publicKeyParameters as ECPublicKeyParameters;
-                    if (ecParameters != null)
-                    {
-                        certData.EC = new ECParameters(ecParameters);
-                    }
-
-                    var rsaKeyParams = publicKeyParameters as RsaKeyParameters;
-                    if (rsaKeyParams != null)
-                    {
-                        certData.RSA = new Models.RSAParameters(rsaKeyParams);
-                    }
-#else
-
-                    var ecdsa = cert.GetECDsaPublicKey();
-                    if (ecdsa != null)
-                    {
-                        certData.EC = new Models.ECParameters(ecdsa.ExportParameters(false));
-                    }
-
-                    var rsa = cert.GetRSAPublicKey();
-                    if (rsa != null)
-                    {
-                        certData.RSA = new Models.RSAParameters(rsa.ExportParameters(false));
-                    }
-#endif
-
-
 
                     certificates.Add(certData);
                 }

@@ -8,7 +8,7 @@ using DgcReader.Exceptions;
 using System.Formats.Asn1;
 #endif
 
-#if NET452
+#if NET452 || NETSTANDARD
 using Org.BouncyCastle.X509;
 using Org.BouncyCastle.Asn1.X9;
 using Org.BouncyCastle.Crypto.Parameters;
@@ -282,7 +282,7 @@ namespace DgcReader.Cwt.Cose
         }
 
 
-#if NET452
+#if NET452 || NETSTANDARD
         /// <summary>
         /// Verifies the signature of the COSE_Sign1 object.
         /// Note: This method only verifies the signature. Not the payload.
@@ -452,7 +452,7 @@ namespace DgcReader.Cwt.Cose
 
 
 
-#if NET452
+#if NET452 || NETSTANDARD
 
         /// <summary>
         /// Given a signature according to section 8.1 in RFC8152 its corresponding DER encoding is returned.

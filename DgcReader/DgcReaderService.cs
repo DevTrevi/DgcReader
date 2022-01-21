@@ -207,9 +207,24 @@ namespace DgcReader
                                 throwOnError,
                                 cancellationToken);
 
-                        // If no message set, use message from rules validation
-                        if (string.IsNullOrEmpty(result.StatusMessage))
-                            result.StatusMessage = result.RulesValidation?.StatusMessage;
+                        if (result.RulesValidation != null)
+                        {
+                            var rulesResult = result.RulesValidation;
+
+                            // If result is not valid and throwOnError is true, throw an exception
+                            if (rulesResult.Status != DgcResultStatus.Valid && throwOnError)
+                            {
+                                var message = rulesResult.StatusMessage;
+                                if (string.IsNullOrEmpty(message))
+                                    message = GetDgcResultStatusDescription(rulesResult.Status);
+
+                                throw new DgcRulesValidationException(message, rulesResult);
+                            }
+
+                            // If no message set, use message from rules validation
+                            if (string.IsNullOrEmpty(result.StatusMessage))
+                                result.StatusMessage = rulesResult.StatusMessage;
+                        }
                     }
 
                 }
@@ -498,6 +513,7 @@ namespace DgcReader
                 return null;
             }
 
+            // While result is open, try all the registered validators
             IRulesValidationResult? rulesResult = null;
             foreach (var validator in RulesValidators)
             {
@@ -510,27 +526,18 @@ namespace DgcReader
                         blacklistValidationResult,
                         cancellationToken);
 
-                    switch (rulesResult.Status)
+                    if (rulesResult != null)
                     {
-                        case DgcResultStatus.Valid:
-                            // If valid, returns the result
-                            return rulesResult;
-                        case DgcResultStatus.NeedRulesVerification:
-                        case DgcResultStatus.OpenResult:
-                            // If result is "Open", try next validator if multiple validators for this country exists
-                            continue;
-                        default:
-                            // With any other result, return the result or throw an exception
-                            if (throwOnError)
-                            {
-                                var message = rulesResult.StatusMessage;
-                                if (string.IsNullOrEmpty(message))
-                                    message = GetDgcResultStatusDescription(rulesResult.Status);
-
-                                throw new DgcRulesValidationException(message, rulesResult);
-                            }
-
-                            return rulesResult;
+                        switch (rulesResult.Status)
+                        {
+                            case DgcResultStatus.NeedRulesVerification:
+                            case DgcResultStatus.OpenResult:
+                                // If result is "Open", try next validator if multiple validators for this country exists
+                                continue;
+                            default:
+                                // With any other result, return the result
+                                return rulesResult;
+                        }
                     }
                 }
             }
@@ -543,14 +550,6 @@ namespace DgcReader
             }
 
             // Result is not null, it will certainly be an Open result
-            if (throwOnError)
-            {
-                var message = rulesResult.StatusMessage;
-                if (string.IsNullOrEmpty(message))
-                    message = GetDgcResultStatusDescription(rulesResult.Status);
-
-                throw new DgcRulesValidationException(message, rulesResult);
-            }
             return rulesResult;
         }
 

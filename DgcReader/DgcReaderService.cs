@@ -26,6 +26,7 @@ namespace DgcReader
     /// </summary>
     public class DgcReaderService
     {
+        #region Services
         /// <summary>
         /// The registered TrustList providers
         /// </summary>
@@ -41,36 +42,9 @@ namespace DgcReader
         /// </summary>
         public readonly IEnumerable<IRulesValidator> RulesValidators;
         private readonly ILogger? Logger;
+        #endregion
 
-        /// <summary>
-        /// Instantiate the DgcReaderService
-        /// </summary>
-        /// <param name="trustListProviders">The provider used to retrieve the valid public keys for signature validations</param>
-        /// <param name="blackListProviders">The provider used to check if a certificate is blacklisted</param>
-        /// <param name="rulesValidators">The service used to validate the rules for a specific country</param>
-        /// <param name="logger"></param>
-        public DgcReaderService(IEnumerable<ITrustListProvider>? trustListProviders = null,
-            IEnumerable<IBlacklistProvider>? blackListProviders = null,
-            IEnumerable<IRulesValidator>? rulesValidators = null,
-            ILogger<DgcReaderService>? logger = null)
-        {
-            TrustListProviders = trustListProviders ?? Enumerable.Empty<ITrustListProvider>();
-            BlackListProviders = blackListProviders ?? Enumerable.Empty<IBlacklistProvider>();
-            RulesValidators = rulesValidators ?? Enumerable.Empty<IRulesValidator>();
-            Logger = logger;
-        }
-
-        /// <summary>
-        /// Decodes the DGC data, trowing exceptions only if data is in invalid format
-        /// Informations about signature validity and expiration can be found in the returned result
-        /// </summary>
-        /// <param name="qrCodeData">DGC raw data from the QRCode</param>
-        /// <param name="cancellationToken"></param>
-        /// <returns></returns>
-        public Task<SignedDgc> Decode(string qrCodeData, CancellationToken cancellationToken = default)
-        {
-            return Decode(qrCodeData, DateTimeOffset.Now, cancellationToken);
-        }
+        #region Main public methods
 
         /// <summary>
         /// Decodes the DGC data, trowing exceptions only if data is in invalid format
@@ -112,45 +86,6 @@ namespace DgcReader
                 Logger?.LogError($"Error decoding Dgc data: {e.Message}");
                 throw;
             }
-        }
-
-        /// <summary>
-        /// Decodes the DGC data, verifying signature, blacklist and rules if a provider is available.
-        /// </summary>
-        /// <param name="qrCodeData">The QRCode data of the DGC</param>
-        /// <param name="acceptanceCountryCode">The 2-letter ISO country of the acceptance country. This information is mandatory in order to perform the rules validation</param>
-        /// <param name="throwOnError">If true, throw an exception if the validation fails</param>
-        /// <param name="cancellationToken"></param>
-        /// <returns></returns>
-        public Task<DgcValidationResult> Verify(string qrCodeData, string acceptanceCountryCode, bool throwOnError = true, CancellationToken cancellationToken = default)
-        {
-            return Verify(qrCodeData, acceptanceCountryCode, DateTimeOffset.Now, throwOnError, cancellationToken);
-        }
-
-        /// <summary>
-        /// Decodes the DGC data, verifying signature, blacklist and rules if a provider is available.
-        /// </summary>
-        /// <param name="qrCodeData">The QRCode data of the DGC</param>
-        /// <param name="acceptanceCountryCode">The 2-letter ISO country of the acceptance country. This information is mandatory in order to perform the rules validation</param>
-        /// <param name="validationInstant">The validation instant of the DGC</param>
-        /// <param name="throwOnError">If true, throw an exception if the validation fails</param>
-        /// <param name="cancellationToken"></param>
-        /// <returns></returns>
-        /// <exception cref="DgcException"></exception>
-        public async Task<DgcValidationResult> Verify(
-            string qrCodeData,
-            string acceptanceCountryCode,
-            DateTimeOffset validationInstant,
-            bool throwOnError = true,
-            CancellationToken cancellationToken = default)
-        {
-            return await Verify(qrCodeData,
-                acceptanceCountryCode,
-                validationInstant,
-                GetRulesValidationResult,
-                throwOnError,
-                cancellationToken);
-
         }
 
         /// <summary>
@@ -262,34 +197,6 @@ namespace DgcReader
             return result;
         }
 
-
-        /// <summary>
-        /// Decodes the DGC data, verifying signature, blacklist and rules if a provider is available.
-        /// A result is always returned
-        /// </summary>
-        /// <param name="qrCodeData">The QRCode data of the DGC</param>
-        /// <param name="acceptanceCountryCode">The 2-letter ISO country of the acceptance country. This information is mandatory in order to perform the rules validation</param>
-        /// <param name="cancellationToken"></param>
-        /// <returns></returns>
-        public Task<DgcValidationResult> GetValidationResult(string qrCodeData, string acceptanceCountryCode, CancellationToken cancellationToken = default)
-        {
-            return Verify(qrCodeData, acceptanceCountryCode, false, cancellationToken);
-        }
-
-        /// <summary>
-        /// Decodes the DGC data, verifying signature, blacklist and rules if a provider is available.
-        /// A result is always returned
-        /// </summary>
-        /// <param name="qrCodeData">The QRCode data of the DGC</param>
-        /// <param name="acceptanceCountryCode">The 2-letter ISO country of the acceptance country. This information is mandatory in order to perform the rules validation</param>
-        /// <param name="validationInstant">The validation instant of the DGC</param>
-        /// <param name="cancellationToken"></param>
-        /// <returns></returns>
-        public Task<DgcValidationResult> GetValidationResult(string qrCodeData, string acceptanceCountryCode, DateTimeOffset validationInstant, CancellationToken cancellationToken = default)
-        {
-            return Verify(qrCodeData, acceptanceCountryCode, validationInstant, false, cancellationToken);
-        }
-
         /// <summary>
         /// Return the list of 2-letter iso country codes for the supported acceptance countries for rules verification
         /// The array is computed by checking all the countries supported by every registered IRulesValidator
@@ -316,6 +223,90 @@ namespace DgcReader
 
             return temp.Where(r => !string.IsNullOrEmpty(r)).OrderBy(r => r).ToArray();
         }
+
+        #endregion
+
+        #region Overloads
+
+        /// <summary>
+        /// Decodes the DGC data, trowing exceptions only if data is in invalid format
+        /// Informations about signature validity and expiration can be found in the returned result
+        /// </summary>
+        /// <param name="qrCodeData">DGC raw data from the QRCode</param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        public Task<SignedDgc> Decode(string qrCodeData, CancellationToken cancellationToken = default)
+        {
+            return Decode(qrCodeData, DateTimeOffset.Now, cancellationToken);
+        }
+
+        /// <summary>
+        /// Decodes the DGC data, verifying signature, blacklist and rules if a provider is available.
+        /// </summary>
+        /// <param name="qrCodeData">The QRCode data of the DGC</param>
+        /// <param name="acceptanceCountryCode">The 2-letter ISO country of the acceptance country. This information is mandatory in order to perform the rules validation</param>
+        /// <param name="throwOnError">If true, throw an exception if the validation fails</param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        public Task<DgcValidationResult> Verify(string qrCodeData, string acceptanceCountryCode, bool throwOnError = true, CancellationToken cancellationToken = default)
+        {
+            return Verify(qrCodeData, acceptanceCountryCode, DateTimeOffset.Now, throwOnError, cancellationToken);
+        }
+
+        /// <summary>
+        /// Decodes the DGC data, verifying signature, blacklist and rules if a provider is available.
+        /// </summary>
+        /// <param name="qrCodeData">The QRCode data of the DGC</param>
+        /// <param name="acceptanceCountryCode">The 2-letter ISO country of the acceptance country. This information is mandatory in order to perform the rules validation</param>
+        /// <param name="validationInstant">The validation instant of the DGC</param>
+        /// <param name="throwOnError">If true, throw an exception if the validation fails</param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        /// <exception cref="DgcException"></exception>
+        public async Task<DgcValidationResult> Verify(
+            string qrCodeData,
+            string acceptanceCountryCode,
+            DateTimeOffset validationInstant,
+            bool throwOnError = true,
+            CancellationToken cancellationToken = default)
+        {
+            return await Verify(qrCodeData,
+                acceptanceCountryCode,
+                validationInstant,
+                GetRulesValidationResult,
+                throwOnError,
+                cancellationToken);
+        }
+
+        /// <summary>
+        /// Decodes the DGC data, verifying signature, blacklist and rules if a provider is available.
+        /// A result is always returned
+        /// This is equivalent to <see cref="Verify(string, string, bool, CancellationToken)"/> with throwOnError = false
+        /// </summary>
+        /// <param name="qrCodeData">The QRCode data of the DGC</param>
+        /// <param name="acceptanceCountryCode">The 2-letter ISO country of the acceptance country. This information is mandatory in order to perform the rules validation</param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        public Task<DgcValidationResult> GetValidationResult(string qrCodeData, string acceptanceCountryCode, CancellationToken cancellationToken = default)
+        {
+            return Verify(qrCodeData, acceptanceCountryCode, false, cancellationToken);
+        }
+
+        /// <summary>
+        /// Decodes the DGC data, verifying signature, blacklist and rules if a provider is available.
+        /// A result is always returned.
+        /// This is equivalent to <see cref="Verify(string, string, DateTimeOffset, bool, CancellationToken)"/> with throwOnError = false
+        /// </summary>
+        /// <param name="qrCodeData">The QRCode data of the DGC</param>
+        /// <param name="acceptanceCountryCode">The 2-letter ISO country of the acceptance country. This information is mandatory in order to perform the rules validation</param>
+        /// <param name="validationInstant">The validation instant of the DGC</param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        public Task<DgcValidationResult> GetValidationResult(string qrCodeData, string acceptanceCountryCode, DateTimeOffset validationInstant, CancellationToken cancellationToken = default)
+        {
+            return Verify(qrCodeData, acceptanceCountryCode, validationInstant, false, cancellationToken);
+        }
+        #endregion
 
         #region Private
 
@@ -677,7 +668,25 @@ namespace DgcReader
 
         #endregion
 
-        #region Factory methods
+        #region Factory methods and constructor
+
+        /// <summary>
+        /// Instantiate the DgcReaderService
+        /// </summary>
+        /// <param name="trustListProviders">The provider used to retrieve the valid public keys for signature validations</param>
+        /// <param name="blackListProviders">The provider used to check if a certificate is blacklisted</param>
+        /// <param name="rulesValidators">The service used to validate the rules for a specific country</param>
+        /// <param name="logger"></param>
+        public DgcReaderService(IEnumerable<ITrustListProvider>? trustListProviders = null,
+            IEnumerable<IBlacklistProvider>? blackListProviders = null,
+            IEnumerable<IRulesValidator>? rulesValidators = null,
+            ILogger<DgcReaderService>? logger = null)
+        {
+            TrustListProviders = trustListProviders ?? Enumerable.Empty<ITrustListProvider>();
+            BlackListProviders = blackListProviders ?? Enumerable.Empty<IBlacklistProvider>();
+            RulesValidators = rulesValidators ?? Enumerable.Empty<IRulesValidator>();
+            Logger = logger;
+        }
 
         /// <summary>
         /// Instantiate the DgcReaderService

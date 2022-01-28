@@ -34,19 +34,19 @@ namespace GreenpassReader.Models
         /// Recovery Group
         /// </summary>
         [JsonProperty("r", NullValueHandling = NullValueHandling.Ignore)]
-        public RecoveryEntry[] Recoveries { get; internal set; }
+        public RecoveryEntry[]? Recoveries { get; internal set; }
 
         /// <summary>
         /// Test Group
         /// </summary>
         [JsonProperty("t", NullValueHandling = NullValueHandling.Ignore)]
-        public TestEntry[] Tests { get; internal set; }
+        public TestEntry[]? Tests { get; internal set; }
 
         /// <summary>
         /// Vaccination Group
         /// </summary>
         [JsonProperty("v", NullValueHandling = NullValueHandling.Ignore)]
-        public VaccinationEntry[] Vaccinations { get; internal set; }
+        public VaccinationEntry[]? Vaccinations { get; internal set; }
 
         /// <summary>
         /// Version of the schema, according to Semantic versioning (ISO, https://semver.org/ version 2.0.0 or newer)
@@ -332,8 +332,14 @@ namespace GreenpassReader.Models
         public static EuDGC? FromJson(string json) => JsonConvert.DeserializeObject<EuDGC>(json, Converter.Settings);
     }
 
-    internal static class Converter
+    /// <summary>
+    /// Json Converter settings to be used for deserializing EuDGC
+    /// </summary>
+    public static class Converter
     {
+        /// <summary>
+        /// Json Converter settings to be used for deserializing EuDGC
+        /// </summary>
         public static readonly JsonSerializerSettings Settings = new JsonSerializerSettings
         {
             MetadataPropertyHandling = MetadataPropertyHandling.Ignore,

@@ -119,7 +119,7 @@ namespace DgcReader.TrustListProviders.Germany
         #region Implementation of TrustListProviderBase
 
         /// <inheritdoc/>
-        protected override async Task<ITrustList> GetTrustListFromServer(CancellationToken cancellationToken = default)
+        protected override async Task<ITrustList?> GetValuesFromServer(CancellationToken cancellationToken = default)
         {
             try
             {
@@ -167,7 +167,7 @@ namespace DgcReader.TrustListProviders.Germany
         }
 
         /// <inheritdoc/>
-        protected override Task<ITrustList?> LoadCache(CancellationToken cancellationToken = default)
+        protected override Task<ITrustList?> LoadFromCache(CancellationToken cancellationToken = default)
         {
             var filePath = GetCacheFilePath();
             TrustList? trustList = null;

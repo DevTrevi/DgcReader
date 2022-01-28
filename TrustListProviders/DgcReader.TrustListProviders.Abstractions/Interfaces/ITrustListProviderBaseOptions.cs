@@ -26,5 +26,12 @@ namespace DgcReader.TrustListProviders.Abstractions.Interfaces
         /// Otherwise, if the list is expired, every trustlist request will wait untill the refresh task completes.
         /// </summary>
         bool UseAvailableListWhileRefreshing { get; set; }
+
+        /// <summary>
+        /// If true, try to reload values from cache before downloading from the remote server.
+        /// This can be useful if values are refreshed by a separate process, i.e. when the same valueset cached file is shared by
+        /// multiple instances for reading
+        /// </summary>
+        bool TryReloadFromCacheWhenExpired { get; set; }
     }
 }

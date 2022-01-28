@@ -28,6 +28,13 @@ namespace DgcReader.RuleValidators.Germany
         public bool UseAvailableValuesWhileRefreshing { get; set; } = true;
 
         /// <summary>
+        /// If true, try to reload values from cache before downloading from the remote server.
+        /// This can be useful if values are refreshed by a separate process, i.e. when the same valueset cached file is shared by
+        /// multiple instances for reading. Default value is false
+        /// </summary>
+        public bool TryReloadFromCacheWhenExpired { get; set; } = false;
+
+        /// <summary>
         /// Base path where the rules will be stored
         /// Default <see cref="Directory.GetCurrentDirectory()"/>
         /// </summary>

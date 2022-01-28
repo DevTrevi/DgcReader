@@ -111,6 +111,7 @@ namespace DgcReader.RuleValidators.Italy.Providers
         public override TimeSpan RefreshInterval => Options.RefreshInterval;
         public override TimeSpan MinRefreshInterval => Options.MinRefreshInterval;
         public override bool UseAvailableValuesWhileRefreshing => Options.UseAvailableValuesWhileRefreshing;
+        public override bool TryReloadFromCacheWhenExpired => Options.TryReloadFromCacheWhenExpired;
 
         private async Task<RuleSetting[]> FetchSettings(CancellationToken cancellationToken = default)
         {

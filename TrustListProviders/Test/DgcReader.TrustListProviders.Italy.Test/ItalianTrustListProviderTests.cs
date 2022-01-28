@@ -26,10 +26,11 @@ namespace DgcReader.TrustListProviders.Italy.Test
 
         static ItalianTrustListProviderOptions Options = new ItalianTrustListProviderOptions
         {
-            MaxFileAge = TimeSpan.FromMinutes(2),
+            MaxFileAge = TimeSpan.FromMinutes(20),
             MinRefreshInterval = TimeSpan.Zero,
-            RefreshInterval = TimeSpan.FromSeconds(10),
+            RefreshInterval = TimeSpan.FromSeconds(60),
             SaveCertificate = true,
+            TryReloadFromCacheWhenExpired = true,
         };
         ITrustListProvider TrustListProvider {  get; set;}
 
@@ -221,6 +222,7 @@ namespace DgcReader.TrustListProviders.Italy.Test
                     o.SaveCertificate = Options.SaveCertificate;
                     o.BasePath = Options.BasePath;
                     o.MaxFileAge = Options.MaxFileAge;
+                    o.TryReloadFromCacheWhenExpired = Options.TryReloadFromCacheWhenExpired;
                 });
         }
 #endif

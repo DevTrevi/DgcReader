@@ -17,5 +17,10 @@ namespace DgcReader.TrustListProviders.Abstractions
 
         /// <inheritdoc />
         public TimeSpan MinRefreshInterval { get; set; } = TimeSpan.FromMinutes(5);
+
+        /// <inheritdoc />
+        public bool TryReloadFromCacheWhenExpired { get; set; } = false;
     }
+
+    
 }

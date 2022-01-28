@@ -31,7 +31,7 @@ namespace DgcReader.TrustListProviders.Germany
     {
         private const string CertUpdateUrl = "https://de.dscg.ubirch.com/trustList/DSC/";
 
-        private const string ProviderDataFolder = "DgcReaderData\\TrustLists\\Germany";
+        private static readonly string ProviderDataFolder = Path.Combine("DgcReaderData", "TrustLists", "Germany");
         private const string FileName = "trustlist-de.json";
 
         private readonly HttpClient _httpClient;

@@ -42,7 +42,7 @@ namespace DgcReader.TrustListProviders.Sweden
     public class SwedishTrustListProvider : ThreadsafeTrustListProvider<SwedishTrustListProviderOptions>
     {
         private const string ProductionTrustListRestUrl = "https://dgcg.covidbevis.se/tp/trust-list";
-        private const string ProviderDataFolder = "DgcReaderData\\TrustLists\\Sweden";
+        private static readonly string ProviderDataFolder = Path.Combine("DgcReaderData", "TrustLists", "Sweden");
         private const string FileName = "trustlist-se.json";
 
         private readonly HttpClient _httpClient;

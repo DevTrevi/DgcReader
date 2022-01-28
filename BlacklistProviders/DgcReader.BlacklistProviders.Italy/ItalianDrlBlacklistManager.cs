@@ -25,7 +25,7 @@ namespace DgcReader.BlacklistProviders.Italy
         private const int MaxConsistencyTryCount = 3;
 
 
-        private const string ProviderDataFolder = "DgcReaderData\\Blacklist\\Italy";
+        internal static readonly string ProviderDataFolder = Path.Combine("DgcReaderData", "Blacklist", "Italy");
         private const string FileName = "italian-drl.db";
 
 

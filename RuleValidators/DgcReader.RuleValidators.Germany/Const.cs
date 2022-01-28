@@ -1,6 +1,8 @@
 ﻿// Copyright (c) 2021 Davide Trevisan
 // Licensed under the Apache License, Version 2.0
 
+using System.IO;
+
 namespace DgcReader.RuleValidators.Germany
 {
     internal class Const
@@ -13,6 +15,6 @@ namespace DgcReader.RuleValidators.Germany
         /// <summary>
         /// The path relative to <see cref="DgcGermanRulesValidatorOptions.BasePath"/> where downloaded files will be save
         /// </summary>
-        internal const string ProviderDataFolder = "DgcReaderData\\RuleValidators\\Germany\\";
+        internal static readonly string ProviderDataFolder = Path.Combine("DgcReaderData", "RuleValidators", "Germany");
     }
 }

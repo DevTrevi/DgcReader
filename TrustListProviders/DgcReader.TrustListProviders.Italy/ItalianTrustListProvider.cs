@@ -33,7 +33,7 @@ namespace DgcReader.TrustListProviders.Italy
         private const string CertUpdateUrl = "https://get.dgc.gov.it/v1/dgc/signercertificate/update";
         private const string CertStatusUrl = "https://get.dgc.gov.it/v1/dgc/signercertificate/status";
 
-        private const string ProviderDataFolder = "DgcReaderData\\TrustLists\\Italy";
+        private static readonly string ProviderDataFolder = Path.Combine("DgcReaderData", "TrustLists", "Italy");
         private const string FileName = "trustlist-it.json";
 
         private readonly HttpClient _httpClient;

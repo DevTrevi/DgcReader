@@ -15,7 +15,7 @@ namespace DgcReader.RuleValidators.Italy.Providers
 {
     internal class RulesProvider : ThreadsafeValueSetProvider<RulesList>
     {
-        private const string ProviderDataFolder = "DgcReaderData\\RuleValidators\\Italy";
+        private static readonly string ProviderDataFolder = Path.Combine("DgcReaderData", "RuleValidators", "Italy");
         private const string FileName = "rules-it.json";
 
         private readonly HttpClient _httpClient;

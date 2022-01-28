@@ -25,7 +25,7 @@ namespace DgcReader.RuleValidators.Italy
         /// If true, allows to use the current rules list without waiting for the refresh task to complete.
         /// Otherwise, if the list is expired, every rules valdation request will wait untill the refresh task completes.
         /// </summary>
-        public bool UseAvailableValuesWhileRefreshing { get; set; } = true;
+        public bool UseAvailableValuesWhileRefreshing { get; set; } = false;
 
         /// <summary>
         /// If true, try to reload values from cache before downloading from the remote server.

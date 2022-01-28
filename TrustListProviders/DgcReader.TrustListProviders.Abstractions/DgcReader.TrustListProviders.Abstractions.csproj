@@ -10,7 +10,7 @@
     <RepositoryUrl>https://github.com/DevTrevi/DGCReader</RepositoryUrl>
     <PackageTags>DGC DCC DigitalGreenCertificate DigitalCovidCertificate Greenpass</PackageTags>
     <Description>Base classes for implementing trustlist providers for national backends</Description>
-	<Version>2.2.1</Version>
+	<Version>2.3.0</Version>
     <PackageLicenseExpression> Apache-2.0</PackageLicenseExpression>
     <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
     <PackageReadmeFile>README.md</PackageReadmeFile>

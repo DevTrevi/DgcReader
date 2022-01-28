@@ -10,12 +10,17 @@ namespace DgcReader.TrustListProviders.Abstractions
     public abstract class TrustListProviderBaseOptions : ITrustListProviderBaseOptions
     {
         /// <inheritdoc />
-        public bool UseAvailableListWhileRefreshing { get; set; } = true;
+        public bool UseAvailableListWhileRefreshing { get; set; } = false;
 
         /// <inheritdoc />
         public TimeSpan RefreshInterval { get; set; } = TimeSpan.FromHours(24);
 
         /// <inheritdoc />
         public TimeSpan MinRefreshInterval { get; set; } = TimeSpan.FromMinutes(5);
+
+        /// <inheritdoc />
+        public bool TryReloadFromCacheWhenExpired { get; set; } = false;
     }
+
+
 }

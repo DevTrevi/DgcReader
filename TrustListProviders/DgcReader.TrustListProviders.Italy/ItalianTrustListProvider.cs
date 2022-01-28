@@ -33,7 +33,7 @@ namespace DgcReader.TrustListProviders.Italy
         private const string CertUpdateUrl = "https://get.dgc.gov.it/v1/dgc/signercertificate/update";
         private const string CertStatusUrl = "https://get.dgc.gov.it/v1/dgc/signercertificate/status";
 
-        private const string ProviderDataFolder = "DgcReaderData\\TrustLists\\Italy";
+        private static readonly string ProviderDataFolder = Path.Combine("DgcReaderData", "TrustLists", "Italy");
         private const string FileName = "trustlist-it.json";
 
         private readonly HttpClient _httpClient;
@@ -118,10 +118,10 @@ namespace DgcReader.TrustListProviders.Italy
 
         #endregion
 
-        #region Implementation of TrustListProviderBase
 
+        #region Implementation of ThreadsafeValueSetProvider
         /// <inheritdoc/>
-        protected override async Task<ITrustList> GetTrustListFromServer(CancellationToken cancellationToken = default)
+        protected override async Task<ITrustList?> GetValuesFromServer(CancellationToken cancellationToken = default)
         {
             try
             {
@@ -164,7 +164,7 @@ namespace DgcReader.TrustListProviders.Italy
         }
 
         /// <inheritdoc/>
-        protected override Task<ITrustList?> LoadCache(CancellationToken cancellationToken = default)
+        protected override Task<ITrustList?> LoadFromCache(CancellationToken cancellationToken = default)
         {
             var filePath = GetCacheFilePath();
             TrustList? trustList = null;
@@ -327,33 +327,6 @@ namespace DgcReader.TrustListProviders.Italy
             catch (Exception ex)
             {
                 Logger?.LogError(ex, $"Error while updating certificate from server (resume token: {resumeToken}): {ex.Message}");
-                throw;
-            }
-        }
-
-        private IDictionary<string, string?[]> ParseCertSubject(string subject)
-        {
-            try
-            {
-                var entries = subject.Split(',')
-                    .Select(r =>
-                    {
-                        if (!r.Contains('='))
-                        {
-                            return new KeyValuePair<string, string?>(r.Trim(), null);
-                        }
-                        var idx = r.IndexOf('=');
-                        return new KeyValuePair<string, string?>(r.Remove(idx).Trim(),
-                            r.Substring(idx + 1).Trim());
-                    });
-
-                return new ReadOnlyDictionary<string, string?[]>(
-                    entries.GroupBy(r => r.Key)
-                    .ToDictionary(r => r.Key, r => r.Select(g => g.Value).ToArray()));
-            }
-            catch (Exception e)
-            {
-                Logger?.LogError(e, $"Error while parsing certificate subject: {e.Message}");
                 throw;
             }
         }

@@ -31,7 +31,7 @@ namespace DgcReader.TrustListProviders.Germany
     {
         private const string CertUpdateUrl = "https://de.dscg.ubirch.com/trustList/DSC/";
 
-        private const string ProviderDataFolder = "DgcReaderData\\TrustLists\\Germany";
+        private static readonly string ProviderDataFolder = Path.Combine("DgcReaderData", "TrustLists", "Germany");
         private const string FileName = "trustlist-de.json";
 
         private readonly HttpClient _httpClient;
@@ -119,7 +119,7 @@ namespace DgcReader.TrustListProviders.Germany
         #region Implementation of TrustListProviderBase
 
         /// <inheritdoc/>
-        protected override async Task<ITrustList> GetTrustListFromServer(CancellationToken cancellationToken = default)
+        protected override async Task<ITrustList?> GetValuesFromServer(CancellationToken cancellationToken = default)
         {
             try
             {
@@ -167,7 +167,7 @@ namespace DgcReader.TrustListProviders.Germany
         }
 
         /// <inheritdoc/>
-        protected override Task<ITrustList?> LoadCache(CancellationToken cancellationToken = default)
+        protected override Task<ITrustList?> LoadFromCache(CancellationToken cancellationToken = default)
         {
             var filePath = GetCacheFilePath();
             TrustList? trustList = null;

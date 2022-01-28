@@ -61,7 +61,8 @@ As result, the response time of the application will be nearly instantanious, ex
 Otherwise, if the list is expired, every trustlist request will wait untill the refresh task completes.
 - **BasePath**: base folder where the trust list will be saved.  
 The default value is `Directory.GetCurrentDirectory()`
-- **TrustListFileName**: the file name used for the trustlist file name. Default is `dgc-trustlist-it.json`
+- **TryReloadFromCacheWhenExpired**: If true, try to reload values from cache before downloading from the remote server. 
+ This can be useful if values are refreshed by a separate process, i.e. when the same valueset cached file is shared by multiple instances for reading. Default value is false.- 
 - **MaxFileAge**: maximum duration of the configuration file before is discarded.  
 If a refresh is not possible when the refresh interval expires, the current file can be used until it passes the specified period.  
 This allows the application to continue to operate even if the backend is temporary unavailable for any reason.

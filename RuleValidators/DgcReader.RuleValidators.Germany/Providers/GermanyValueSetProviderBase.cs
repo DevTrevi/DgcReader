@@ -99,6 +99,7 @@ namespace DgcReader.RuleValidators.Germany.Providers
         public override TimeSpan RefreshInterval => Options.RefreshInterval;
         public override TimeSpan MinRefreshInterval => Options.MinRefreshInterval;
         public override bool UseAvailableValuesWhileRefreshing => Options.UseAvailableValuesWhileRefreshing;
+        public override bool TryReloadFromCacheWhenExpired => Options.TryReloadFromCacheWhenExpired;
     }
 
     internal abstract class GermanyValueSetProviderBase<T, TKey> : ThreadsafeMultiValueSetProvider<T, TKey>

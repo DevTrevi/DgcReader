@@ -68,6 +68,8 @@ Default value is 5 minutes.
 This prevents the application to wait that the new rules are downloaded, extending by the time needed for the download the effective validitiy of the rules already loaded.  
 As result, the response time of the application will be nearly instantanious, except for the first download or if the rules have reached the `MaxFileAge` value.  
 Otherwise, if the rules are expired, every validation request will wait untill the refresh task completes.
+- **TryReloadFromCacheWhenExpired**: If true, try to reload values from cache before downloading from the remote server. 
+ This can be useful if values are refreshed by a separate process, i.e. when the same valueset cached file is shared by multiple instances for reading. Default value is false.
 - **BasePath**: base folder where the rules list will be saved.  
 The default value is `Directory.GetCurrentDirectory()`
 - **MaxFileAge**: maximum duration of the configuration file before is discarded.  

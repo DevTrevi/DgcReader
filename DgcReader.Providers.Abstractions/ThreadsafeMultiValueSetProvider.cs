@@ -56,7 +56,7 @@ namespace DgcReader.Providers.Abstractions
         {
             T? currentValueSet = default;
 
-            // Reading rules from cache if the provider supports it
+            // Reading valueset from cache if the provider supports it
             await _currentValueSetsSemaphore.WaitAsync(cancellationToken);
             try
             {
@@ -79,7 +79,7 @@ namespace DgcReader.Providers.Abstractions
                 _currentValueSetsSemaphore.Release();
             }
 
-            // Checking validity of the rules:
+            // Checking validity of the valueset:
             // If is null or expired, refresh
             var valueSet = currentValueSet;
 
@@ -95,22 +95,37 @@ namespace DgcReader.Providers.Abstractions
                 // If not present, always try to refresh the list
                 refreshTask = await GetRefreshTask(key, cancellationToken);
             }
-            else if (GetLastUpdate(valueSet).Add(RefreshInterval) < DateTime.Now)
+            else if (NeedsUpdate(key, valueSet))
             {
-                // If refresh interval is expired and the min refresh interval is over, refresh the list
-                if (_lastRefreshAttempt.Add(MinRefreshInterval) < DateTime.Now)
+                // Update needed
+
+                // Optional: try to reload cache first
+                if (TryReloadFromCacheWhenExpired)
                 {
-                    Logger?.LogInformation($"{GetValuesetName(key)} refresh interval expired, refreshing from server");
-                    refreshTask = await GetRefreshTask(key, cancellationToken);
+                    // Try to reload values from cache before downloading from server
+                    var fromCache = await LoadFromCache(key, cancellationToken);
+
+                    // Check if loaded values are already updated
+                    if (fromCache != null && !NeedsUpdate(key, fromCache, false))
+                    {
+                        Logger?.LogInformation($"{GetValuesetName(key)} reloaded from cache is up to date. No need to refresh from server");
+                        await _currentValueSetsSemaphore.WaitAsync(cancellationToken);
+                        try
+                        {
+                            _currentValueSets[key] = fromCache;
+                            return fromCache;
+                        }
+                        finally
+                        {
+                            _currentValueSetsSemaphore.Release();
+                        }
+                    }
                 }
-            }
-            else if (expiration != null &&
-                     expiration < DateTime.Now)
-            {
-                // If file is expired and the min refresh interval is over, refresh the list
+
+                // Starting request to the remote server if the min refresh interval is over
                 if (_lastRefreshAttempt.Add(MinRefreshInterval) < DateTime.Now)
                 {
-                    Logger?.LogInformation($"{GetValuesetName(key)} expired, refreshing from server");
+                    Logger?.LogInformation($"{GetValuesetName(key)} refreshing from server");
                     refreshTask = await GetRefreshTask(key, cancellationToken);
                 }
             }
@@ -124,7 +139,7 @@ namespace DgcReader.Providers.Abstractions
                 }
                 else if (UseAvailableValuesWhileRefreshing == false)
                 {
-                    // If UseAvailableRulesWhileRefreshing, always wait for the task to complete
+                    // If not UseAvailableRulesWhileRefreshing, always wait for the task to complete
                     Logger?.LogInformation($"Values for {GetValuesetName(key)} are expired, waiting for refresh to complete");
                     return await refreshTask;
                 }
@@ -192,7 +207,7 @@ namespace DgcReader.Providers.Abstractions
             catch (Exception e)
             {
                 Logger?.LogError(e, $"Error refreshing {GetValuesetName(key)} from server: {e.Message}");
-                return default;
+                throw;
             }
         }
 
@@ -259,6 +274,13 @@ namespace DgcReader.Providers.Abstractions
         /// Otherwise, if the values are expired, every request will wait untill the refresh task completes.
         /// </summary>
         public virtual bool UseAvailableValuesWhileRefreshing => true;
+
+        /// <summary>
+        /// If true, try to reload values from cache before downloading from the remote server.
+        /// This can be useful if values are refreshed by a separate process, i.e. when the same valueset cached file is shared by
+        /// multiple instances for reading
+        /// </summary>
+        public virtual bool TryReloadFromCacheWhenExpired => false;
         #endregion
 
         #region Private
@@ -294,10 +316,48 @@ namespace DgcReader.Providers.Abstractions
 
         }
 
+        /// <summary>
+        /// Check if the valueset needs to be updated, checking last update and expiration
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="valueSet"></param>
+        /// <param name="writeLog">If true, write to log why values should be updated</param>
+        /// <returns></returns>
+        private bool NeedsUpdate(TKey key, T? valueSet, bool writeLog = true)
+        {
+            DateTimeOffset? expiration = null;
+            if (valueSet != null)
+                expiration = GetExpiration(valueSet);
+
+            if (valueSet == null)
+            {
+                if (writeLog)
+                    Logger?.LogInformation($"{GetValuesetName(key)} not loaded, update required");
+
+                // If not present, always try to refresh the list
+                return true;
+            }
+
+            if (GetLastUpdate(valueSet).Add(RefreshInterval) < DateTime.Now)
+            {
+                if (writeLog)
+                    Logger?.LogInformation($"{GetValuesetName(key)} refresh interval expired");
+                return true;
+            }
+            else if (expiration != null &&
+                     expiration < DateTime.Now)
+            {
+                if (writeLog)
+                    Logger?.LogInformation($"{GetValuesetName(key)} expired");
+                return true;
+            }
+            return false;
+        }
+
         /// <inheritdoc/>
         public virtual void Dispose()
         {
-            foreach(var runner in _refreshTasks.Values)
+            foreach (var runner in _refreshTasks.Values)
             {
                 runner.Dispose();
             }

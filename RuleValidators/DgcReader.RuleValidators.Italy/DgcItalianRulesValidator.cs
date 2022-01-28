@@ -103,6 +103,7 @@ namespace DgcReader.RuleValidators.Italy
 
         /// <inheritdoc/>
         public async Task<IRulesValidationResult> GetRulesValidationResult(EuDGC dgc,
+            string dgcJson,
             DateTimeOffset validationInstant,
             string countryCode = "IT",
             SignatureValidationResult? signatureValidationResult = null,
@@ -127,6 +128,7 @@ namespace DgcReader.RuleValidators.Italy
             }
 
             return await this.GetRulesValidationResult(dgc,
+                dgcJson,
                 validationInstant,
                 Options.ValidationMode ?? ValidationMode.Basic3G,
                 signatureValidationResult,
@@ -191,6 +193,7 @@ namespace DgcReader.RuleValidators.Italy
         /// Returns the validation result
         /// </summary>
         /// <param name="dgc"></param>
+        /// <param name="dgcJson">The RAW json of the DGC</param>
         /// <param name="validationInstant"></param>
         /// <param name="validationMode">The Italian validation mode to be used</param>
         /// <param name="signatureValidationResult">The result from the signature validation step</param>
@@ -198,6 +201,7 @@ namespace DgcReader.RuleValidators.Italy
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
         public async Task<IRulesValidationResult> GetRulesValidationResult(EuDGC dgc,
+            string dgcJson,
             DateTimeOffset validationInstant,
             ValidationMode validationMode,
             SignatureValidationResult? signatureValidationResult = null,
@@ -258,9 +262,18 @@ namespace DgcReader.RuleValidators.Italy
                 }
                 else
                 {
-                    // An EU DCC must have one of the sections above.
-                    Logger?.LogWarning($"No vaccinations, tests or recovery statements found in the certificate.");
-                    result.ItalianStatus = DgcItalianResultStatus.NotEuDCC;
+                    // Try to check for exemptions (custom for Italy)
+                    var italianDgc = ItalianDGC.FromJson(dgcJson);
+                    if(italianDgc?.Exemptions?.Any(r => r.TargetedDiseaseAgent == DiseaseAgents.Covid19) == true)
+                    {
+                        CheckExemptionStatements(italianDgc, result, rules, signatureValidationResult, validationMode);
+                    }
+                    else
+                    {
+                        // An EU DCC must have one of the sections above.
+                        Logger?.LogWarning($"No vaccinations, tests, recovery or exemptions statements found in the certificate.");
+                        result.ItalianStatus = DgcItalianResultStatus.NotEuDCC;
+                    }
                 }
             }
             catch (DgcRulesValidationException e)
@@ -276,19 +289,6 @@ namespace DgcReader.RuleValidators.Italy
             }
             return result;
         }
-
-        /// <summary>
-        /// Validates the specified certificate against the Italian business rules.
-        /// Is assumed that the Signed DGC signature was already validated for signature and expiration
-        /// </summary>
-        /// <param name="dgc">The DGC to be validated</param>
-        /// <returns></returns>
-
-        public async Task<ItalianRulesValidationResult> ValidateBusinessRules(EuDGC dgc)
-        {
-            return (ItalianRulesValidationResult)await GetRulesValidationResult(dgc, DateTimeOffset.Now);
-        }
-
 
         #endregion
 
@@ -494,6 +494,34 @@ namespace DgcReader.RuleValidators.Italy
                 result.ItalianStatus = DgcItalianResultStatus.NotValid;
             else
                 result.ItalianStatus = validationMode == ValidationMode.Booster ? DgcItalianResultStatus.TestNeeded : DgcItalianResultStatus.Valid;
+        }
+
+        /// <summary>
+        /// Computes the status by checking the exemption statements in the Italian DCC
+        /// </summary>
+        /// <param name="italianDgc"></param>
+        /// <param name="result">The output result compiled by the function</param>
+        /// <param name="rules"></param>
+        /// <param name="signatureValidation">The result from the signature validation step</param>
+        /// <param name="validationMode"></param>
+        private void CheckExemptionStatements(ItalianDGC italianDgc, ItalianRulesValidationResult result, IEnumerable<RuleSetting> rules,
+            SignatureValidationResult? signatureValidation, ValidationMode validationMode)
+        {
+            var exemption = italianDgc.Exemptions.Last(r => r.TargetedDiseaseAgent == DiseaseAgents.Covid19);
+
+            Logger?.LogDebug($"Exemption from {exemption.ValidFrom} to {exemption.ValidUntil}");
+
+            if (exemption.ValidFrom > result.ValidationInstant)
+                result.ItalianStatus = DgcItalianResultStatus.NotValidYet;
+            else if (exemption.ValidUntil != null && result.ValidationInstant > exemption.ValidUntil)
+                result.ItalianStatus = DgcItalianResultStatus.NotValid;
+            else
+            {
+                if (validationMode == ValidationMode.Booster)
+                    result.ItalianStatus = DgcItalianResultStatus.TestNeeded;
+                else
+                    result.ItalianStatus = DgcItalianResultStatus.Valid;
+            }
         }
 
 

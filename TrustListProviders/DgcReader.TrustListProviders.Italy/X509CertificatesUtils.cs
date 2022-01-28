@@ -9,6 +9,7 @@ using Microsoft.Extensions.Logging;
 // Recente version of .NET Framework and .NET implements the required cryptographic apis in System.Security.Cryptography
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+using System.Text;
 #else
 // Older version of .NET Framework, Xamarin, Mono requires BoucyCastle
 using Org.BouncyCastle.X509;
@@ -37,7 +38,7 @@ namespace DgcReader.TrustListProviders.Italy
         public static CertificateData GetCertificateData(string kid, byte[] certificateBytes, ILogger? logger)
         {
 
-            var cert = new X509Certificate2(certificateBytes);
+            var cert = new X509Certificate2(Convert.FromBase64String(Encoding.ASCII.GetString(certificateBytes)));
             var keyAlgo = cert.GetKeyAlgorithm();
             var keyAlgoOid = Oid.FromOidValue(keyAlgo, OidGroup.PublicKeyAlgorithm);
 

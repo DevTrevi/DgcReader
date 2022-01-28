@@ -116,12 +116,14 @@ namespace DgcReader.BlacklistProviders.Italy
                 var affected = await ctx.Database.ExecuteSqlCommandAsync($"DELETE FROM {tableName}", cancellationToken);
 
                 Logger?.LogInformation($"{affected} rows removed");
-#endif
-
-#if NETSTANDARD2_0_OR_GREATER
+#else
                 var tableName = entityModel.GetTableName();
+
                 var schemaName = entityModel.GetSchema();
-                var affected = await ctx.Database.ExecuteSqlRawAsync($"DELETE FROM {schemaName}.{tableName}", cancellationToken);
+                if(!string.IsNullOrEmpty(schemaName))
+                    tableName = $"{schemaName}.{tableName}";
+
+                var affected = await ctx.Database.ExecuteSqlRawAsync($"DELETE FROM {tableName}", cancellationToken);
 #endif
 
 
@@ -183,7 +185,7 @@ namespace DgcReader.BlacklistProviders.Italy
                     await ClearDb();
 
                     // Try again
-                    return await UpdateFromServer(tryCount++, cancellationToken);
+                    return await UpdateFromServer(tryCount + 1, cancellationToken);
                 }
             }
             else
@@ -242,7 +244,7 @@ namespace DgcReader.BlacklistProviders.Italy
                         if (!localStatus.HasCurrentVersion())
                         {
                             // If failed, db is resetted and a new download attempt will be made
-                            return await UpdateFromServer(tryCount++, cancellationToken);
+                            return await UpdateFromServer(tryCount + 1, cancellationToken);
                         }
                     }
                 }
@@ -261,7 +263,7 @@ namespace DgcReader.BlacklistProviders.Italy
                         if (!localStatus.HasCurrentVersion())
                         {
                             // If failed, db is resetted and a new download attempt will be made
-                            return await UpdateFromServer(tryCount++, cancellationToken);
+                            return await UpdateFromServer(tryCount + 1, cancellationToken);
                         }
                     }
                 }
@@ -571,6 +573,6 @@ namespace DgcReader.BlacklistProviders.Italy
                 ctx.Blacklist.RemoveRange(deleting);
             }
         }
-        #endregion
+#endregion
     }
 }

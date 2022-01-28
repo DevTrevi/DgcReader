@@ -397,6 +397,20 @@ namespace DgcReader.BlacklistProviders.Italy
                         ctx.Attach(status).State = EntityState.Modified;
                         await ctx.SaveChangesAsync(cancellationToken);
 
+#if !NET452
+                        if (ctx.Database.ProviderName == "Microsoft.EntityFrameworkCore.Sqlite")
+                        {
+                            try
+                            {
+                                await ctx.Database.ExecuteSqlRawAsync("VACUUM;");
+                            }
+                            catch (Exception e)
+                            {
+                                Logger?.LogWarning(e, $"Error while executing VACUUM: {e.Message}");
+                            }
+                        }
+#endif
+
                         Logger?.LogInformation($"Version {status.TargetVersion} finalized for {count} total blacklist entries");
 
                         return status;

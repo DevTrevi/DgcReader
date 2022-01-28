@@ -103,6 +103,7 @@ namespace DgcReader.RuleValidators.Italy
 
         /// <inheritdoc/>
         public async Task<IRulesValidationResult> GetRulesValidationResult(EuDGC dgc,
+            string dgcJson,
             DateTimeOffset validationInstant,
             string countryCode = "IT",
             SignatureValidationResult? signatureValidationResult = null,
@@ -127,6 +128,7 @@ namespace DgcReader.RuleValidators.Italy
             }
 
             return await this.GetRulesValidationResult(dgc,
+                dgcJson,
                 validationInstant,
                 Options.ValidationMode ?? ValidationMode.Basic3G,
                 signatureValidationResult,
@@ -191,6 +193,7 @@ namespace DgcReader.RuleValidators.Italy
         /// Returns the validation result
         /// </summary>
         /// <param name="dgc"></param>
+        /// <param name="dgcJson">The RAW json of the DGC</param>
         /// <param name="validationInstant"></param>
         /// <param name="validationMode">The Italian validation mode to be used</param>
         /// <param name="signatureValidationResult">The result from the signature validation step</param>
@@ -198,6 +201,7 @@ namespace DgcReader.RuleValidators.Italy
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
         public async Task<IRulesValidationResult> GetRulesValidationResult(EuDGC dgc,
+            string dgcJson,
             DateTimeOffset validationInstant,
             ValidationMode validationMode,
             SignatureValidationResult? signatureValidationResult = null,
@@ -276,19 +280,6 @@ namespace DgcReader.RuleValidators.Italy
             }
             return result;
         }
-
-        /// <summary>
-        /// Validates the specified certificate against the Italian business rules.
-        /// Is assumed that the Signed DGC signature was already validated for signature and expiration
-        /// </summary>
-        /// <param name="dgc">The DGC to be validated</param>
-        /// <returns></returns>
-
-        public async Task<ItalianRulesValidationResult> ValidateBusinessRules(EuDGC dgc)
-        {
-            return (ItalianRulesValidationResult)await GetRulesValidationResult(dgc, DateTimeOffset.Now);
-        }
-
 
         #endregion
 

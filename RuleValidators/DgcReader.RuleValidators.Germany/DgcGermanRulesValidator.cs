@@ -147,6 +147,7 @@ namespace DgcReader.RuleValidators.Germany
 
         /// <inheritdoc/>
         public async Task<IRulesValidationResult> GetRulesValidationResult(EuDGC dgc,
+            string dgcJson,
             DateTimeOffset validationInstant,
             string countryCode = "DE",
             SignatureValidationResult? validationResult = null,
@@ -199,13 +200,12 @@ namespace DgcReader.RuleValidators.Germany
                     Region = "",
                 };
 
-                var certString = JsonConvert.SerializeObject(dgc, JsonSerializerSettings);
 
                 var testResults = _certLogicEngine.Validate(certificateType,
                     dgc.SchemaVersion,
                     rules,
                     externalParameters,
-                    certString).ToArray();
+                    dgcJson).ToArray();
 
                 // Se the validation results to the final result
                 result.ValidationResults = testResults;

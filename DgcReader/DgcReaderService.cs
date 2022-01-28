@@ -62,7 +62,8 @@ namespace DgcReader
 
                 // Step 1: decode
                 var cose = DecodeCoseObject(qrCodeData);
-                result.Dgc = GetDgc(cose);
+                var dgcJson = GetDgcJson(cose);
+                result.Dgc = EuDGC.FromJson(dgcJson);
 
                 // Step 2: check signature
                 try
@@ -103,7 +104,7 @@ namespace DgcReader
             string qrCodeData,
             string acceptanceCountryCode,
             DateTimeOffset validationInstant,
-            Func<EuDGC, string, DateTimeOffset, SignatureValidationResult, BlacklistValidationResult, bool, CancellationToken, Task<IRulesValidationResult?>>? rulesValidatorFunction,
+            Func<EuDGC, string, string, DateTimeOffset, SignatureValidationResult, BlacklistValidationResult, CancellationToken, Task<IRulesValidationResult?>>? rulesValidatorFunction,
             bool throwOnError = true,
             CancellationToken cancellationToken = default)
         {
@@ -120,8 +121,10 @@ namespace DgcReader
                 {
                     var cose = DecodeCoseObject(qrCodeData);
 
+
                     // Step 1: Decoding data
-                    result.Dgc = GetDgc(cose);
+                    var dgcJson = GetDgcJson(cose);
+                    result.Dgc = EuDGC.FromJson(dgcJson);
 
                     // Step 2: check signature
                     result.Signature = await GetSignatureValidationResult(cose, validationInstant, throwOnError);
@@ -135,11 +138,11 @@ namespace DgcReader
                         result.RulesValidation =
                             await rulesValidatorFunction.Invoke(
                                 result.Dgc,
+                                dgcJson,
                                 acceptanceCountryCode,
                                 validationInstant,
                                 result.Signature,
                                 result.Blacklist,
-                                throwOnError,
                                 cancellationToken);
 
                         if (result.RulesValidation != null)
@@ -475,21 +478,21 @@ namespace DgcReader
         /// This overload is intended for internal use only, and should not be used directly
         /// </summary>
         /// <param name="dgc">The DGC</param>
+        /// <param name="dgcJson">The RAW json of the DGC</param>
         /// <param name="acceptanceCountryCode">The 2-letter iso code of the acceptance country</param>
         /// <param name="validationInstant">The validation instant of the DGC</param>
         /// <param name="signatureValidationResult">The result from the signature validation step</param>
         /// <param name="blacklistValidationResult">The result from the blacklist validation step</param>
-        /// <param name="throwOnError">If true, throw an exception if the validation fails</param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
         /// <exception cref="DgcRulesValidationException"></exception>
         private async Task<IRulesValidationResult?> GetRulesValidationResult(
             EuDGC dgc,
+            string dgcJson,
             string acceptanceCountryCode,
             DateTimeOffset validationInstant,
             SignatureValidationResult signatureValidationResult,
             BlacklistValidationResult blacklistValidationResult,
-            bool throwOnError,
             CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrEmpty(acceptanceCountryCode))
@@ -511,6 +514,7 @@ namespace DgcReader
                 if (await validator.SupportsCountry(acceptanceCountryCode, cancellationToken))
                 {
                     rulesResult = await validator.GetRulesValidationResult(dgc,
+                        dgcJson,
                         validationInstant,
                         acceptanceCountryCode,
                         signatureValidationResult,
@@ -549,7 +553,7 @@ namespace DgcReader
         /// </summary>
         /// <param name="cose"></param>
         /// <returns></returns>
-        private EuDGC GetDgc(CoseSign1_Object cose)
+        private string GetDgcJson(CoseSign1_Object cose)
         {
             var cwt = cose.GetCwt();
             if (cwt == null)
@@ -560,11 +564,11 @@ namespace DgcReader
             if (dgcData == null)
                 throw new DgcException($"Unable to get DGC data from cwt");
 
-            var dgc = GetEuDGCFromCbor(dgcData);
-            if (dgc == null)
+            var dgcJson = GetEuDGCJsonFromCbor(dgcData);
+            if (string.IsNullOrEmpty(dgcJson))
                 throw new DgcException($"Unable to get DGC data from cwt");
 
-            return dgc;
+            return dgcJson;
         }
 
         private static byte[] Base45Decoding(byte[] encodedData)
@@ -599,14 +603,11 @@ namespace DgcReader
             return cose;
         }
 
-        private static EuDGC? GetEuDGCFromCbor(byte[] cborData)
+        private static string? GetEuDGCJsonFromCbor(byte[] cborData)
         {
             var cbor = CBORObject.DecodeFromBytes(cborData, CBOREncodeOptions.Default);
-
             var json = cbor.ToJSONString();
-            var vacProof = EuDGC.FromJson(json);
-
-            return vacProof;
+            return json;
         }
 
         private static string GetDgcResultStatusDescription(DgcResultStatus status)

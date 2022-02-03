@@ -38,7 +38,7 @@ namespace DgcReader.TrustListProviders.Italy
         public static CertificateData GetCertificateData(string kid, byte[] certificateBytes, ILogger? logger)
         {
 
-            var cert = new X509Certificate2(Convert.FromBase64String(Encoding.ASCII.GetString(certificateBytes)));
+            var cert = new X509Certificate2(certificateBytes);
             var keyAlgo = cert.GetKeyAlgorithm();
             var keyAlgoOid = Oid.FromOidValue(keyAlgo, OidGroup.PublicKeyAlgorithm);
 
@@ -145,7 +145,7 @@ namespace DgcReader.TrustListProviders.Italy
             const string PemHeader = "-----BEGIN CERTIFICATE-----";
             const string PemFooter = "-----END CERTIFICATE-----";
 
-            var decoded = Encoding.ASCII.GetString(certificateData);
+            var decoded = Convert.ToBase64String(certificateData);
             if (!decoded.StartsWith(PemHeader) && !decoded.EndsWith(PemFooter))
             {
                 decoded = PemHeader + "\n" + decoded + "\n" + PemFooter;

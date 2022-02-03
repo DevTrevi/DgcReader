@@ -38,7 +38,7 @@ namespace DgcReader.TrustListProviders.Italy
         public static CertificateData GetCertificateData(string kid, byte[] certificateBytes, ILogger? logger)
         {
 
-            var cert = new X509Certificate2(certificateBytes);
+            var cert = new X509Certificate2(Convert.FromBase64String(Encoding.ASCII.GetString(certificateBytes)));
             var keyAlgo = cert.GetKeyAlgorithm();
             var keyAlgoOid = Oid.FromOidValue(keyAlgo, OidGroup.PublicKeyAlgorithm);
 

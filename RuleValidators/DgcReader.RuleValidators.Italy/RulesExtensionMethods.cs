@@ -90,12 +90,13 @@ namespace DgcReader.RuleValidators.Italy
 
         public static int GetRecoveryCertEndDayUnified(this IEnumerable<RuleSetting> settings, string issuerCountryCode)
         {
-            issuerCountryCode = issuerCountryCode?.ToUpperInvariant() ?? string.Empty;
-
             return issuerCountryCode.ToUpperInvariantNotNull() == "IT" ?
                 settings.GetRuleNullableInteger(SettingNames.RecoveryCertEndDayIT) ?? 180 :
                 settings.GetRuleNullableInteger(SettingNames.RecoveryCertEndDayNotIT) ?? 270;
         }
+
+        public static int GetRecoveryCertEndDaySchool(this IEnumerable<RuleSetting> settings)
+            => settings.GetRuleNullableInteger(SettingNames.RecoveryCertEndDaySchool) ?? 120;
         #endregion
 
         #region Test
@@ -135,8 +136,11 @@ namespace DgcReader.RuleValidators.Italy
             return startDay + daysToAdd;
         }
 
-        public static int GetVaccineEndDayCompleteUnified(this IEnumerable<RuleSetting> settings, string issuerCountryCode)
+        public static int GetVaccineEndDayCompleteUnified(this IEnumerable<RuleSetting> settings, string issuerCountryCode, ValidationMode validationMode)
         {
+            if (validationMode == ValidationMode.School)
+                return settings.GetRuleNullableInteger(SettingNames.VaccineEndDaySchool) ?? 120;
+
             return issuerCountryCode.ToUpperInvariantNotNull() == "IT" ?
                 settings.GetRuleNullableInteger(SettingNames.VaccineEndDayCompleteIT) ?? 180 :
                 settings.GetRuleNullableInteger(SettingNames.VaccineEndDayCompleteNotIT) ?? 270;

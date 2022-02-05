@@ -269,7 +269,7 @@ namespace DgcReader.RuleValidators.Italy
                 {
                     // Try to check for exemptions (custom for Italy)
                     var italianDgc = ItalianDGC.FromJson(dgcJson);
-                    if(italianDgc?.Exemptions?.Any(r => r.TargetedDiseaseAgent == DiseaseAgents.Covid19) == true)
+                    if (italianDgc?.Exemptions?.Any(r => r.TargetedDiseaseAgent == DiseaseAgents.Covid19) == true)
                     {
                         CheckExemptionStatements(italianDgc, result, rules, signatureValidationResult, validationMode);
                     }
@@ -340,7 +340,7 @@ namespace DgcReader.RuleValidators.Italy
                     else
                     {
                         startDay = rules.GetVaccineStartDayCompleteUnified(countryCode, vaccination.MedicinalProduct);
-                        endDay = rules.GetVaccineEndDayCompleteUnified(countryCode);
+                        endDay = rules.GetVaccineEndDayCompleteUnified(countryCode, validationMode);
                     }
                 }
 
@@ -373,10 +373,13 @@ namespace DgcReader.RuleValidators.Italy
                     result.ItalianStatus = DgcItalianResultStatus.NotValid;
                 else
                 {
-                    if(vaccination.DoseNumber < vaccination.TotalDoseSeries)
+                    if (vaccination.DoseNumber < vaccination.TotalDoseSeries)
                     {
-                        // Incomplete cycle, invalid for BOOSTER mode
-                        result.ItalianStatus = validationMode == ValidationMode.Booster ? DgcItalianResultStatus.NotValid : DgcItalianResultStatus.Valid;
+                        // Incomplete cycle, invalid for BOOSTER and SCHOOL mode
+                        result.ItalianStatus = new[] {
+                            ValidationMode.Booster,
+                            ValidationMode.School
+                        }.Contains(validationMode) ? DgcItalianResultStatus.NotValid : DgcItalianResultStatus.Valid;
                     }
                     else
                     {
@@ -420,9 +423,12 @@ namespace DgcReader.RuleValidators.Italy
             if (test == null) return;
 
             // Super Greenpass check
-            if (validationMode == ValidationMode.Strict2G || validationMode == ValidationMode.Booster)
+            if (new[] {
+                    ValidationMode.Strict2G,
+                    ValidationMode.Booster,
+                    ValidationMode.School
+                }.Contains(validationMode))
             {
-                // If BOOSTER or 2G mode is active, Test entries are considered not valid
                 if (dgc.GetCertificateEntry() is TestEntry)
                 {
                     Logger.LogWarning($"Test entries are considered not valid when validation mode is {validationMode}");
@@ -430,7 +436,6 @@ namespace DgcReader.RuleValidators.Italy
                     return;
                 }
             }
-
 
             if (test.TestResult == TestResults.NotDetected)
             {
@@ -493,15 +498,28 @@ namespace DgcReader.RuleValidators.Italy
             // Check if is PV (post-vaccination) recovery by checking signer certificate
             var isPvRecovery = IsRecoveryPvSignature(signatureValidation);
 
-            var recoveryCertStartDay = isPvRecovery ? rules.GetRecoveryPvCertStartDay() : rules.GetRecoveryCertStartDayUnified(countryCode);
-            var recoveryCertEndDay = isPvRecovery ? rules.GetRecoveryPvCertEndDay() : rules.GetRecoveryCertEndDayUnified(countryCode);
+            var startDaysToAdd = isPvRecovery ? rules.GetRecoveryPvCertStartDay() : rules.GetRecoveryCertStartDayUnified(countryCode);
+            var endDaysToAdd =
+                validationMode == ValidationMode.School ? rules.GetRecoveryCertEndDaySchool() :
+                isPvRecovery ? rules.GetRecoveryPvCertEndDay() :
+                rules.GetRecoveryCertEndDayUnified(countryCode);
 
-            result.ValidFrom = recovery.ValidFrom.Date.AddDays(recoveryCertStartDay);
-            result.ValidUntil = recovery.ValidUntil.Date;
+            result.ValidFrom = recovery.ValidFrom.Date.AddDays(startDaysToAdd);
+            if(validationMode == ValidationMode.School)
+            {
+                // Take the more restrictive from end of "quarantine" after first positive test and the original expiration from the Recovery entry
+                result.ValidUntil = recovery.FirstPositiveTestResult.Date.AddDays(endDaysToAdd);
+                if (recovery.ValidUntil < result.ValidUntil)
+                    result.ValidUntil = recovery.ValidUntil;
+            }
+            else
+            {
+                result.ValidUntil = result.ValidFrom.Value.AddDays(endDaysToAdd);
+            }
 
             if (result.ValidFrom > result.ValidationInstant.Date)
                 result.ItalianStatus = DgcItalianResultStatus.NotValidYet;
-            else if (result.ValidationInstant.Date > result.ValidFrom.Value.AddDays(recoveryCertEndDay))
+            else if (result.ValidationInstant.Date > result.ValidFrom.Value.AddDays(endDaysToAdd))
                 result.ItalianStatus = DgcItalianResultStatus.NotValid;
             else
                 result.ItalianStatus = validationMode == ValidationMode.Booster ? DgcItalianResultStatus.TestNeeded : DgcItalianResultStatus.Valid;
@@ -520,11 +538,12 @@ namespace DgcReader.RuleValidators.Italy
         {
             var exemption = italianDgc.Exemptions.Last(r => r.TargetedDiseaseAgent == DiseaseAgents.Covid19);
 
-            Logger?.LogDebug($"Exemption from {exemption.ValidFrom} to {exemption.ValidUntil}");
+            result.ValidFrom = exemption.ValidFrom;
+            result.ValidUntil = exemption.ValidUntil;
 
-            if (exemption.ValidFrom > result.ValidationInstant.Date)
+            if (exemption.ValidFrom.Date > result.ValidationInstant.Date)
                 result.ItalianStatus = DgcItalianResultStatus.NotValidYet;
-            else if (exemption.ValidUntil != null && result.ValidationInstant.Date > exemption.ValidUntil)
+            else if (exemption.ValidUntil != null && result.ValidationInstant.Date > exemption.ValidUntil?.Date)
                 result.ItalianStatus = DgcItalianResultStatus.NotValid;
             else
             {
@@ -617,6 +636,6 @@ namespace DgcReader.RuleValidators.Italy
 
             return extendedKeyUsages.Any(usage => CertificateExtendedKeyUsageIdentifiers.RecoveryIssuersIds.Contains(usage));
         }
-#endregion
+        #endregion
     }
 }

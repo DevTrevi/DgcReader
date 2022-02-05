@@ -23,5 +23,10 @@ namespace DgcReader.RuleValidators.Italy.Models
         /// Enables the booster check, that requires at least 3 vaccination doses to be considered valid (or 2 doses in case of Johnson &amp; Johnson)
         /// </summary>
         Booster,
+
+        /// <summary>
+        /// Validates certificate applying rules for school
+        /// </summary>
+        School,
     }
 }

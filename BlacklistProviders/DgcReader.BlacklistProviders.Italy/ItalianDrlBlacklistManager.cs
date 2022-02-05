@@ -39,6 +39,11 @@ namespace DgcReader.BlacklistProviders.Italy
         private SyncStatus? _syncStatus;
 
         /// <summary>
+        /// Notify subscribers about the download progress
+        /// </summary>
+        public event EventHandler<DownloadProgressEventArgs> DownloadProgressChanged;
+
+        /// <summary>
         /// Constructor
         /// </summary>
         /// <param name="options"></param>
@@ -181,10 +186,8 @@ namespace DgcReader.BlacklistProviders.Italy
                 }
                 else
                 {
-                    Logger?.LogWarning($"Database is in an inconsistent state, clearing DB");
+                    Logger?.LogWarning($"Database is in an inconsistent state, clearing DB and restarting download");
                     await ClearDb();
-
-                    // Try again
                     return await UpdateFromServer(tryCount + 1, cancellationToken);
                 }
             }
@@ -200,22 +203,38 @@ namespace DgcReader.BlacklistProviders.Italy
                 }
                 else
                 {
-                    // If target version does not match the remote info, updates the target version and restart the download of the latest snapshot.
-                    // This strategy differs from the offical one, but should keep the results consistent anyway, beeing more efficient.
-                    // When the download completes, a consistency check will be done, eventually resetting the DB and restarting the download
+                    // If target version does not match the remote info and a download was already started, the db is in an inconsistent state
+                    if (localStatus.HasPendingDownload() && localStatus.AnyChunkDownloaded())
+                    {
+                        Logger?.LogWarning($"Database is in an inconsistent state, clearing DB and restarting download");
+                        await ClearDb();
+                        return await UpdateFromServer(tryCount + 1, cancellationToken);
+                    }
 
+                    // Otherwise, if the previous download was not started, updates the info with the new target and continues the download
                     if (!localStatus.CurrentVersionMatchTarget())
                         Logger?.LogWarning($"Target version {remoteStatus.Version} changed, setting new target version");
                     localStatus = await SetTargetVersion(remoteStatus, cancellationToken);
                 }
 
+                // Notify initial progress
+                NotifyProgress(new DownloadProgressEventArgs(localStatus));
+
                 // Downloading chunks
                 while (localStatus.HasPendingDownload())
                 {
                     Logger?.LogInformation($"Downloading chunk {localStatus.LastChunkSaved + 1} of {localStatus.TargetChunksCount} " +
-                        $"for updating Dlr from version {localStatus.CurrentVersion} to version {localStatus.TargetVersion}");
+                        $"for updating Drl from version {localStatus.CurrentVersion} to version {localStatus.TargetVersion}");
 
                     var chunk = await Client.GetDrlChunk(localStatus.CurrentVersion, localStatus.LastChunkSaved + 1, cancellationToken);
+
+
+                    if (chunk.RevokedUcviList?.Length > 0 && chunk.Chunk == 1)
+                    {
+                        // If the update is not a differential update, clear the DB before saving the first chunk
+                        Logger?.LogInformation($"The update is not incremental, clearing db before saving new data");
+                        await ClearDb();
+                    }
 
                     if (!localStatus.IsTargetVersionConsistent(chunk))
                     {
@@ -247,6 +266,7 @@ namespace DgcReader.BlacklistProviders.Italy
                             return await UpdateFromServer(tryCount + 1, cancellationToken);
                         }
                     }
+                    NotifyProgress(new DownloadProgressEventArgs(localStatus));
                 }
 
                 // If finalization is missing, finalize the update
@@ -260,6 +280,8 @@ namespace DgcReader.BlacklistProviders.Italy
                     if (localStatus.IsTargetVersion(remoteStatus))
                     {
                         localStatus = await FinalizeUpdate(localStatus, remoteStatus);
+                        NotifyProgress(new DownloadProgressEventArgs(localStatus));
+
                         if (!localStatus.HasCurrentVersion())
                         {
                             // If failed, db is resetted and a new download attempt will be made
@@ -585,6 +607,18 @@ namespace DgcReader.BlacklistProviders.Italy
 
                 Logger?.LogDebug($"Removing {deleting.Count()} of {ucvis.Length} (page {i + 1} of {pages}) UCVIs from the blacklist");
                 ctx.Blacklist.RemoveRange(deleting);
+            }
+        }
+
+        private void NotifyProgress(DownloadProgressEventArgs eventArgs)
+        {
+            try
+            {
+                DownloadProgressChanged?.Invoke(this, eventArgs);
+            }
+            catch (Exception e)
+            {
+                Logger?.LogError(e, $"Error while notifying download progress: {e.Message}");
             }
         }
 #endregion

@@ -315,18 +315,14 @@ namespace DgcReader.RuleValidators.Italy
                 if (vaccination.DoseNumber < vaccination.TotalDoseSeries)
                 {
                     // Vaccination is not completed (partial number of doses)
-                    startDay = rules.GetRuleInteger(SettingNames.VaccineStartDayNotComplete,
-                        vaccination.MedicinalProduct);
-                    endDay = rules.GetRuleInteger(SettingNames.VaccineEndDayNotComplete,
-                        vaccination.MedicinalProduct);
+                    startDay = rules.GetVaccineStartDayNotComplete(vaccination.MedicinalProduct);
+                    endDay = rules.GetVaccineEndDayNotComplete(vaccination.MedicinalProduct);
                 }
                 else
                 {
                     // Vaccination completed (full number of doses)
-                    startDay = rules.GetRuleInteger(SettingNames.VaccineStartDayComplete,
-                        vaccination.MedicinalProduct);
-                    endDay = rules.GetRuleInteger(SettingNames.VaccineEndDayComplete,
-                        vaccination.MedicinalProduct);
+                    startDay = rules.GetVaccineStartDayComplete(vaccination.MedicinalProduct);
+                    endDay = rules.GetVaccineEndDayComplete(vaccination.MedicinalProduct);
 
                 }
 
@@ -432,12 +428,12 @@ namespace DgcReader.RuleValidators.Italy
                 switch (test.TestType)
                 {
                     case TestTypes.Rapid:
-                        startHours = rules.GetRuleInteger(SettingNames.RapidTestStartHours);
-                        endHours = rules.GetRuleInteger(SettingNames.RapidTestEndHours);
+                        startHours = rules.GetRapidTestStartHour();
+                        endHours = rules.GetRapidTestEndHour();
                         break;
                     case TestTypes.Molecular:
-                        startHours = rules.GetRuleInteger(SettingNames.MolecularTestStartHours);
-                        endHours = rules.GetRuleInteger(SettingNames.MolecularTestEndHours);
+                        startHours = rules.GetMolecularTestStartHour();
+                        endHours = rules.GetMolecularTestEndHour();
                         break;
                     default:
                         Logger?.LogWarning($"Test type {test.TestType} not supported by current rules");
@@ -482,8 +478,8 @@ namespace DgcReader.RuleValidators.Italy
             // Check if is PV (post-vaccination) recovery by checking signer certificate
             var isPvRecovery = IsRecoveryPvSignature(signatureValidation);
 
-            var recoveryCertStartDay = rules.GetRuleInteger(isPvRecovery ? SettingNames.RecoveryPvCertStartDay : SettingNames.RecoveryCertStartDay);
-            var recoveryCertEndDay = rules.GetRuleInteger(isPvRecovery ? SettingNames.RecoveryPvCertEndDay : SettingNames.RecoveryCertEndDay);
+            var recoveryCertStartDay = isPvRecovery ? rules.GetRecoveryPvCertStartDay() : rules.GetRecoveryCertStartDay();
+            var recoveryCertEndDay = isPvRecovery ? rules.GetRecoveryPvCertEndDay() : rules.GetRecoveryCertEndDay();
 
             result.ValidFrom = recovery.ValidFrom.Date.AddDays(recoveryCertStartDay);
             result.ValidUntil = recovery.ValidUntil.Date;

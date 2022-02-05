@@ -1,10 +1,6 @@
 ﻿using GreenpassReader.Models;
 using DgcReader.RuleValidators.Italy.Const;
 
-#if NETSTANDARD2_0_OR_GREATER || NET5_0_OR_GREATER || NET47_OR_GREATER
-using Microsoft.Extensions.Options;
-#endif
-
 // Copyright (c) 2021 Davide Trevisan
 // Licensed under the Apache License, Version 2.0
 

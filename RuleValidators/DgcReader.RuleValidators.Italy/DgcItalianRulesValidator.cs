@@ -110,15 +110,6 @@ namespace DgcReader.RuleValidators.Italy
             BlacklistValidationResult? blacklistValidationResult = null,
             CancellationToken cancellationToken = default)
         {
-            if (!await SupportsCountry(countryCode))
-            {
-                var result = new ItalianRulesValidationResult
-                {
-                    ItalianStatus = DgcItalianResultStatus.NotValidated,
-                    StatusMessage = $"Rules validation for country {countryCode} is not supported by this provider",
-                };
-                return result;
-            }
 
             // Validation mode check
             if (Options.ValidationMode == null)
@@ -127,10 +118,23 @@ namespace DgcReader.RuleValidators.Italy
                 Logger?.LogWarning($"Validation mode not set. The {ValidationMode.Basic3G} validation mode will be used");
             }
 
+            var validationMode = Options.ValidationMode ?? ValidationMode.Basic3G;
+
+            if (!await SupportsCountry(countryCode))
+            {
+                var result = new ItalianRulesValidationResult
+                {
+                    ItalianStatus = DgcItalianResultStatus.NotValidated,
+                    StatusMessage = $"Rules validation for country {countryCode} is not supported by this provider",
+                    ValidationMode = validationMode,
+                };
+                return result;
+            }
+
             return await this.GetRulesValidationResult(dgc,
                 dgcJson,
                 validationInstant,
-                Options.ValidationMode ?? ValidationMode.Basic3G,
+                validationMode,
                 signatureValidationResult,
                 blacklistValidationResult,
                 cancellationToken);
@@ -211,6 +215,7 @@ namespace DgcReader.RuleValidators.Italy
             var result = new ItalianRulesValidationResult
             {
                 ValidationInstant = validationInstant,
+                ValidationMode = validationMode,
             };
 
             if (dgc == null)
@@ -246,7 +251,7 @@ namespace DgcReader.RuleValidators.Italy
                 }
 
                 // Checking min version:
-                CheckMinSdkVersion(rules, validationInstant);
+                CheckMinSdkVersion(rules, validationInstant, validationMode);
 
                 if (dgc.Recoveries?.Any(r => r.TargetedDiseaseAgent == DiseaseAgents.Covid19) == true)
                 {
@@ -537,8 +542,9 @@ namespace DgcReader.RuleValidators.Italy
         /// </summary>
         /// <param name="rules"></param>
         /// <param name="validationInstant"></param>
+        /// <param name="validationMode"></param>
         /// <exception cref="DgcRulesValidationException"></exception>
-        private void CheckMinSdkVersion(IEnumerable<RuleSetting> rules, DateTimeOffset validationInstant)
+        private void CheckMinSdkVersion(IEnumerable<RuleSetting> rules, DateTimeOffset validationInstant, ValidationMode validationMode)
         {
             var obsolete = false;
             string message = string.Empty;
@@ -581,6 +587,7 @@ namespace DgcReader.RuleValidators.Italy
                     var result = new ItalianRulesValidationResult
                     {
                         ValidationInstant = validationInstant,
+                        ValidationMode = validationMode,
                         ItalianStatus = DgcItalianResultStatus.NotValidated,
                         StatusMessage = message,
                     };

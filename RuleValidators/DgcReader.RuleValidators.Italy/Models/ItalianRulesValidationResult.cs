@@ -53,6 +53,11 @@ namespace DgcReader.RuleValidators.Italy.Models
         /// </summary>
         public DateTimeOffset? ValidUntil { get; internal set; }
 
+        /// <summary>
+        /// Validation mode used during validation
+        /// </summary>
+        public ValidationMode ValidationMode { get; internal set; }
+
         #endregion
     }
 

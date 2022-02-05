@@ -321,9 +321,22 @@ namespace DgcReader.RuleValidators.Italy
                 else
                 {
                     // Vaccination completed (full number of doses)
-                    startDay = rules.GetVaccineStartDayComplete(vaccination.MedicinalProduct);
-                    endDay = rules.GetVaccineEndDayComplete(vaccination.MedicinalProduct);
 
+                    // If mode is not basic, use always rules for Italy
+                    var countryCode = validationMode == ValidationMode.Basic3G ? vaccination.Country : "IT";
+
+
+                    // Check rules for "BOOSTER" certificates
+                    if (vaccination.IsBooster())
+                    {
+                        startDay = rules.GetVaccineStartDayBoosterUnified(countryCode);
+                        endDay = rules.GetVaccineEndDayBoosterUnified(countryCode);
+                    }
+                    else
+                    {
+                        startDay = rules.GetVaccineStartDayCompleteUnified(countryCode, vaccination.MedicinalProduct);
+                        endDay = rules.GetVaccineEndDayCompleteUnified(countryCode);
+                    }
                 }
 
                 // Calculate start/end dates
@@ -331,13 +344,13 @@ namespace DgcReader.RuleValidators.Italy
                         (vaccination.DoseNumber > vaccination.TotalDoseSeries || vaccination.DoseNumber >= 2))
                 {
                     // For J&J booster, in case of more vaccinations than expected, the vaccine is immediately valid
-                    result.ValidFrom = vaccination.Date;
-                    result.ValidUntil = vaccination.Date.AddDays(endDay);
+                    result.ValidFrom = vaccination.Date.Date;
+                    result.ValidUntil = vaccination.Date.Date.AddDays(endDay);
                 }
                 else
                 {
-                    result.ValidFrom = vaccination.Date.AddDays(startDay);
-                    result.ValidUntil = vaccination.Date.AddDays(endDay);
+                    result.ValidFrom = vaccination.Date.Date.AddDays(startDay);
+                    result.ValidUntil = vaccination.Date.Date.AddDays(endDay);
                 }
 
                 // Calculate the status
@@ -365,13 +378,7 @@ namespace DgcReader.RuleValidators.Italy
                         // Complete cycle
                         if (validationMode == ValidationMode.Booster)
                         {
-                            // Min num of doses to be considered "booster":
-                            // J&J: required full cycle with at least 2 doses, other vaccines 3 doses
-                            var boostedDoseNumber = vaccination.MedicinalProduct == VaccineProducts.JeJVacineCode ? 2 : 3;
-
-
-                            if (vaccination.DoseNumber > vaccination.TotalDoseSeries ||
-                                vaccination.DoseNumber >= boostedDoseNumber)
+                            if (vaccination.IsBooster())
                             {
                                 // If dose number is higher than total dose series, or minimum booster dose number reached
                                 result.ItalianStatus = DgcItalianResultStatus.Valid;
@@ -475,11 +482,14 @@ namespace DgcReader.RuleValidators.Italy
         {
             var recovery = dgc.Recoveries.Last(r => r.TargetedDiseaseAgent == DiseaseAgents.Covid19);
 
+            // If mode is not basic, use always rules for Italy
+            var countryCode = validationMode == ValidationMode.Basic3G ? recovery.Country : "IT";
+
             // Check if is PV (post-vaccination) recovery by checking signer certificate
             var isPvRecovery = IsRecoveryPvSignature(signatureValidation);
 
-            var recoveryCertStartDay = isPvRecovery ? rules.GetRecoveryPvCertStartDay() : rules.GetRecoveryCertStartDay();
-            var recoveryCertEndDay = isPvRecovery ? rules.GetRecoveryPvCertEndDay() : rules.GetRecoveryCertEndDay();
+            var recoveryCertStartDay = isPvRecovery ? rules.GetRecoveryPvCertStartDay() : rules.GetRecoveryCertStartDayUnified(countryCode);
+            var recoveryCertEndDay = isPvRecovery ? rules.GetRecoveryPvCertEndDay() : rules.GetRecoveryCertEndDayUnified(countryCode);
 
             result.ValidFrom = recovery.ValidFrom.Date.AddDays(recoveryCertStartDay);
             result.ValidUntil = recovery.ValidUntil.Date;
@@ -600,7 +610,6 @@ namespace DgcReader.RuleValidators.Italy
 
             return extendedKeyUsages.Any(usage => CertificateExtendedKeyUsageIdentifiers.RecoveryIssuersIds.Contains(usage));
         }
-
 #endregion
     }
 }

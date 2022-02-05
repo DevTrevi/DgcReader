@@ -67,9 +67,11 @@ namespace DgcReader.RuleValidators.Italy
         #region Start/end days
 
         #region Recovery
+        [Obsolete]
         public static int GetRecoveryCertStartDay(this IEnumerable<RuleSetting> settings)
             => settings.GetRuleInteger(SettingNames.RecoveryCertStartDay);
 
+        [Obsolete]
         public static int GetRecoveryCertEndDay(this IEnumerable<RuleSetting> settings)
             => settings.GetRuleInteger(SettingNames.RecoveryCertEndDay);
 
@@ -114,8 +116,11 @@ namespace DgcReader.RuleValidators.Italy
         public static int GetVaccineEndDayNotComplete(this IEnumerable<RuleSetting> settings, string vaccineType)
             => settings.GetRuleInteger(SettingNames.VaccineEndDayNotComplete, vaccineType);
 
+        [Obsolete]
         public static int GetVaccineStartDayComplete(this IEnumerable<RuleSetting> settings, string vaccineType)
             => settings.GetRuleInteger(SettingNames.VaccineStartDayComplete, vaccineType);
+
+        [Obsolete]
         public static int GetVaccineEndDayComplete(this IEnumerable<RuleSetting> settings, string vaccineType)
             => settings.GetRuleInteger(SettingNames.VaccineEndDayComplete, vaccineType);
 
@@ -151,10 +156,7 @@ namespace DgcReader.RuleValidators.Italy
                 settings.GetRuleNullableInteger(SettingNames.VaccineEndDayBoosterNotIT) ?? 270;
         }
 
-
-
         #endregion
-
 
         #endregion
     }

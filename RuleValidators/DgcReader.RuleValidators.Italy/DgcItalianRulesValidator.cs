@@ -349,9 +349,9 @@ namespace DgcReader.RuleValidators.Italy
                     return;
                 }
 
-                if (result.ValidFrom > result.ValidationInstant)
+                if (result.ValidFrom > result.ValidationInstant.Date)
                     result.ItalianStatus = DgcItalianResultStatus.NotValidYet;
-                else if (result.ValidUntil < result.ValidationInstant)
+                else if (result.ValidUntil < result.ValidationInstant.Date)
                     result.ItalianStatus = DgcItalianResultStatus.NotValid;
                 else
                 {
@@ -484,9 +484,9 @@ namespace DgcReader.RuleValidators.Italy
             result.ValidFrom = recovery.ValidFrom.Date.AddDays(recoveryCertStartDay);
             result.ValidUntil = recovery.ValidUntil.Date;
 
-            if (result.ValidFrom > result.ValidationInstant)
+            if (result.ValidFrom > result.ValidationInstant.Date)
                 result.ItalianStatus = DgcItalianResultStatus.NotValidYet;
-            else if (result.ValidationInstant > result.ValidFrom.Value.AddDays(recoveryCertEndDay))
+            else if (result.ValidationInstant.Date > result.ValidFrom.Value.AddDays(recoveryCertEndDay))
                 result.ItalianStatus = DgcItalianResultStatus.NotValid;
             else
                 result.ItalianStatus = validationMode == ValidationMode.Booster ? DgcItalianResultStatus.TestNeeded : DgcItalianResultStatus.Valid;
@@ -507,9 +507,9 @@ namespace DgcReader.RuleValidators.Italy
 
             Logger?.LogDebug($"Exemption from {exemption.ValidFrom} to {exemption.ValidUntil}");
 
-            if (exemption.ValidFrom > result.ValidationInstant)
+            if (exemption.ValidFrom > result.ValidationInstant.Date)
                 result.ItalianStatus = DgcItalianResultStatus.NotValidYet;
-            else if (exemption.ValidUntil != null && result.ValidationInstant > exemption.ValidUntil)
+            else if (exemption.ValidUntil != null && result.ValidationInstant.Date > exemption.ValidUntil)
                 result.ItalianStatus = DgcItalianResultStatus.NotValid;
             else
             {

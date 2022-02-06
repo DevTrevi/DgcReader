@@ -89,6 +89,27 @@ namespace DgcReader.DgcTestData.Test
 
         }
 
+
+        [TestMethod]
+        public async Task TestGetBirthDates()
+        {
+
+            foreach (var folder in TestEntries.Keys.Where(r => r != CertificatesTestsLoader.CommonTestDirName))
+            {
+                foreach (var entry in TestEntries[folder])
+                {
+
+                    var result = await DgcReader.Decode(entry.PREFIX);
+
+                    Assert.IsNotNull(result);
+                    Assert.IsNotNull(result.Dgc);
+
+                    Debug.WriteLine(result.Dgc.DateOfBirth);
+                }
+            }
+
+        }
+
         [TestMethod]
         public async Task TestVerifyMethod()
         {

@@ -431,8 +431,9 @@ namespace DgcReader.RuleValidators.Italy
             {
                 if (dgc.GetCertificateEntry() is TestEntry)
                 {
-                    Logger.LogWarning($"Test entries are considered not valid when validation mode is {validationMode}");
+                    result.StatusMessage = $"Test entries are considered not valid when validation mode is {validationMode}";
                     result.ItalianStatus = DgcItalianResultStatus.NotValid;
+                    Logger.LogWarning(result.StatusMessage);
                     return;
                 }
             }
@@ -453,8 +454,9 @@ namespace DgcReader.RuleValidators.Italy
                         endHours = rules.GetMolecularTestEndHour();
                         break;
                     default:
-                        Logger?.LogWarning($"Test type {test.TestType} not supported by current rules");
+                        result.StatusMessage = $"Test type {test.TestType} not supported by current rules";
                         result.ItalianStatus = DgcItalianResultStatus.NotValid;
+                        Logger.LogWarning(result.StatusMessage);
                         return;
                 }
 
@@ -467,13 +469,29 @@ namespace DgcReader.RuleValidators.Italy
                 else if (result.ValidUntil < result.ValidationInstant)
                     result.ItalianStatus = DgcItalianResultStatus.NotValid;
                 else
-                    result.ItalianStatus = DgcItalianResultStatus.Valid;
+                {
+                    if (validationMode == ValidationMode.Work &&
+                        dgc.GetBirthDate().GetAge(result.ValidationInstant.Date) >= SdkConstants.VaccineMandatoryAge)
+                    {
+                        result.StatusMessage = $"Test entries are considered not valid for people over the age of {SdkConstants.VaccineMandatoryAge} when validation mode is {validationMode}";
+                        result.ItalianStatus = DgcItalianResultStatus.NotValid;
+                        Logger.LogWarning(result.StatusMessage);
+                    }
+                    else
+                    {
+                        result.ItalianStatus = DgcItalianResultStatus.Valid;
+                    }
+                }
             }
             else
             {
                 // Positive test or unknown result
                 if (test.TestResult != TestResults.Detected)
-                    Logger?.LogWarning($"Found test with unkwnown TestResult {test.TestResult}. The certificate is considered invalid");
+                {
+                    result.StatusMessage = $"Found test with unkwnown TestResult {test.TestResult}. The certificate is considered invalid";
+                    Logger?.LogWarning(result.StatusMessage);
+
+                }
 
                 result.ItalianStatus = DgcItalianResultStatus.NotValid;
             }

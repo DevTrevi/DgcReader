@@ -14,7 +14,10 @@ namespace DgcReader.RuleValidators.Italy.Test
         protected TestBase()
         {
             Configuration = LoadConfiguration();
-            InitializeServices();
+            var serviceCollection = new ServiceCollection();
+            ConfigureServices(serviceCollection);
+
+            ServiceProvider = serviceCollection.BuildServiceProvider();
         }
 
         protected IConfiguration Configuration;
@@ -27,14 +30,6 @@ namespace DgcReader.RuleValidators.Italy.Test
                 o.AddConsole()
                     .AddDebug();
             });
-        }
-
-        private void InitializeServices()
-        {
-            var serviceCollection = new ServiceCollection();
-            ConfigureServices(serviceCollection);
-
-            ServiceProvider = serviceCollection.BuildServiceProvider();
         }
 
         private IConfiguration LoadConfiguration()

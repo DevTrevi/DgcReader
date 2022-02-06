@@ -4,10 +4,6 @@ using System;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
-using DgcReader.RuleValidators.Italy;
-using System.Collections.Generic;
-using System.Linq;
-using Microsoft.Extensions.DependencyInjection;
 using System.Diagnostics;
 
 
@@ -26,10 +22,12 @@ namespace DgcReader.BlacklistProviders.Italy.Test
             RefreshInterval = TimeSpan.FromSeconds(10),
             UseAvailableValuesWhileRefreshing = false,
         };
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         ItalianDrlBlacklistProvider BlacklistProvider { get; set; }
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 
         [TestInitialize]
-        public async Task Initialize()
+        public void Initialize()
         {
 #if NET452
             ServicePointManager.SecurityProtocol |= SecurityProtocolType.Tls12 | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls;

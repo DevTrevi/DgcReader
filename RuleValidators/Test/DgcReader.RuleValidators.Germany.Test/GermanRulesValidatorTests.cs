@@ -22,10 +22,12 @@ namespace DgcReader.RuleValidators.Germany.Test
     [TestClass]
     public class GermanRulesValidatorTests : TestBase
     {
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         DgcGermanRulesValidator Validator { get; set; }
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 
         [TestInitialize]
-        public async Task Initialize()
+        public void Initialize()
         {
 
 #if NET452
@@ -41,64 +43,28 @@ namespace DgcReader.RuleValidators.Germany.Test
         [TestMethod]
         public async Task TestGetSupportedCountries()
         {
-            try
-            {
-                var countries = await Validator.GetSupportedCountries();
-                Assert.IsNotNull(countries);
-                Assert.IsTrue(countries.Contains("DE"));
-            }
-            catch (Exception e)
-            {
-
-                throw;
-            }
-
+            var countries = await Validator.GetSupportedCountries();
+            Assert.IsNotNull(countries);
+            Assert.IsTrue(countries.Contains("DE"));
         }
 
 
         [TestMethod]
         public async Task TestRefreshRulesList()
         {
-            try
-            {
-                await Validator.RefreshRules();
-            }
-            catch (Exception e)
-            {
-
-                throw;
-            }
-
+            await Validator.RefreshRules();
         }
 
         [TestMethod]
         public async Task TestRefreshAllRules()
         {
-            try
-            {
-                await Validator.RefreshAllRules();
-            }
-            catch (Exception e)
-            {
-
-                throw;
-            }
-
+            await Validator.RefreshAllRules();
         }
 
         [TestMethod]
         public async Task TestRefreshValuesets()
         {
-            try
-            {
-                await Validator.RefreshValuesets();
-            }
-            catch (Exception e)
-            {
-
-                throw;
-            }
-
+            await Validator.RefreshValuesets();
         }
 
 
@@ -107,14 +73,14 @@ namespace DgcReader.RuleValidators.Germany.Test
 #if !NET452
 
         [TestMethod]
-        public async Task TestGetDgcGermanRulesValidatorService()
+        public void TestGetDgcGermanRulesValidatorService()
         {
             var service = ServiceProvider.GetService<DgcGermanRulesValidator>();
             Assert.IsNotNull(service);
         }
 
         [TestMethod]
-        public async Task TestGetIRulesValidatorSerice()
+        public void TestGetIRulesValidatorSerice()
         {
             var interfaceService = ServiceProvider.GetService<IRulesValidator>();
             Assert.IsNotNull(interfaceService);

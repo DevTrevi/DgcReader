@@ -246,13 +246,13 @@ namespace DgcReader.RuleValidators.Germany.CovpassDgcCertlogic
         public static object EvaluateIn(IProcessJsonLogic p, JToken[] args, object data)
         {
             object needle = p.Apply(args[0], data);
-            if (needle == null)
-                return false;
             object haystack = p.Apply(args[1], data);
             if (haystack is null) return false;
             if (haystack is string s)
             {
-                return s.IndexOf(needle.ToString() ?? string.Empty) >= 0;
+#pragma warning disable CS8604 // Possible null reference argument.
+                return s.IndexOf(needle.ToString()) >= 0;
+#pragma warning restore CS8604 // Possible null reference argument.
             }
 
             if(haystack is JArray jarr)

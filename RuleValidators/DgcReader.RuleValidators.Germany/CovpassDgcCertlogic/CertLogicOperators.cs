@@ -104,10 +104,11 @@ namespace DgcReader.RuleValidators.Germany.CovpassDgcCertlogic
         {
             if (args.Length != 3)
                 throw new ArgumentException($"Expected 3 arguments for plusTime operator: datetime, integer and time unit");
-
+#pragma warning disable CS8604 // Possible null reference argument.
             var value = p.Apply(args[0], data);
             var offset = Convert.ToInt32(p.Apply(args[1], data));
             var unit = Enum.Parse(typeof(TimeUnit), p.Apply(args[2], data)?.ToString(), ignoreCase: true);
+#pragma warning restore CS8604 // Possible null reference argument.
 
             DateTimeOffset dateTimeOff;
             if (value is DateTimeOffset dto)
@@ -245,11 +246,13 @@ namespace DgcReader.RuleValidators.Germany.CovpassDgcCertlogic
         public static object EvaluateIn(IProcessJsonLogic p, JToken[] args, object data)
         {
             object needle = p.Apply(args[0], data);
+            if (needle == null)
+                return false;
             object haystack = p.Apply(args[1], data);
             if (haystack is null) return false;
             if (haystack is string s)
             {
-                return s.IndexOf(needle.ToString()) >= 0;
+                return s.IndexOf(needle.ToString() ?? string.Empty) >= 0;
             }
 
             if(haystack is JArray jarr)

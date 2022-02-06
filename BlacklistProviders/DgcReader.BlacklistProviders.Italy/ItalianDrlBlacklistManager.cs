@@ -41,7 +41,7 @@ namespace DgcReader.BlacklistProviders.Italy
         /// <summary>
         /// Notify subscribers about the download progress
         /// </summary>
-        public event EventHandler<DownloadProgressEventArgs> DownloadProgressChanged;
+        public event EventHandler<DownloadProgressEventArgs>? DownloadProgressChanged;
 
         /// <summary>
         /// Constructor
@@ -115,6 +115,11 @@ namespace DgcReader.BlacklistProviders.Italy
 
                 var status = await GetOrCreateSyncStatus(ctx, cancellationToken);
                 var entityModel = ctx.Model.FindEntityType(typeof(BlacklistEntry));
+
+                if (entityModel == null)
+                {
+                    throw new Exception($"Can not get model configuration for {nameof(BlacklistEntry)}");
+                }
 
 #if NET452
                 var tableName = entityModel.FindAnnotation("Relational:TableName")?.Value;

@@ -1,5 +1,4 @@
 ﻿using DgcReader.Models;
-using System;
 
 // Copyright (c) 2021 Davide Trevisan
 // Licensed under the Apache License, Version 2.0

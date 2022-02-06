@@ -102,7 +102,7 @@ namespace DgcReader.RuleValidators.Italy
         #region Implementation of IRulesValidator
 
         /// <inheritdoc/>
-        public async Task<IRulesValidationResult> GetRulesValidationResult(EuDGC dgc,
+        public async Task<IRulesValidationResult> GetRulesValidationResult(EuDGC? dgc,
             string dgcJson,
             DateTimeOffset validationInstant,
             string countryCode = "IT",
@@ -204,7 +204,7 @@ namespace DgcReader.RuleValidators.Italy
         /// <param name="blacklistValidationResult">The result from the blacklist validation step</param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        public async Task<IRulesValidationResult> GetRulesValidationResult(EuDGC dgc,
+        public async Task<IRulesValidationResult> GetRulesValidationResult(EuDGC? dgc,
             string dgcJson,
             DateTimeOffset validationInstant,
             ValidationMode validationMode,
@@ -310,7 +310,7 @@ namespace DgcReader.RuleValidators.Italy
         private void CheckVaccinations(EuDGC dgc, ItalianRulesValidationResult result, IEnumerable<RuleSetting> rules,
             SignatureValidationResult? signatureValidation, ValidationMode validationMode)
         {
-            var vaccination = dgc.Vaccinations.Last(r => r.TargetedDiseaseAgent == DiseaseAgents.Covid19);
+            var vaccination = dgc.Vaccinations?.Last(r => r.TargetedDiseaseAgent == DiseaseAgents.Covid19);
             if (vaccination == null) return;
 
             int startDay, endDay;
@@ -419,7 +419,7 @@ namespace DgcReader.RuleValidators.Italy
         private void CheckTests(EuDGC dgc, ItalianRulesValidationResult result, IEnumerable<RuleSetting> rules,
             SignatureValidationResult? signatureValidation, ValidationMode validationMode)
         {
-            var test = dgc.Tests.Last(r => r.TargetedDiseaseAgent == DiseaseAgents.Covid19);
+            var test = dgc.Tests?.Last(r => r.TargetedDiseaseAgent == DiseaseAgents.Covid19);
             if (test == null) return;
 
             // Super Greenpass check
@@ -490,7 +490,8 @@ namespace DgcReader.RuleValidators.Italy
         private void CheckRecoveryStatements(EuDGC dgc, ItalianRulesValidationResult result, IEnumerable<RuleSetting> rules,
             SignatureValidationResult? signatureValidation, ValidationMode validationMode)
         {
-            var recovery = dgc.Recoveries.Last(r => r.TargetedDiseaseAgent == DiseaseAgents.Covid19);
+            var recovery = dgc.Recoveries?.Last(r => r.TargetedDiseaseAgent == DiseaseAgents.Covid19);
+            if (recovery == null) return;
 
             // If mode is not basic, use always rules for Italy
             var countryCode = validationMode == ValidationMode.Basic3G ? recovery.Country : "IT";
@@ -536,7 +537,8 @@ namespace DgcReader.RuleValidators.Italy
         private void CheckExemptionStatements(ItalianDGC italianDgc, ItalianRulesValidationResult result, IEnumerable<RuleSetting> rules,
             SignatureValidationResult? signatureValidation, ValidationMode validationMode)
         {
-            var exemption = italianDgc.Exemptions.Last(r => r.TargetedDiseaseAgent == DiseaseAgents.Covid19);
+            var exemption = italianDgc.Exemptions?.Last(r => r.TargetedDiseaseAgent == DiseaseAgents.Covid19);
+            if (exemption == null) return;
 
             result.ValidFrom = exemption.ValidFrom;
             result.ValidUntil = exemption.ValidUntil;

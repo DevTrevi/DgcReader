@@ -5,6 +5,7 @@ using System.Collections.Generic;
 // Licensed under the Apache License, Version 2.0
 // Based on the original work of Myndigheten för digital förvaltning (DIGG)
 
+#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
 
 namespace DgcReader.TrustListProviders.Sweden
 {

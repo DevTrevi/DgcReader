@@ -25,10 +25,6 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 #endif
 
-#if NETSTANDARD2_0_OR_GREATER || NET5_0_OR_GREATER || NET47_OR_GREATER
-using Microsoft.Extensions.Logging;
-#endif
-
 
 
 // Copyright (c) 2021 Davide Trevisan

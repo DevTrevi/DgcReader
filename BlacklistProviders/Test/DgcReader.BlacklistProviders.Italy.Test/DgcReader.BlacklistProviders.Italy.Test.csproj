@@ -2,11 +2,15 @@
 
 	<PropertyGroup>
 		<TargetFrameworks>net452;net47;net6.0;net5.0</TargetFrameworks>
-		<Nullable>enable</Nullable>
+		<Nullable>annotations</Nullable>
 		<LangVersion>Latest</LangVersion>
 		<IsPackable>false</IsPackable>
 		<UserSecretsId>3bbeb6ed-0da8-4bd5-b078-2b231198c9ad</UserSecretsId>
 	</PropertyGroup>
+	<PropertyGroup Condition="'$(TargetFramework)' == 'net5.0' OR '$(TargetFramework)' == 'net6.0' ">
+		<Nullable>enable</Nullable>
+	</PropertyGroup>
+
 
 	<ItemGroup>
 		<PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.0.0" />

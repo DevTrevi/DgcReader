@@ -23,6 +23,7 @@ namespace DgcReader.RuleValidators.Italy
         /// Read the extended key usage identifiers from the signer certificate
         /// </summary>
         /// <param name="signatureValidation"></param>
+        /// <param name="logger"></param>
         /// <returns></returns>
         public static IEnumerable<string> GetExtendedKeyUsages(SignatureValidationResult? signatureValidation, ILogger? logger)
         {
@@ -57,8 +58,13 @@ namespace DgcReader.RuleValidators.Italy
                 var certificate = new X509Certificate2(signatureValidation.PublicKeyData.Certificate);
                 var enhancedKeyExtensions = certificate.Extensions.OfType<X509EnhancedKeyUsageExtension>();
 
+                if (enhancedKeyExtensions == null)
+                    return Enumerable.Empty<string>();
+
                 return enhancedKeyExtensions
-                    .SelectMany(e => e.EnhancedKeyUsages.OfType<Oid>().Select(r => r.Value))
+                    .SelectMany(e => e.EnhancedKeyUsages.OfType<Oid>())
+                    .Where(r => !string.IsNullOrEmpty(r.Value))
+                    .Select(r=>r.Value).Cast<string>()
                     .ToArray();
 #endif
             }

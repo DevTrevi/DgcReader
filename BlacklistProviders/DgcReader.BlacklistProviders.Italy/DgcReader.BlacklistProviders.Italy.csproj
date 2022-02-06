@@ -5,18 +5,21 @@
 		<!--<OutputType>Exe</OutputType>-->
 		<TargetFrameworks>net452;net47;netstandard2.0;netstandard2.1;net6.0</TargetFrameworks>
 		<LangVersion>Latest</LangVersion>
-		<Nullable>enable</Nullable>
+		<Nullable>annotations</Nullable>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<Authors>Davide Trevisan</Authors>
 		<Copyright>Copyright © 2021 Davide Trevisan</Copyright>
 		<RepositoryUrl>https://github.com/DevTrevi/DGCReader</RepositoryUrl>
 		<PackageTags>DGC DCC DigitalGreenCertificate DigitalCovidCertificate Greenpass VerificaC19 Blacklist DRL</PackageTags>
 		<Description>Blacklist provider implementation using the official Italian backend APIs. This provider is included in the list of verified SDKs by Italian authorities</Description>
-    <Version>2.3.0</Version>
+		<Version>2.4.0</Version>
 		<PackageLicenseExpression> Apache-2.0</PackageLicenseExpression>
 		<PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
 		<PackageProjectUrl>https://github.com/DevTrevi/DgcReader</PackageProjectUrl>
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(TargetFramework)' == 'netstandard2.1' OR '$(TargetFramework)' == 'net6.0' ">
+		<Nullable>enable</Nullable>
 	</PropertyGroup>
 
 	<ItemGroup>

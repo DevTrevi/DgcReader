@@ -21,13 +21,13 @@ namespace DgcReader.TrustListProviders.Italy.Models
 
         /// <inheritdoc/>
         [JsonProperty("ka")]
-        public string KeyAlgorithm { get; set; }
+        public string? KeyAlgorithm { get; set; }
 
         /// <summary>
         /// Signature algorithm name
         /// </summary>
         [JsonProperty("sa")]
-        public string SignatureAlgo { get; set; }
+        public string? SignatureAlgo { get; set; }
 
         /// <summary>
         /// ECDsa public key parameters

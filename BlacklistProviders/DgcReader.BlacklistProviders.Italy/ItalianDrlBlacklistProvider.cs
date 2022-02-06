@@ -27,6 +27,12 @@ namespace DgcReader.BlacklistProviders.Italy
         private readonly SingleTaskRunner<SyncStatus> RefreshBlacklistTaskRunner;
         private DateTime LastRefreshAttempt;
 
+        /// <inheritdoc cref="ItalianDrlBlacklistManager.DownloadProgressChanged"/>
+        public event EventHandler<DownloadProgressEventArgs> DownloadProgressChanged
+        {
+            add { BlacklistManager.DownloadProgressChanged += value; }
+            remove { BlacklistManager.DownloadProgressChanged -= value; }
+        }
 
         #region Constructor
 #if NET452

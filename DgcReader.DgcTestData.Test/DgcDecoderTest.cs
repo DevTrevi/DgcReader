@@ -26,7 +26,7 @@ namespace DgcReader.DgcTestData.Test
         DgcReaderService DgcReader { get; set; }
 
         [TestInitialize]
-        public async Task Initialize()
+        public void Initialize()
         {
 
 #if NET452
@@ -36,11 +36,11 @@ namespace DgcReader.DgcTestData.Test
             var trustListProvider = new TestTrustListProvider(loader);
             DgcReader = DgcReaderService.Create(trustListProvider);
 
-            TestEntries = await loader.LoadTestEntries();
+            TestEntries = loader.LoadTestEntries();
 #else
             DgcReader = ServiceProvider.GetRequiredService<DgcReaderService>();
             var loader = ServiceProvider.GetRequiredService<CertificatesTestsLoader>();
-            TestEntries = await loader.LoadTestEntries();
+            TestEntries = loader.LoadTestEntries();
 #endif
         }
 

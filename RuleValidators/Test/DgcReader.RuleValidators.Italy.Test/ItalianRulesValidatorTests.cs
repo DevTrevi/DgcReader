@@ -1,13 +1,5 @@
-using System;
-using System.Diagnostics;
-using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using DgcReader.RuleValidators.Italy;
-using DgcReader;
 using System.Threading.Tasks;
-using System.Collections.Generic;
-using DgcReader.Exceptions;
-using GreenpassReader.Models;
 using DgcReader.Interfaces.RulesValidators;
 
 #if NETFRAMEWORK
@@ -28,7 +20,7 @@ namespace DgcReader.RuleValidators.Italy.Test
         DgcItalianRulesValidator Validator { get; set; }
 
         [TestInitialize]
-        public async Task Initialize()
+        public void Initialize()
         {
 
 #if NET452
@@ -45,16 +37,7 @@ namespace DgcReader.RuleValidators.Italy.Test
         [TestMethod]
         public async Task TestRefreshRulesList()
         {
-            try
-            {
-                await Validator.RefreshRules();
-            }
-            catch (Exception e)
-            {
-
-                throw;
-            }
-
+            await Validator.RefreshRules();
         }
 
         [TestMethod]
@@ -79,14 +62,14 @@ namespace DgcReader.RuleValidators.Italy.Test
 #if !NET452
 
         [TestMethod]
-        public async Task TestGetDgcItalianRulesValidatorService()
+        public void TestGetDgcItalianRulesValidatorService()
         {
             var service = ServiceProvider.GetService<DgcItalianRulesValidator>();
             Assert.IsNotNull(service);
         }
 
         [TestMethod]
-        public async Task TestGetIRulesValidatorSerice()
+        public void TestGetIRulesValidatorSerice()
         {
             var interfaceService = ServiceProvider.GetService<IRulesValidator>();
             Assert.IsNotNull(interfaceService);

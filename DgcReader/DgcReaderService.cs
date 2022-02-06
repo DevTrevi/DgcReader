@@ -104,11 +104,11 @@ namespace DgcReader
             string qrCodeData,
             string acceptanceCountryCode,
             DateTimeOffset validationInstant,
-            Func<EuDGC, string, string, DateTimeOffset, SignatureValidationResult, BlacklistValidationResult, CancellationToken, Task<IRulesValidationResult?>>? rulesValidatorFunction,
+            Func<EuDGC?, string, string, DateTimeOffset, SignatureValidationResult, BlacklistValidationResult, CancellationToken, Task<IRulesValidationResult?>>? rulesValidatorFunction,
             bool throwOnError = true,
             CancellationToken cancellationToken = default)
         {
-            var result = new DgcValidationResult()
+            DgcValidationResult result = new()
             {
                 ValidationInstant = validationInstant,
                 AcceptanceCountry = acceptanceCountryCode,
@@ -427,13 +427,16 @@ namespace DgcReader
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
         /// <exception cref="DgcBlackListException"></exception>
-        private async Task<BlacklistValidationResult> GetBlacklistValidationResult(EuDGC dgc, bool throwOnError, CancellationToken cancellationToken = default)
+        private async Task<BlacklistValidationResult> GetBlacklistValidationResult(EuDGC? dgc, bool throwOnError, CancellationToken cancellationToken = default)
         {
             var context = new BlacklistValidationResult()
             {
                 BlacklistVerified = false,
                 IsBlacklisted = null,
             };
+
+            if (dgc == null)
+                return context;
 
             if (BlackListProviders?.Any() == true)
             {
@@ -487,7 +490,7 @@ namespace DgcReader
         /// <returns></returns>
         /// <exception cref="DgcRulesValidationException"></exception>
         private async Task<IRulesValidationResult?> GetRulesValidationResult(
-            EuDGC dgc,
+            EuDGC? dgc,
             string dgcJson,
             string acceptanceCountryCode,
             DateTimeOffset validationInstant,

@@ -39,7 +39,7 @@ namespace DgcReader.DgcTestData.Test.Services
         };
 
         /// <summary>
-        /// Instantiate the loader class, specifying the path of the 
+        /// Instantiate the loader class, specifying the path of the
         /// <see href="https://github.com/eu-digital-green-certificates/dgc-testdata">dgc-testdata repository</see> folder
         /// </summary>
         /// <param name="basePath"></param>
@@ -52,7 +52,7 @@ namespace DgcReader.DgcTestData.Test.Services
         /// Load all the entries from the base path, scanning all the subfolders
         /// </summary>
         /// <returns></returns>
-        public async Task<IDictionary<string, IEnumerable<TestEntry>>> LoadTestEntries()
+        public IDictionary<string, IEnumerable<TestEntry>> LoadTestEntries()
         {
             var directories = Directory.GetDirectories(basePath)
                 .Select(d => Path.GetFileName(d))
@@ -64,7 +64,7 @@ namespace DgcReader.DgcTestData.Test.Services
             var temp = new Dictionary<string, IEnumerable<TestEntry>>();
             foreach (var dir in directories)
             {
-                temp.Add(dir, await LoadTestEntries(dir));
+                temp.Add(dir, LoadTestEntries(dir));
             }
             return temp;
 
@@ -76,7 +76,7 @@ namespace DgcReader.DgcTestData.Test.Services
         /// </summary>
         /// <param name="folder"></param>
         /// <returns></returns>
-        public async Task<IEnumerable<TestEntry>> LoadTestEntries(string folder)
+        public IEnumerable<TestEntry> LoadTestEntries(string folder)
         {
             if (!string.IsNullOrEmpty(basePath))
                 folder = Path.Combine(basePath, folder);
@@ -90,11 +90,8 @@ namespace DgcReader.DgcTestData.Test.Services
             {
                 try
                 {
-#if NET5_0_OR_GREATER
-                    var json = await File.ReadAllTextAsync(file);
-#else
                     var json = File.ReadAllText(file);
-#endif
+
                     var entry = JsonConvert.DeserializeObject<TestEntry>(json, SerializerSettings);
                     entry.Filename = Path.GetFileName(file);
                     temp.Add(entry);

@@ -8,7 +8,6 @@ using DgcReader.Interfaces.TrustListProviders;
 using System.Net.Http;
 
 #if NETFRAMEWORK
-using DgcReader.Interfaces.TrustListProviders;
 using System.Net;
 #endif
 
@@ -31,7 +30,7 @@ namespace DgcReader.TrustListProviders.Sweden.Test
         ITrustListProvider TrustListProvider { get; set; }
 
         [TestInitialize]
-        public async Task Initialize()
+        public void Initialize()
         {
 
 #if NET452
@@ -46,54 +45,37 @@ namespace DgcReader.TrustListProviders.Sweden.Test
         [TestMethod]
         public async Task TestRefreshTrustList()
         {
-            try
-            {
-                var test = await TrustListProvider.RefreshTrustList();
-                Assert.IsNotNull(test);
-                Assert.IsTrue(test.Any());
-            }
-            catch (Exception e)
-            {
-                throw;
-            }
-
+            var test = await TrustListProvider.RefreshTrustList();
+            Assert.IsNotNull(test);
+            Assert.IsTrue(test.Any());
         }
 
 
         [TestMethod]
         public async Task TestConcurrency()
         {
-            try
+            var rnd = new Random();
+            var tasks = new List<Task>();
+            for (int i = 0; i < 100; i++)
             {
-                var rnd = new Random();
-                var tasks = new List<Task>();
-                for (int i = 0; i < 100; i++)
+                tasks.Add(Task.Run(async () =>
                 {
-                    tasks.Add(Task.Run(async () =>
-                    {
 
-                        var n = i;
-                        await Task.Delay(rnd.Next(250));
-                        var start = DateTime.Now;
-                        var results = await TrustListProvider.GetTrustList();
-                        Assert.IsNotNull(results);
-                        Assert.IsTrue(results.Any());
+                    var n = i;
+                    await Task.Delay(rnd.Next(250));
+                    var start = DateTime.Now;
+                    var results = await TrustListProvider.GetTrustList();
+                    Assert.IsNotNull(results);
+                    Assert.IsTrue(results.Any());
 
-                        var time = DateTime.Now - start;
-                        Debug.WriteLine($"Request {n} completed in {time} with {results?.Count().ToString() ?? "empty"} results");
-                    }));
-                };
+                    var time = DateTime.Now - start;
+                    Debug.WriteLine($"Request {n} completed in {time} with {results?.Count().ToString() ?? "empty"} results");
+                }));
+            };
 
-                Task.WaitAll(tasks.ToArray(), TimeSpan.FromSeconds(90));
+            Task.WaitAll(tasks.ToArray(), TimeSpan.FromSeconds(90));
 
-                await Task.Delay(5);
-            }
-            catch (Exception e)
-            {
-
-                throw;
-            }
-
+            await Task.Delay(5);
         }
 
 

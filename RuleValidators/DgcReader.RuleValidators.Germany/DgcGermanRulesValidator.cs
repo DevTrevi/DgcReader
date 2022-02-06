@@ -146,7 +146,7 @@ namespace DgcReader.RuleValidators.Germany
         #region Implementation of IRulesValidator
 
         /// <inheritdoc/>
-        public async Task<IRulesValidationResult> GetRulesValidationResult(EuDGC dgc,
+        public async Task<IRulesValidationResult> GetRulesValidationResult(EuDGC? dgc,
             string dgcJson,
             DateTimeOffset validationInstant,
             string countryCode = "DE",

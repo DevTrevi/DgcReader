@@ -386,9 +386,10 @@ namespace DgcReader.Cwt.Cose
 
                 var parameters = new ECParameters
                 {
-                    Curve = string.IsNullOrEmpty(ec.Curve) ?
-                        ECCurve.CreateFromFriendlyName(ec.CurveFriendlyName) :
-                        ECCurve.CreateFromValue(ec.Curve),
+                    Curve = !string.IsNullOrEmpty(ec.Curve) ? ECCurve.CreateFromValue(ec.Curve) :
+                        !string.IsNullOrEmpty(ec.CurveFriendlyName) ? ECCurve.CreateFromFriendlyName(ec.CurveFriendlyName) :
+                        default,
+
                     Q = new ECPoint() { X = ec.X, Y = ec.Y }
                 };
 

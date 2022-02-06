@@ -64,11 +64,11 @@ namespace DgcReader.DgcTestData.Test.Services
         }
 
         /// <inheritdoc/>
-        public async Task<IEnumerable<ITrustedCertificateData>> RefreshTrustList(CancellationToken cancellationToken = default)
+        public Task<IEnumerable<ITrustedCertificateData>> RefreshTrustList(CancellationToken cancellationToken = default)
         {
-            var entries = await Loader.LoadTestEntries();
+            var entries = Loader.LoadTestEntries();
             TrustList = ToTrustListData(entries.SelectMany(e => e.Value.Select(r => (e.Key, r))));
-            return TrustList;
+            return Task.FromResult(TrustList);
         }
         #endregion
 
@@ -147,7 +147,7 @@ namespace DgcReader.DgcTestData.Test.Services
                 var ecdsa = cert.GetECDsaPublicKey();
                 if (ecdsa != null)
                     EC = new ECParams(ecdsa.ExportParameters(false));
-                
+
 
                 var rsa = cert.GetRSAPublicKey();
                 if (rsa != null)

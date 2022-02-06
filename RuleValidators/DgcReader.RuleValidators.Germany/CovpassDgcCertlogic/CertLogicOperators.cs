@@ -104,10 +104,11 @@ namespace DgcReader.RuleValidators.Germany.CovpassDgcCertlogic
         {
             if (args.Length != 3)
                 throw new ArgumentException($"Expected 3 arguments for plusTime operator: datetime, integer and time unit");
-
+#pragma warning disable CS8604 // Possible null reference argument.
             var value = p.Apply(args[0], data);
             var offset = Convert.ToInt32(p.Apply(args[1], data));
             var unit = Enum.Parse(typeof(TimeUnit), p.Apply(args[2], data)?.ToString(), ignoreCase: true);
+#pragma warning restore CS8604 // Possible null reference argument.
 
             DateTimeOffset dateTimeOff;
             if (value is DateTimeOffset dto)
@@ -249,7 +250,9 @@ namespace DgcReader.RuleValidators.Germany.CovpassDgcCertlogic
             if (haystack is null) return false;
             if (haystack is string s)
             {
+#pragma warning disable CS8604 // Possible null reference argument.
                 return s.IndexOf(needle.ToString()) >= 0;
+#pragma warning restore CS8604 // Possible null reference argument.
             }
 
             if(haystack is JArray jarr)

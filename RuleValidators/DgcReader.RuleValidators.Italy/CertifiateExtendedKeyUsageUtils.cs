@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Extensions.Logging;
 using DgcReader.Models;
+using System.Text;
 
 #if NETSTANDARD
 using System.Text;
@@ -55,7 +56,7 @@ namespace DgcReader.RuleValidators.Italy
                 return Enumerable.Empty<string>();
 
 #else
-                var certificate = new X509Certificate2(signatureValidation.PublicKeyData.Certificate);
+                var certificate = new X509Certificate2(signatureValidation.PublicKeyData.Certificate); 
                 var enhancedKeyExtensions = certificate.Extensions.OfType<X509EnhancedKeyUsageExtension>();
 
                 if (enhancedKeyExtensions == null)
@@ -82,7 +83,8 @@ namespace DgcReader.RuleValidators.Italy
             const string PemHeader = "-----BEGIN CERTIFICATE-----";
             const string PemFooter = "-----END CERTIFICATE-----";
 
-            var decoded = Encoding.ASCII.GetString(certificateData);
+            var decoded = Convert.ToBase64String(certificateData);
+           
             if (!decoded.StartsWith(PemHeader) && !decoded.EndsWith(PemFooter))
             {
                 decoded = PemHeader + "\n" + decoded + "\n" + PemFooter;

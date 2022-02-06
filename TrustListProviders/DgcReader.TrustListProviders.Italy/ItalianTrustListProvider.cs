@@ -304,8 +304,9 @@ namespace DgcReader.TrustListProviders.Italy
                 var response = await _httpClient.SendAsync(request, cancellationToken);
                 if (response.IsSuccessStatusCode)
                 {
-                    var content = await response.Content.ReadAsByteArrayAsync();
-
+                    var stringContent = await response.Content.ReadAsStringAsync();
+                    var content = Convert.FromBase64String(stringContent);
+                 
                     int? newToken = null;
                     if (response.Headers.TryGetValues(HeaderResumeToken, out var newTokens))
                     {

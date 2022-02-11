@@ -25,8 +25,13 @@ namespace DgcReader.RuleValidators.Italy.Models
         Booster,
 
         /// <summary>
-        /// Validates certificate applying rules for school
+        /// Validates the certificate applying rules for school
         /// </summary>
         School,
+
+        /// <summary>
+        /// Validates the certificate applying rules for work
+        /// </summary>
+        Work
     }
 }

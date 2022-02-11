@@ -24,5 +24,10 @@ namespace DgcReader.RuleValidators.Italy
         /// NOTE: this is the version of the android app using the <see cref="ReferenceSdkMinVersion"/> of the SDK. The SDK version is not available in the settings right now.
         /// </summary>
         public const string ReferenceAppMinVersion = "1.2.0";
+
+        /// <summary>
+        /// Age from which the vaccine is mandatory when using work mode
+        /// </summary>
+        public const int VaccineMandatoryAge = 50;
     }
 }

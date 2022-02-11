@@ -1,12 +1,4 @@
-trigger:
-  paths:
-   exclude:
-     - README.md
-     - '**/*.Test'
-  tags:
-    include:
-      - 'v2.*'
-pr: none
+trigger: none
 
 variables:
 - group: NuGet

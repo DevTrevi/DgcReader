@@ -444,25 +444,39 @@ namespace DgcReader
 
                 // Tracking the validated CertificateIdentifier
                 context.CertificateIdentifier = certEntry.CertificateIdentifier;
-
-                foreach (var blacklistProvider in BlackListProviders)
+                try
                 {
-                    var blacklisted = await blacklistProvider.IsBlacklisted(certEntry.CertificateIdentifier, cancellationToken);
-
-                    // At least one check performed
-                    context.BlacklistVerified = true;
-
-                    if (blacklisted)
+                    foreach (var blacklistProvider in BlackListProviders)
                     {
-                        context.IsBlacklisted = true;
-                        context.BlacklistMatchProviderType = blacklistProvider.GetType();
+                        var blacklisted = await blacklistProvider.IsBlacklisted(certEntry.CertificateIdentifier, cancellationToken);
 
-                        Logger?.LogWarning($"The certificate is blacklisted");
-                        if (throwOnError)
-                            throw new DgcBlackListException($"The certificate is blacklisted", context);
+                        // At least one check performed
+                        context.BlacklistVerified = true;
 
-                        return context;
+                        if (blacklisted)
+                        {
+                            context.IsBlacklisted = true;
+                            context.BlacklistMatchProviderType = blacklistProvider.GetType();
+
+                            Logger?.LogWarning($"The certificate is blacklisted");
+                            if (throwOnError)
+                                throw new DgcBlackListException($"The certificate is blacklisted", context);
+
+                            return context;
+                        }
                     }
+                }
+                catch (Exception e)
+                {
+                    // Technical failure, stop blacklist check and set as not verified
+                    context.BlacklistVerified = false;
+                    context.IsBlacklisted = null;
+                    Logger?.LogError(e, $"Error while checking blacklist: {e.Message}");
+
+                    if (throwOnError)
+                        throw new DgcBlackListException($"Error while checking blacklist: {e.Message}", context, e);
+
+                    return context;
                 }
                 context.IsBlacklisted = false;
             }

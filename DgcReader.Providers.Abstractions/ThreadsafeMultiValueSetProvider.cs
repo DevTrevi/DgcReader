@@ -141,7 +141,23 @@ namespace DgcReader.Providers.Abstractions
                 {
                     // If not UseAvailableRulesWhileRefreshing, always wait for the task to complete
                     Logger?.LogInformation($"Values for {GetValuesetName(key)} are expired, waiting for refresh to complete");
-                    return await refreshTask;
+
+                    try
+                    {
+                        valueSet = await refreshTask;
+                    }
+                    catch (Exception e)
+                    {
+                        if (valueSet != null)
+                        {
+                            var lastUpdate = GetLastUpdate(valueSet);
+                            Logger?.LogWarning(e, $"Can not refresh {GetValuesetName(key)} from remote server: {e.Message}. Current values downloaded on {lastUpdate} will be used");
+                        }
+                        else
+                        {
+                            Logger?.LogError(e, $"Can not refresh {GetValuesetName(key)} from remote server. No values available to be used");
+                        }
+                    }
                 }
             }
 

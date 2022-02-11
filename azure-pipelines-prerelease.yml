@@ -24,10 +24,10 @@ steps:
     versionEnvVar: 'prerelease-version'
     verbosityPack: 'Normal'
 
-#- task: NuGetToolInstaller@1
-#  displayName: 'Install NuGet'
-#- script: nuget push $(Build.ArtifactStagingDirectory)\**\*.nupkg -Source $(nugetSource) -ApiKey $(nuget-org-apikey) -SkipDuplicate -NoSymbols
-#  displayName: 'Push to NuGet.org'
+- task: NuGetToolInstaller@1
+  displayName: 'Install NuGet'
+- script: nuget push $(Build.ArtifactStagingDirectory)\**\*.nupkg -Source $(nugetSource) -ApiKey $(nuget-org-apikey) -SkipDuplicate -NoSymbols
+  displayName: 'Push to NuGet.org'
 
 
 - task: PublishBuildArtifacts@1

@@ -26,7 +26,7 @@ namespace DgcReader.RuleValidators.Italy.Models
         /// </summary>
         /// <param name="json"></param>
         /// <returns></returns>
-        public static new ItalianDGC? FromJson(string json) => JsonConvert.DeserializeObject<ItalianDGC>(json, Converter.Settings);
+        public static new ItalianDGC? FromJson(string json) => JsonConvert.DeserializeObject<ItalianDGC>(json, EuDGCConverter.Settings);
     }
 
     /// <summary>

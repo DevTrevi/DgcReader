@@ -72,19 +72,11 @@ namespace DgcReader.RuleValidators.Italy.Models
         NotValidated,
 
         /// <summary>
-        /// The certificate is not a valid EU DCC
-        /// </summary>
-        NotEuDCC,
-
-        /// <summary>
         /// The certificate has an invalid signature
         /// </summary>
         InvalidSignature,
 
-        /// <summary>
-        /// The certificate is blacklisted or temporarily revoked
-        /// </summary>
-        Revoked,
+
 
         /// <summary>
         /// The certificate is not valid
@@ -97,13 +89,28 @@ namespace DgcReader.RuleValidators.Italy.Models
         NotValidYet,
 
         /// <summary>
-        /// Certificate is not enough for the required validation mode, and needs to be integrated by a test
-        /// </summary>
-        TestNeeded,
-
-        /// <summary>
         /// The certificate is valid
         /// </summary>
         Valid,
+
+        /// <summary>
+        /// The certificate is expired
+        /// </summary>
+        Expired,
+
+        /// <summary>
+        /// The certificate is blacklisted or temporarily revoked
+        /// </summary>
+        Revoked,
+
+        /// <summary>
+        /// The certificate is not a valid EU DCC
+        /// </summary>
+        NotEuDCC,
+
+        /// <summary>
+        /// Certificate is not enough for the required validation mode, and needs to be integrated by a test
+        /// </summary>
+        TestNeeded,
     }
 }

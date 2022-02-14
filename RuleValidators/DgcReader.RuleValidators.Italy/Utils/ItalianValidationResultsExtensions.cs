@@ -2,6 +2,7 @@
 using DgcReader.Interfaces.RulesValidators;
 using DgcReader.Models;
 using DgcReader.RuleValidators.Italy;
+using DgcReader.RuleValidators.Italy.Const;
 using DgcReader.RuleValidators.Italy.Models;
 using System;
 using System.Linq;
@@ -71,7 +72,7 @@ namespace DgcReader
             bool throwOnError = true,
             CancellationToken cancellationToken = default)
         {
-            return await dgcReaderService.Verify(qrCodeData, "IT", validationInstant,
+            return await dgcReaderService.Verify(qrCodeData, CountryCodes.Italy, validationInstant,
                 async (dgc, dgcJson, countryCode, validationInstant, signatureValidation, blacklistValidation, cancellationToken) =>
                 {
                     var italianValidator = dgcReaderService.RulesValidators.OfType<DgcItalianRulesValidator>().FirstOrDefault();

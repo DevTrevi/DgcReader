@@ -1,7 +1,9 @@
 ﻿using DgcReader.RuleValidators.Italy.Const;
 using DgcReader.RuleValidators.Italy.Models;
+using GreenpassReader.Models;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 
 // Copyright (c) 2021 Davide Trevisan
@@ -11,6 +13,8 @@ namespace DgcReader.RuleValidators.Italy
 {
     internal static class RulesExtensionMethods
     {
+        const int NoValue = 0;
+
         /// <summary>
         /// Search the rule with the specified type.
         /// If no match exists for the specified type, returns null.
@@ -36,17 +40,22 @@ namespace DgcReader.RuleValidators.Italy
             return null;
         }
 
+        /// <summary>
+        /// Returns the required integer value, or <see cref="NoValue"/> as fallback
+        /// </summary>
+        /// <param name="settings"></param>
+        /// <param name="name"></param>
+        /// <param name="type"></param>
+        /// <returns></returns>
         public static int GetRuleInteger(this IEnumerable<RuleSetting> settings, string name, string type = SettingTypes.Generic)
         {
-            var rule = settings.GetRule(name, type);
-            if (rule == null)
-                throw new Exception($"No rules found for setting {name} and type {type}");
-
-            var value = rule.ToInteger();
+            var value = settings.GetRuleNullableInteger(name, type);
             if (value == null)
-                throw new Exception($"Invalid value {rule.Value} in rule {name} type {type}");
+            {
+                Debug.WriteLine($"No rules found for setting {name} and type {type}. Returning default value {NoValue}");
+            }
 
-            return value.Value;
+            return value ?? NoValue;
         }
 
         public static int? GetRuleNullableInteger(this IEnumerable<RuleSetting> settings, string name, string type = SettingTypes.Generic)
@@ -83,20 +92,20 @@ namespace DgcReader.RuleValidators.Italy
 
         public static int GetRecoveryCertStartDayUnified(this IEnumerable<RuleSetting> settings, string issuerCountryCode)
         {
-            return issuerCountryCode.ToUpperInvariantNotNull() == "IT" ?
-                settings.GetRuleNullableInteger(SettingNames.RecoveryCertStartDayIT) ?? 0 :
-                settings.GetRuleNullableInteger(SettingNames.RecoveryCertStartDayNotIT) ?? 0;
+            return issuerCountryCode.ToUpperInvariantNotNull() == CountryCodes.Italy ?
+                settings.GetRuleInteger(SettingNames.RecoveryCertStartDayIT) :
+                settings.GetRuleInteger(SettingNames.RecoveryCertStartDayNotIT);
         }
 
         public static int GetRecoveryCertEndDayUnified(this IEnumerable<RuleSetting> settings, string issuerCountryCode)
         {
-            return issuerCountryCode.ToUpperInvariantNotNull() == "IT" ?
-                settings.GetRuleNullableInteger(SettingNames.RecoveryCertEndDayIT) ?? 180 :
-                settings.GetRuleNullableInteger(SettingNames.RecoveryCertEndDayNotIT) ?? 270;
+            return issuerCountryCode.ToUpperInvariantNotNull() == CountryCodes.Italy ?
+                settings.GetRuleInteger(SettingNames.RecoveryCertEndDayIT) :
+                settings.GetRuleInteger(SettingNames.RecoveryCertEndDayNotIT);
         }
 
         public static int GetRecoveryCertEndDaySchool(this IEnumerable<RuleSetting> settings)
-            => settings.GetRuleNullableInteger(SettingNames.RecoveryCertEndDaySchool) ?? 120;
+            => settings.GetRuleInteger(SettingNames.RecoveryCertEndDaySchool);
         #endregion
 
         #region Test
@@ -117,7 +126,6 @@ namespace DgcReader.RuleValidators.Italy
         public static int GetVaccineEndDayNotComplete(this IEnumerable<RuleSetting> settings, string vaccineType)
             => settings.GetRuleInteger(SettingNames.VaccineEndDayNotComplete, vaccineType);
 
-        [Obsolete]
         public static int GetVaccineStartDayComplete(this IEnumerable<RuleSetting> settings, string vaccineType)
             => settings.GetRuleInteger(SettingNames.VaccineStartDayComplete, vaccineType);
 
@@ -127,39 +135,69 @@ namespace DgcReader.RuleValidators.Italy
 
         public static int GetVaccineStartDayCompleteUnified(this IEnumerable<RuleSetting> settings, string issuerCountryCode, string vaccineType)
         {
-            var daysToAdd = vaccineType == VaccineProducts.JeJVacineCode ? 15 : 0;
+            var daysToAdd = vaccineType == VaccineProducts.JeJVacineCode ? settings.GetVaccineStartDayComplete(VaccineProducts.JeJVacineCode) : NoValue;
 
-            var startDay = issuerCountryCode.ToUpperInvariantNotNull() == "IT" ?
-                settings.GetRuleNullableInteger(SettingNames.VaccineStartDayCompleteIT) ?? 0 :
-                settings.GetRuleNullableInteger(SettingNames.VaccineStartDayCompleteNotIT) ?? 0;
+            var startDay = issuerCountryCode.ToUpperInvariantNotNull() == CountryCodes.Italy ?
+                settings.GetRuleInteger(SettingNames.VaccineStartDayCompleteIT) :
+                settings.GetRuleInteger(SettingNames.VaccineStartDayCompleteNotIT);
 
             return startDay + daysToAdd;
         }
 
-        public static int GetVaccineEndDayCompleteUnified(this IEnumerable<RuleSetting> settings, string issuerCountryCode, ValidationMode validationMode)
+        public static int GetVaccineEndDayCompleteUnified(this IEnumerable<RuleSetting> settings, string issuerCountryCode)
         {
-            if (validationMode == ValidationMode.School)
-                return settings.GetRuleNullableInteger(SettingNames.VaccineEndDaySchool) ?? 120;
-
-            return issuerCountryCode.ToUpperInvariantNotNull() == "IT" ?
-                settings.GetRuleNullableInteger(SettingNames.VaccineEndDayCompleteIT) ?? 180 :
-                settings.GetRuleNullableInteger(SettingNames.VaccineEndDayCompleteNotIT) ?? 270;
+            return issuerCountryCode.ToUpperInvariantNotNull() == CountryCodes.Italy ?
+                settings.GetRuleInteger(SettingNames.VaccineEndDayCompleteIT) :
+                settings.GetRuleInteger(SettingNames.VaccineEndDayCompleteNotIT);
         }
 
         public static int GetVaccineStartDayBoosterUnified(this IEnumerable<RuleSetting> settings, string issuerCountryCode)
         {
-            return issuerCountryCode.ToUpperInvariantNotNull() == "IT" ?
-                settings.GetRuleNullableInteger(SettingNames.VaccineStartDayBoosterIT) ?? 0 :
-                settings.GetRuleNullableInteger(SettingNames.VaccineStartDayBoosterNotIT) ?? 0;
+            return issuerCountryCode.ToUpperInvariantNotNull() == CountryCodes.Italy ?
+                settings.GetRuleInteger(SettingNames.VaccineStartDayBoosterIT) :
+                settings.GetRuleInteger(SettingNames.VaccineStartDayBoosterNotIT);
         }
 
         public static int GetVaccineEndDayBoosterUnified(this IEnumerable<RuleSetting> settings, string issuerCountryCode)
         {
-            return issuerCountryCode.ToUpperInvariantNotNull() == "IT" ?
-                settings.GetRuleNullableInteger(SettingNames.VaccineEndDayBoosterIT) ?? 180 :
-                settings.GetRuleNullableInteger(SettingNames.VaccineEndDayBoosterNotIT) ?? 270;
+            return issuerCountryCode.ToUpperInvariantNotNull() == CountryCodes.Italy ?
+                settings.GetRuleInteger(SettingNames.VaccineEndDayBoosterIT) :
+                settings.GetRuleInteger(SettingNames.VaccineEndDayBoosterNotIT);
         }
 
+        public static int GetVaccineEndDaySchool(this IEnumerable<RuleSetting> settings)
+            => settings.GetRuleInteger(SettingNames.VaccineEndDaySchool);
+
+        public static int GetVaccineEndDayCompleteExtendedEMA(this IEnumerable<RuleSetting> settings)
+            => settings.GetRuleInteger(SettingNames.VaccineEndDayCompleteExtendedEMA);
+
+        /// <summary>
+        /// The EMA approved list of vaccines
+        /// </summary>
+        /// <param name="settings"></param>
+        /// <returns></returns>
+        public static string[] GetEMAVaccines(this IEnumerable<RuleSetting> settings)
+        {
+            return settings.GetRule(SettingNames.EMAVaccines, SettingTypes.Generic)?.Value.Split(';') ?? new string[0];
+        }
+
+        /// <summary>
+        /// Check if the vaccine product is considered valid by EMA
+        /// </summary>
+        /// <param name="settings"></param>
+        /// <param name="medicinalProduct"></param>
+        /// <param name="countryOfVaccination"></param>
+        /// <returns></returns>
+        public static bool IsEMA(this IEnumerable<RuleSetting> settings, string medicinalProduct, string countryOfVaccination)
+        {
+            // also Sputnik is EMA, but only if from San Marino
+            return settings.GetEMAVaccines().Contains(medicinalProduct) ||
+                medicinalProduct == VaccineProducts.Sputnik && countryOfVaccination == CountryCodes.SanMarino;
+        }
+
+        /// <inheritdoc cref="IsEMA(IEnumerable{RuleSetting}, string, string)"/>
+        public static bool IsEMA(this IEnumerable<RuleSetting> settings, VaccinationEntry vaccination)
+            => settings.IsEMA(vaccination.MedicinalProduct, vaccination.Country);
         #endregion
 
         #endregion

@@ -3,6 +3,7 @@ using DgcReader.RuleValidators.Italy.Const;
 using System;
 using System.Globalization;
 using System.Linq;
+using DgcReader.RuleValidators.Italy.Models;
 
 // Copyright (c) 2021 Davide Trevisan
 // Licensed under the Apache License, Version 2.0
@@ -14,6 +15,27 @@ namespace DgcReader.RuleValidators.Italy
     /// </summary>
     public static class CertificateEntryExtensions
     {
+        /// <summary>
+        /// Check if the validated entry was issued by Italy
+        /// </summary>
+        /// <param name="entry"></param>
+        /// <returns></returns>
+        public static bool IsFromItaly(this ICertificateEntry entry) => entry.Country == CountryCodes.Italy;
+
+        /// <summary>
+        /// Check if the validated entry was issued by San Marino
+        /// </summary>
+        /// <param name="entry"></param>
+        /// <returns></returns>
+        public static bool IsFromSanMarino(this ICertificateEntry entry) => entry.Country == "SM";
+
+        /// <summary>
+        /// Check if the vaccination cycle is completed
+        /// </summary>
+        /// <param name="vaccination"></param>
+        /// <returns></returns>
+        public static bool IsComplete(this VaccinationEntry vaccination) => vaccination.DoseNumber >= vaccination.TotalDoseSeries;
+
         /// <summary>
         /// Check if the vaccination is considered a BOOSTER (more doses than initially required)
         /// </summary>
@@ -91,5 +113,41 @@ namespace DgcReader.RuleValidators.Italy
             return age;
         }
 
+
+
+        /// <summary>
+        /// Try to cast the EuDGC as the ItalianDGG customization
+        /// </summary>
+        /// <param name="dgc"></param>
+        /// <returns></returns>
+        public static ItalianDGC? AsItalianDgc(this EuDGC dgc) => dgc as ItalianDGC;
+
+        /// <summary>
+        /// Check if the certificate contains vaccination statements
+        /// </summary>
+        /// <param name="dgc"></param>
+        /// <returns></returns>
+        public static bool HasVaccinations(this EuDGC dgc) => dgc.Vaccinations?.Any() == true;
+
+        /// <summary>
+        /// Check if the certificate contains recovery statements
+        /// </summary>
+        /// <param name="dgc"></param>
+        /// <returns></returns>
+        public static bool HasRecoveries(this EuDGC dgc) => dgc.Recoveries?.Any() == true;
+
+        /// <summary>
+        /// Check if the certificate contains test statements
+        /// </summary>
+        /// <param name="dgc"></param>
+        /// <returns></returns>
+        public static bool HasTests(this EuDGC dgc) => dgc.Tests?.Any() == true;
+
+        /// <summary>
+        /// Check if the certificate contains exemption statements
+        /// </summary>
+        /// <param name="dgc"></param>
+        /// <returns></returns>
+        public static bool HasExemptions(this EuDGC dgc) => dgc.AsItalianDgc()?.Exemptions?.Any() == true;
     }
 }

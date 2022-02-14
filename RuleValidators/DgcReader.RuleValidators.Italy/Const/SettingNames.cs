@@ -27,6 +27,9 @@ namespace DgcReader.RuleValidators.Italy.Const
         public const string VaccineEndDayBoosterNotIT = "vaccine_end_day_booster_NOT_IT";
 
         public const string VaccineEndDaySchool = "vaccine_end_day_school";
+
+        public const string VaccineEndDayCompleteExtendedEMA = "vaccine_end_day_complete_extended_EMA";
+        public const string EMAVaccines = "EMA_vaccines";
         #endregion
 
         #region Test

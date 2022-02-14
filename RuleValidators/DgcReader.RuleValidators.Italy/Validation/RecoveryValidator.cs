@@ -30,8 +30,8 @@ namespace DgcReader.RuleValidators.Italy.Validation
             if (recovery == null)
                 return result;
 
-            // If mode is not basic, use always rules for Italy
-            var countryCode = validationMode == ValidationMode.Basic3G ? recovery.Country : "IT";
+            // If mode is not 3G, use always rules for Italy
+            var countryCode = validationMode == ValidationMode.Basic3G ? recovery.Country : CountryCodes.Italy;
 
             // Check if is PV (post-vaccination) recovery by checking signer certificate
             var isPvRecovery = IsRecoveryPvSignature(certificateModel.SignatureData);
@@ -42,25 +42,29 @@ namespace DgcReader.RuleValidators.Italy.Validation
                 isPvRecovery ? rules.GetRecoveryPvCertEndDay() :
                 rules.GetRecoveryCertEndDayUnified(countryCode);
 
-            result.ValidFrom = recovery.ValidFrom.Date.AddDays(startDaysToAdd);
-            if (validationMode == ValidationMode.School)
-            {
-                // Take the more restrictive from end of "quarantine" after first positive test and the original expiration from the Recovery entry
-                result.ValidUntil = recovery.FirstPositiveTestResult.Date.AddDays(endDaysToAdd);
-                if (recovery.ValidUntil < result.ValidUntil)
-                    result.ValidUntil = recovery.ValidUntil;
-            }
-            else
-            {
-                result.ValidUntil = result.ValidFrom.Value.AddDays(endDaysToAdd);
-            }
+            var startDate =
+                validationMode == ValidationMode.School ? recovery.FirstPositiveTestResult.Date :
+                recovery.ValidFrom.Date;
+            var endDate = startDate.AddDays(endDaysToAdd);
 
-            if (result.ValidFrom > result.ValidationInstant.Date)
+
+            result.ValidFrom = startDate.AddDays(startDaysToAdd);
+            result.ValidUntil = endDate;
+
+            if (result.ValidationInstant.Date < result.ValidFrom)
                 result.ItalianStatus = DgcItalianResultStatus.NotValidYet;
             else if (result.ValidationInstant.Date > result.ValidUntil)
                 result.ItalianStatus = DgcItalianResultStatus.Expired;
             else
-                result.ItalianStatus = validationMode == ValidationMode.Booster ? DgcItalianResultStatus.TestNeeded : DgcItalianResultStatus.Valid;
+            {
+                if (validationMode == ValidationMode.Booster && !isPvRecovery)
+                {
+                    result.ItalianStatus = DgcItalianResultStatus.TestNeeded;
+                    result.StatusMessage = "Certificate is valid, but a test is also needed if mode is booster and the recovery certificate is not issued after a vaccination";
+                }
+                else
+                    result.ItalianStatus = DgcItalianResultStatus.Valid;
+            }
 
             return result;
         }
@@ -78,7 +82,7 @@ namespace DgcReader.RuleValidators.Italy.Validation
             if (signatureValidationResult == null)
                 return false;
 
-            if (signatureValidationResult.Issuer != "IT")
+            if (signatureValidationResult.Issuer != CountryCodes.Italy)
                 return false;
 
             return extendedKeyUsages.Any(usage => CertificateExtendedKeyUsageIdentifiers.RecoveryIssuersIds.Contains(usage));

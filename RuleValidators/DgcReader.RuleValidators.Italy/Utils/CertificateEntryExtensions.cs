@@ -20,7 +20,7 @@ namespace DgcReader.RuleValidators.Italy
         /// </summary>
         /// <param name="entry"></param>
         /// <returns></returns>
-        public static bool IsFromItaly(this ICertificateEntry entry) => entry.Country == "IT";
+        public static bool IsFromItaly(this ICertificateEntry entry) => entry.Country == CountryCodes.Italy;
 
         /// <summary>
         /// Check if the validated entry was issued by San Marino

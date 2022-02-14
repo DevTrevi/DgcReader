@@ -20,7 +20,7 @@ namespace DgcReader
         {
             switch (status)
             {
-                case DgcItalianResultStatus.NotValidated:
+                case DgcItalianResultStatus.NeedRulesVerification:
                     return DgcResultStatus.NeedRulesVerification;
 
                 case DgcItalianResultStatus.NotEuDCC:

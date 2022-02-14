@@ -1,10 +1,7 @@
-﻿using DgcReader.Models;
-using DgcReader.RuleValidators.Italy.Const;
+﻿using DgcReader.RuleValidators.Italy.Const;
 using DgcReader.RuleValidators.Italy.Models;
-using GreenpassReader.Models;
 using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace DgcReader.RuleValidators.Italy.Validation
 {
@@ -39,10 +36,20 @@ namespace DgcReader.RuleValidators.Italy.Validation
                 result.ItalianStatus = DgcItalianResultStatus.Expired;
             else
             {
-                if (validationMode == ValidationMode.Booster)
-                    result.ItalianStatus = DgcItalianResultStatus.TestNeeded;
-                else
-                    result.ItalianStatus = DgcItalianResultStatus.Valid;
+                switch (validationMode)
+                {
+                    case ValidationMode.EntryItaly:
+                        result.ItalianStatus = DgcItalianResultStatus.NotValid;
+                        result.StatusMessage = $"Exemptions are not valid for entry in Italy";
+                        break;
+                    case ValidationMode.Booster:
+                        result.ItalianStatus = DgcItalianResultStatus.TestNeeded;
+                        result.StatusMessage = $"Certificate is valid, but mode {validationMode} requires also a valid test";
+                        break;
+                    default:
+                        result.ItalianStatus = DgcItalianResultStatus.Valid;
+                        break;
+                }
             }
 
             return result;

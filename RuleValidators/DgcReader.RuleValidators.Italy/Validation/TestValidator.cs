@@ -1,5 +1,4 @@
-﻿using DgcReader.Models;
-using DgcReader.RuleValidators.Italy.Const;
+﻿using DgcReader.RuleValidators.Italy.Const;
 using DgcReader.RuleValidators.Italy.Models;
 using GreenpassReader.Models;
 using Microsoft.Extensions.Logging;
@@ -30,12 +29,13 @@ namespace DgcReader.RuleValidators.Italy.Validation
             if (test == null)
                 return result;
 
+
             // Super Greenpass check
             if (new[] {
-                    ValidationMode.Strict2G,
-                    ValidationMode.Booster,
-                    ValidationMode.School
-                }.Contains(validationMode))
+                ValidationMode.Strict2G,
+                ValidationMode.Booster,
+                ValidationMode.School
+            }.Contains(validationMode))
             {
                 result.StatusMessage = $"Test entries are considered not valid when validation mode is {validationMode}";
                 result.ItalianStatus = DgcItalianResultStatus.NotValid;
@@ -46,17 +46,15 @@ namespace DgcReader.RuleValidators.Italy.Validation
             if (test.TestResult == TestResults.NotDetected)
             {
                 // Negative test
-                int startHours, endHours;
-
                 switch (test.TestType)
                 {
                     case TestTypes.Rapid:
-                        startHours = rules.GetRapidTestStartHour();
-                        endHours = rules.GetRapidTestEndHour();
+                        result.ValidFrom = test.SampleCollectionDate.AddHours(rules.GetRapidTestStartHour());
+                        result.ValidUntil = test.SampleCollectionDate.AddHours(rules.GetRapidTestEndHour());
                         break;
                     case TestTypes.Molecular:
-                        startHours = rules.GetMolecularTestStartHour();
-                        endHours = rules.GetMolecularTestEndHour();
+                        result.ValidFrom = test.SampleCollectionDate.AddHours(rules.GetMolecularTestStartHour());
+                        result.ValidUntil = test.SampleCollectionDate.AddHours(rules.GetMolecularTestEndHour());
                         break;
                     default:
                         result.StatusMessage = $"Test type {test.TestType} not supported by current rules";
@@ -64,9 +62,6 @@ namespace DgcReader.RuleValidators.Italy.Validation
                         Logger?.LogWarning(result.StatusMessage);
                         return result;
                 }
-
-                result.ValidFrom = test.SampleCollectionDate.AddHours(startHours);
-                result.ValidUntil = test.SampleCollectionDate.AddHours(endHours);
 
                 // Calculate the status
                 if (result.ValidFrom > result.ValidationInstant)
@@ -93,9 +88,13 @@ namespace DgcReader.RuleValidators.Italy.Validation
                 // Positive test or unknown result
                 if (test.TestResult != TestResults.Detected)
                 {
-                    result.StatusMessage = $"Found test with unkwnown TestResult {test.TestResult}. The certificate is considered invalid";
+                    result.StatusMessage = $"Found test with unkwnown TestResult {test.TestResult}. The certificate is considered not valid";
                     Logger?.LogWarning(result.StatusMessage);
 
+                }
+                else
+                {
+                    result.StatusMessage = "Test result is positive, certificate is not valid";
                 }
 
                 result.ItalianStatus = DgcItalianResultStatus.NotValid;

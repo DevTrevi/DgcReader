@@ -1,5 +1,6 @@
 ﻿using DgcReader.RuleValidators.Italy.Const;
 using DgcReader.RuleValidators.Italy.Models;
+using GreenpassReader.Models;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -91,14 +92,14 @@ namespace DgcReader.RuleValidators.Italy
 
         public static int GetRecoveryCertStartDayUnified(this IEnumerable<RuleSetting> settings, string issuerCountryCode)
         {
-            return issuerCountryCode.ToUpperInvariantNotNull() == "IT" ?
+            return issuerCountryCode.ToUpperInvariantNotNull() == CountryCodes.Italy ?
                 settings.GetRuleInteger(SettingNames.RecoveryCertStartDayIT) :
                 settings.GetRuleInteger(SettingNames.RecoveryCertStartDayNotIT);
         }
 
         public static int GetRecoveryCertEndDayUnified(this IEnumerable<RuleSetting> settings, string issuerCountryCode)
         {
-            return issuerCountryCode.ToUpperInvariantNotNull() == "IT" ?
+            return issuerCountryCode.ToUpperInvariantNotNull() == CountryCodes.Italy ?
                 settings.GetRuleInteger(SettingNames.RecoveryCertEndDayIT) :
                 settings.GetRuleInteger(SettingNames.RecoveryCertEndDayNotIT);
         }
@@ -136,7 +137,7 @@ namespace DgcReader.RuleValidators.Italy
         {
             var daysToAdd = vaccineType == VaccineProducts.JeJVacineCode ? settings.GetVaccineStartDayComplete(VaccineProducts.JeJVacineCode) : NoValue;
 
-            var startDay = issuerCountryCode.ToUpperInvariantNotNull() == "IT" ?
+            var startDay = issuerCountryCode.ToUpperInvariantNotNull() == CountryCodes.Italy ?
                 settings.GetRuleInteger(SettingNames.VaccineStartDayCompleteIT) :
                 settings.GetRuleInteger(SettingNames.VaccineStartDayCompleteNotIT);
 
@@ -145,21 +146,21 @@ namespace DgcReader.RuleValidators.Italy
 
         public static int GetVaccineEndDayCompleteUnified(this IEnumerable<RuleSetting> settings, string issuerCountryCode)
         {
-            return issuerCountryCode.ToUpperInvariantNotNull() == "IT" ?
+            return issuerCountryCode.ToUpperInvariantNotNull() == CountryCodes.Italy ?
                 settings.GetRuleInteger(SettingNames.VaccineEndDayCompleteIT) :
                 settings.GetRuleInteger(SettingNames.VaccineEndDayCompleteNotIT);
         }
 
         public static int GetVaccineStartDayBoosterUnified(this IEnumerable<RuleSetting> settings, string issuerCountryCode)
         {
-            return issuerCountryCode.ToUpperInvariantNotNull() == "IT" ?
+            return issuerCountryCode.ToUpperInvariantNotNull() == CountryCodes.Italy ?
                 settings.GetRuleInteger(SettingNames.VaccineStartDayBoosterIT) :
                 settings.GetRuleInteger(SettingNames.VaccineStartDayBoosterNotIT);
         }
 
         public static int GetVaccineEndDayBoosterUnified(this IEnumerable<RuleSetting> settings, string issuerCountryCode)
         {
-            return issuerCountryCode.ToUpperInvariantNotNull() == "IT" ?
+            return issuerCountryCode.ToUpperInvariantNotNull() == CountryCodes.Italy ?
                 settings.GetRuleInteger(SettingNames.VaccineEndDayBoosterIT) :
                 settings.GetRuleInteger(SettingNames.VaccineEndDayBoosterNotIT);
         }
@@ -191,8 +192,12 @@ namespace DgcReader.RuleValidators.Italy
         {
             // also Sputnik is EMA, but only if from San Marino
             return settings.GetEMAVaccines().Contains(medicinalProduct) ||
-                medicinalProduct == VaccineProducts.Sputnik && countryOfVaccination == "SM";
+                medicinalProduct == VaccineProducts.Sputnik && countryOfVaccination == CountryCodes.SanMarino;
         }
+
+        /// <inheritdoc cref="IsEMA(IEnumerable{RuleSetting}, string, string)"/>
+        public static bool IsEMA(this IEnumerable<RuleSetting> settings, VaccinationEntry vaccination)
+            => settings.IsEMA(vaccination.MedicinalProduct, vaccination.Country);
         #endregion
 
         #endregion

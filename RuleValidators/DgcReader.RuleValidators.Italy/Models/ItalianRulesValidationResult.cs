@@ -15,7 +15,7 @@ namespace DgcReader.RuleValidators.Italy.Models
         /// <summary>
         /// Validation status according to the official Italian SDK
         /// </summary>
-        public DgcItalianResultStatus ItalianStatus { get; internal set; } = DgcItalianResultStatus.NotValidated;
+        public DgcItalianResultStatus ItalianStatus { get; internal set; } = DgcItalianResultStatus.NeedRulesVerification;
 
         #region Implementation of IRulesValidationResult
         /// <summary>
@@ -69,7 +69,7 @@ namespace DgcReader.RuleValidators.Italy.Models
         /// <summary>
         /// The certificate has not been validated by the Italian rules validator
         /// </summary>
-        NotValidated,
+        NeedRulesVerification,
 
         /// <summary>
         /// The certificate has an invalid signature

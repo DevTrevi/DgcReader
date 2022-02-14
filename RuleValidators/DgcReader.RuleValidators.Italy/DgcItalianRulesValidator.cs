@@ -41,7 +41,7 @@ namespace DgcReader.RuleValidators.Italy
         public async Task<IRulesValidationResult> GetRulesValidationResult(EuDGC? dgc,
             string dgcJson,
             DateTimeOffset validationInstant,
-            string countryCode = "IT",
+            string countryCode = CountryCodes.Italy,
             SignatureValidationResult? signatureValidationResult = null,
             BlacklistValidationResult? blacklistValidationResult = null,
             CancellationToken cancellationToken = default)
@@ -60,7 +60,7 @@ namespace DgcReader.RuleValidators.Italy
             {
                 var result = new ItalianRulesValidationResult
                 {
-                    ItalianStatus = DgcItalianResultStatus.NotValidated,
+                    ItalianStatus = DgcItalianResultStatus.NeedRulesVerification,
                     StatusMessage = $"Rules validation for country {countryCode} is not supported by this provider",
                     ValidationMode = validationMode,
                 };
@@ -85,7 +85,7 @@ namespace DgcReader.RuleValidators.Italy
         /// <inheritdoc/>
         public Task<IEnumerable<string>> GetSupportedCountries(CancellationToken cancellationToken = default)
         {
-            return Task.FromResult(new[] { "IT" }.AsEnumerable());
+            return Task.FromResult(new[] { CountryCodes.Italy }.AsEnumerable());
         }
 
         /// <inheritdoc/>
@@ -153,7 +153,7 @@ namespace DgcReader.RuleValidators.Italy
             {
                 ValidationInstant = validationInstant,
                 ValidationMode = validationMode,
-                ItalianStatus = DgcItalianResultStatus.NotValidated,
+                ItalianStatus = DgcItalianResultStatus.NeedRulesVerification,
             };
 
             if (dgc == null || string.IsNullOrEmpty(dgcJson))
@@ -183,7 +183,7 @@ namespace DgcReader.RuleValidators.Italy
                 var rules = rulesContainer?.Rules;
                 if (rules == null)
                 {
-                    result.ItalianStatus = DgcItalianResultStatus.NotValidated;
+                    result.ItalianStatus = DgcItalianResultStatus.NeedRulesVerification;
                     result.StatusMessage = "Unable to get validation rules";
                     return result;
                 }
@@ -195,14 +195,12 @@ namespace DgcReader.RuleValidators.Italy
                 var certificateModel = new ValidationCertificateModel
                 {
                     Dgc = dgc,
-                    DgcJson = dgcJson,
-                    Rules = rules,
                     SignatureData = signatureValidationResult,
                     ValidationInstant = validationInstant,
                 };
 
                 // Try to deserialzie dgc from Json, to get the more specific ItalianDGC
-                if (signatureValidationResult.Issuer == "IT")
+                if (signatureValidationResult.Issuer == CountryCodes.Italy)
                 {
                     try
                     {
@@ -314,7 +312,7 @@ namespace DgcReader.RuleValidators.Italy
                     {
                         ValidationInstant = validationInstant,
                         ValidationMode = validationMode,
-                        ItalianStatus = DgcItalianResultStatus.NotValidated,
+                        ItalianStatus = DgcItalianResultStatus.NeedRulesVerification,
                         StatusMessage = message,
                     };
                     throw new DgcRulesValidationException(message, result);

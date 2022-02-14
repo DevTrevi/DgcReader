@@ -87,7 +87,7 @@ namespace DgcReader.RuleValidators.Italy.Validation
                 if (result.ValidFrom > result.ValidationInstant.Date)
                     result.ItalianStatus = DgcItalianResultStatus.NotValidYet;
                 else if (result.ValidUntil < result.ValidationInstant.Date)
-                    result.ItalianStatus = DgcItalianResultStatus.NotValid;
+                    result.ItalianStatus = DgcItalianResultStatus.Expired;
                 else
                 {
                     if (vaccination.DoseNumber < vaccination.TotalDoseSeries)

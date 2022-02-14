@@ -57,8 +57,8 @@ namespace DgcReader.RuleValidators.Italy.Validation
 
             if (result.ValidFrom > result.ValidationInstant.Date)
                 result.ItalianStatus = DgcItalianResultStatus.NotValidYet;
-            else if (result.ValidationInstant.Date > result.ValidFrom.Value.AddDays(endDaysToAdd))
-                result.ItalianStatus = DgcItalianResultStatus.NotValid;
+            else if (result.ValidationInstant.Date > result.ValidUntil)
+                result.ItalianStatus = DgcItalianResultStatus.Expired;
             else
                 result.ItalianStatus = validationMode == ValidationMode.Booster ? DgcItalianResultStatus.TestNeeded : DgcItalianResultStatus.Valid;
 

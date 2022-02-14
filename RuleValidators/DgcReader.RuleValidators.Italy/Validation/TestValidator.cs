@@ -72,7 +72,7 @@ namespace DgcReader.RuleValidators.Italy.Validation
                 if (result.ValidFrom > result.ValidationInstant)
                     result.ItalianStatus = DgcItalianResultStatus.NotValidYet;
                 else if (result.ValidUntil < result.ValidationInstant)
-                    result.ItalianStatus = DgcItalianResultStatus.NotValid;
+                    result.ItalianStatus = DgcItalianResultStatus.Expired;
                 else
                 {
                     if (validationMode == ValidationMode.Work &&

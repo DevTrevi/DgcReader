@@ -129,8 +129,18 @@ namespace DgcReader.BlacklistProviders.Italy
 
                 var refreshTask = await RefreshBlacklistTaskRunner.RunSingleTask(cancellationToken);
 
-                // Wait for the task to complete
-                await refreshTask;
+                try
+                {
+                    // Wait for the task to complete
+                    await refreshTask;
+                }
+                catch (Exception e)
+                {
+                    Logger?.LogError(e, $"Can not refresh ItalianDrlBlacklist from remote server. " +
+                        $"Values from DRL version {status.CurrentVersion}, checked on {status.LastCheck} have reached MaxFileAge and can no longer be used.");
+                    throw;
+                }
+
             }
             else if (status.LastCheck.Add(Options.RefreshInterval) < DateTime.Now ||
                 status.HasPendingDownload())
@@ -143,8 +153,17 @@ namespace DgcReader.BlacklistProviders.Italy
                     var refreshTask = await RefreshBlacklistTaskRunner.RunSingleTask(cancellationToken);
                     if (!Options.UseAvailableValuesWhileRefreshing)
                     {
-                        // Wait for the task to complete
-                        await refreshTask;
+                        try
+                        {
+                            // Wait for the task to complete
+                            await refreshTask;
+                        }
+                        catch (Exception e)
+                        {
+                            // If refresh fail, continue until MaxFileAge
+                            Logger?.LogWarning(e, $"Can not refresh ItalianDrlBlacklist from remote server: {e.Message}. Values from DRL version {status.CurrentVersion}, checked on {status.LastCheck} will be used");
+                        }
+
                     }
                 }
             }

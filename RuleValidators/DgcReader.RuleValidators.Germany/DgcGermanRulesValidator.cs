@@ -177,6 +177,9 @@ namespace DgcReader.RuleValidators.Germany
 
 
                 var certEntry = dgc.GetCertificateEntry();
+                if (certEntry == null)
+                    throw new Exception("Unable to get the certificate entry");
+
                 var issuerCountryCode = certEntry.Country;
                 var certificateType = dgc.GetCertificateType();
 

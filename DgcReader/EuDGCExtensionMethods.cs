@@ -15,26 +15,33 @@ namespace DgcReader
         /// Return the single certificate entry from the EuDGC (RecoveryEntry, Test or Vaccination)
         /// </summary>
         /// <param name="dgc"></param>
+        /// <param name="targetedDiseaseAgent">Restrict search to the specified disease agent</param>
         /// <returns></returns>
-        public static ICertificateEntry GetCertificateEntry(this EuDGC dgc)
+        public static ICertificateEntry? GetCertificateEntry(this EuDGC dgc, string? targetedDiseaseAgent = null)
         {
             var empty = Enumerable.Empty<ICertificateEntry>();
-            return empty
+
+            var q = empty
                 .Union(dgc.Recoveries ?? empty)
                 .Union(dgc.Tests ?? empty)
-                .Union(dgc.Vaccinations ?? empty)
-                .Last();
+                .Union(dgc.Vaccinations ?? empty);
+
+            if (!string.IsNullOrEmpty(targetedDiseaseAgent))
+                q = q.Where(e => e.TargetedDiseaseAgent == targetedDiseaseAgent);
+
+            return q.LastOrDefault();
         }
 
         /// <summary>
         /// Return the single certificate entry from the EuDGC (RecoveryEntry, Test or Vaccination)
         /// </summary>
         /// <param name="dgc"></param>
+        /// <param name="targetedDiseaseAgent">Restrict search to the specified disease agent</param>
         /// <returns></returns>
-        public static TCertificate? GetCertificateEntry<TCertificate>(this EuDGC dgc)
+        public static TCertificate? GetCertificateEntry<TCertificate>(this EuDGC dgc, string? targetedDiseaseAgent = null)
             where TCertificate : class, ICertificateEntry
         {
-            return dgc.GetCertificateEntry() as TCertificate;
+            return dgc.GetCertificateEntry(targetedDiseaseAgent) as TCertificate;
         }
     }
 }

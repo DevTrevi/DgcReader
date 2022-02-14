@@ -15,7 +15,7 @@ namespace DgcReader.RuleValidators.Italy.Models
         /// <summary>
         /// Validation status according to the official Italian SDK
         /// </summary>
-        public DgcItalianResultStatus ItalianStatus { get; internal set; } = DgcItalianResultStatus.NotValidated;
+        public DgcItalianResultStatus ItalianStatus { get; internal set; } = DgcItalianResultStatus.NeedRulesVerification;
 
         #region Implementation of IRulesValidationResult
         /// <summary>
@@ -69,22 +69,14 @@ namespace DgcReader.RuleValidators.Italy.Models
         /// <summary>
         /// The certificate has not been validated by the Italian rules validator
         /// </summary>
-        NotValidated,
-
-        /// <summary>
-        /// The certificate is not a valid EU DCC
-        /// </summary>
-        NotEuDCC,
+        NeedRulesVerification,
 
         /// <summary>
         /// The certificate has an invalid signature
         /// </summary>
         InvalidSignature,
 
-        /// <summary>
-        /// The certificate is blacklisted or temporarily revoked
-        /// </summary>
-        Revoked,
+
 
         /// <summary>
         /// The certificate is not valid
@@ -97,13 +89,28 @@ namespace DgcReader.RuleValidators.Italy.Models
         NotValidYet,
 
         /// <summary>
-        /// Certificate is not enough for the required validation mode, and needs to be integrated by a test
-        /// </summary>
-        TestNeeded,
-
-        /// <summary>
         /// The certificate is valid
         /// </summary>
         Valid,
+
+        /// <summary>
+        /// The certificate is expired
+        /// </summary>
+        Expired,
+
+        /// <summary>
+        /// The certificate is blacklisted or temporarily revoked
+        /// </summary>
+        Revoked,
+
+        /// <summary>
+        /// The certificate is not a valid EU DCC
+        /// </summary>
+        NotEuDCC,
+
+        /// <summary>
+        /// Certificate is not enough for the required validation mode, and needs to be integrated by a test
+        /// </summary>
+        TestNeeded,
     }
 }

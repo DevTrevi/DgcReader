@@ -1,0 +1,37 @@
+trigger: none
+
+variables:
+- group: NuGet
+- name: nugetSource
+  value: 'https://api.nuget.org/v3/index.json'
+- name: BuildConfiguration
+  value: 'release'
+
+pool:
+  vmImage: windows-latest
+
+steps:
+- task: UseDotNet@2
+  displayName: "Use .NET Sdk"
+  inputs:
+    version: 6.0.x
+
+- task: DotNetCoreCLI@2
+  inputs:
+    command: 'pack'
+    packagesToPack: '**/*.csproj'
+    versioningScheme: 'byEnvVar'
+    versionEnvVar: 'prerelease-version'
+    verbosityPack: 'Normal'
+
+- task: NuGetToolInstaller@1
+  displayName: 'Install NuGet'
+- script: nuget push $(Build.ArtifactStagingDirectory)\**\*.nupkg -Source $(nugetSource) -ApiKey $(nuget-org-apikey) -SkipDuplicate -NoSymbols
+  displayName: 'Push to NuGet.org'
+
+
+- task: PublishBuildArtifacts@1
+  inputs:
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+    ArtifactName: 'drop'
+    publishLocation: 'Container'

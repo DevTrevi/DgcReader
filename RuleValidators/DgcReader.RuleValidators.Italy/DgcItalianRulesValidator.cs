@@ -13,6 +13,7 @@ using DgcReader.Interfaces.BlacklistProviders;
 using DgcReader.RuleValidators.Italy.Providers;
 using DgcReader.Exceptions;
 using DgcReader.Models;
+using DgcReader.RuleValidators.Italy.Validation;
 
 #if NETSTANDARD2_0_OR_GREATER || NET5_0_OR_GREATER || NET47_OR_GREATER
 using Microsoft.Extensions.Options;
@@ -30,74 +31,9 @@ namespace DgcReader.RuleValidators.Italy
     /// </summary>
     public class DgcItalianRulesValidator : IRulesValidator, IBlacklistProvider
     {
-        // File containing the business logic on the offical SDK repo:
-        // https://github.com/ministero-salute/it-dgc-verificac19-sdk-android/blob/develop/sdk/src/main/java/it/ministerodellasalute/verificaC19sdk/model/VerificationViewModel.kt
-
         private readonly ILogger? Logger;
         private readonly DgcItalianRulesValidatorOptions Options;
-
         private readonly RulesProvider _rulesProvider;
-
-#if NET452
-        /// <summary>
-        /// Constructor
-        /// </summary>
-        public DgcItalianRulesValidator(HttpClient httpClient,
-            DgcItalianRulesValidatorOptions? options = null,
-            ILogger<DgcItalianRulesValidator>? logger = null)
-        {
-            Options = options ?? new DgcItalianRulesValidatorOptions();
-            Logger = logger;
-
-            _rulesProvider = new RulesProvider(httpClient, Options, logger);
-        }
-
-        /// <summary>
-        /// Factory method for creating an instance of <see cref="DgcItalianRulesValidator"/>
-        /// whithout using the DI mechanism. Useful for legacy applications
-        /// </summary>
-        /// <param name="httpClient">The http client instance that will be used for requests to the server</param>
-        /// <param name="options">The options for the provider</param>
-        /// <param name="logger">Instance of <see cref="ILogger"/> used by the provider (optional).</param>
-        /// <returns></returns>
-        public static DgcItalianRulesValidator Create(HttpClient httpClient,
-            DgcItalianRulesValidatorOptions? options = null,
-            ILogger<DgcItalianRulesValidator>? logger = null)
-        {
-            return new DgcItalianRulesValidator(httpClient, options, logger);
-        }
-
-#else
-        /// <summary>
-        /// Constructor
-        /// </summary>
-        public DgcItalianRulesValidator(HttpClient httpClient,
-            IOptions<DgcItalianRulesValidatorOptions>? options = null,
-            ILogger<DgcItalianRulesValidator>? logger = null)
-        {
-            Options = options?.Value ?? new DgcItalianRulesValidatorOptions();
-            Logger = logger;
-
-            _rulesProvider = new RulesProvider(httpClient, Options, logger);
-        }
-
-        /// <summary>
-        /// Factory method for creating an instance of <see cref="DgcItalianRulesValidator"/>
-        /// whithout using the DI mechanism. Useful for legacy applications
-        /// </summary>
-        /// <param name="httpClient">The http client instance that will be used for requests to the server</param>
-        /// <param name="options">The options for the provider</param>
-        /// <param name="logger">Instance of <see cref="ILogger"/> used by the provider (optional).</param>
-        /// <returns></returns>
-        public static DgcItalianRulesValidator Create(HttpClient httpClient,
-            DgcItalianRulesValidatorOptions? options = null,
-            ILogger<DgcItalianRulesValidator>? logger = null)
-        {
-            return new DgcItalianRulesValidator(httpClient,
-                options == null ? null : Microsoft.Extensions.Options.Options.Create(options),
-                logger);
-        }
-#endif
 
         #region Implementation of IRulesValidator
 
@@ -105,7 +41,7 @@ namespace DgcReader.RuleValidators.Italy
         public async Task<IRulesValidationResult> GetRulesValidationResult(EuDGC? dgc,
             string dgcJson,
             DateTimeOffset validationInstant,
-            string countryCode = "IT",
+            string countryCode = CountryCodes.Italy,
             SignatureValidationResult? signatureValidationResult = null,
             BlacklistValidationResult? blacklistValidationResult = null,
             CancellationToken cancellationToken = default)
@@ -124,7 +60,7 @@ namespace DgcReader.RuleValidators.Italy
             {
                 var result = new ItalianRulesValidationResult
                 {
-                    ItalianStatus = DgcItalianResultStatus.NotValidated,
+                    ItalianStatus = DgcItalianResultStatus.NeedRulesVerification,
                     StatusMessage = $"Rules validation for country {countryCode} is not supported by this provider",
                     ValidationMode = validationMode,
                 };
@@ -149,7 +85,7 @@ namespace DgcReader.RuleValidators.Italy
         /// <inheritdoc/>
         public Task<IEnumerable<string>> GetSupportedCountries(CancellationToken cancellationToken = default)
         {
-            return Task.FromResult(new[] { "IT" }.AsEnumerable());
+            return Task.FromResult(new[] { CountryCodes.Italy }.AsEnumerable());
         }
 
         /// <inheritdoc/>
@@ -212,13 +148,15 @@ namespace DgcReader.RuleValidators.Italy
             BlacklistValidationResult? blacklistValidationResult = null,
             CancellationToken cancellationToken = default)
         {
+            // Check preconditions
             var result = new ItalianRulesValidationResult
             {
                 ValidationInstant = validationInstant,
                 ValidationMode = validationMode,
+                ItalianStatus = DgcItalianResultStatus.NeedRulesVerification,
             };
 
-            if (dgc == null)
+            if (dgc == null || string.IsNullOrEmpty(dgcJson))
             {
                 result.ItalianStatus = DgcItalianResultStatus.NotEuDCC;
                 return result;
@@ -245,7 +183,7 @@ namespace DgcReader.RuleValidators.Italy
                 var rules = rulesContainer?.Rules;
                 if (rules == null)
                 {
-                    result.ItalianStatus = DgcItalianResultStatus.NotValidated;
+                    result.ItalianStatus = DgcItalianResultStatus.NeedRulesVerification;
                     result.StatusMessage = "Unable to get validation rules";
                     return result;
                 }
@@ -253,33 +191,43 @@ namespace DgcReader.RuleValidators.Italy
                 // Checking min version:
                 CheckMinSdkVersion(rules, validationInstant, validationMode);
 
-                if (dgc.Recoveries?.Any(r => r.TargetedDiseaseAgent == DiseaseAgents.Covid19) == true)
+                // Preparing model for validators
+                var certificateModel = new ValidationCertificateModel
                 {
-                    CheckRecoveryStatements(dgc, result, rules, signatureValidationResult, validationMode);
-                }
-                else if (dgc.Tests?.Any(r => r.TargetedDiseaseAgent == DiseaseAgents.Covid19) == true)
+                    Dgc = dgc,
+                    SignatureData = signatureValidationResult,
+                    ValidationInstant = validationInstant,
+                };
+
+                // Try to deserialzie dgc from Json, to get the more specific ItalianDGC
+                if (signatureValidationResult.Issuer == CountryCodes.Italy)
                 {
-                    CheckTests(dgc, result, rules, signatureValidationResult, validationMode);
-                }
-                else if (dgc.Vaccinations?.Any(r => r.TargetedDiseaseAgent == DiseaseAgents.Covid19) == true)
-                {
-                    CheckVaccinations(dgc, result, rules, signatureValidationResult, validationMode);
-                }
-                else
-                {
-                    // Try to check for exemptions (custom for Italy)
-                    var italianDgc = ItalianDGC.FromJson(dgcJson);
-                    if (italianDgc?.Exemptions?.Any(r => r.TargetedDiseaseAgent == DiseaseAgents.Covid19) == true)
+                    try
                     {
-                        CheckExemptionStatements(italianDgc, result, rules, signatureValidationResult, validationMode);
+                        // Try to check for exemptions (custom for Italy)
+                        var italianDGC = ItalianDGC.FromJson(dgcJson);
+                        if (italianDGC == null)
+                            throw new Exception($"Deserialized object is null");
+
+                        // Replace the "original" dgc with the extended version
+                        certificateModel.Dgc = italianDGC;
                     }
-                    else
+                    catch (Exception e)
                     {
-                        // An EU DCC must have one of the sections above.
-                        Logger?.LogWarning($"No vaccinations, tests, recovery or exemptions statements found in the certificate.");
-                        result.ItalianStatus = DgcItalianResultStatus.NotEuDCC;
+                        Logger?.LogWarning(e, $"Error while trying to deserialize json content to {nameof(ItalianDGC)}. The original {nameof(EuDGC)} will be used for validation: {e.Message}");
                     }
                 }
+
+                var validator = GetValidator(certificateModel);
+                if (validator == null)
+                {
+                    // An EU DCC must have one of the sections above.
+                    Logger?.LogWarning($"No vaccinations, tests, recovery or exemptions statements found in the certificate.");
+                    result.ItalianStatus = DgcItalianResultStatus.NotEuDCC;
+                    return result;
+                }
+
+                return validator.CheckCertificate(certificateModel, rules, validationMode);
             }
             catch (DgcRulesValidationException e)
             {
@@ -299,263 +247,18 @@ namespace DgcReader.RuleValidators.Italy
 
         #region Validation methods
 
-        /// <summary>
-        /// Computes the status by checking the vaccinations in the DCC
-        /// </summary>
-        /// <param name="dgc"></param>
-        /// <param name="result">The output result compiled by the function</param>
-        /// <param name="rules"></param>
-        /// <param name="signatureValidation">The result from the signature validation step</param>
-        /// <param name="validationMode"></param>
-        private void CheckVaccinations(EuDGC dgc, ItalianRulesValidationResult result, IEnumerable<RuleSetting> rules,
-            SignatureValidationResult? signatureValidation, ValidationMode validationMode)
+        private ICertificateEntryValidator? GetValidator(ValidationCertificateModel certificateModel)
         {
-            var vaccination = dgc.Vaccinations?.Last(r => r.TargetedDiseaseAgent == DiseaseAgents.Covid19);
-            if (vaccination == null) return;
-
-            int startDay, endDay;
-            if (vaccination.DoseNumber > 0 && vaccination.TotalDoseSeries > 0)
-            {
-                // Calculate start/end days
-                if (vaccination.DoseNumber < vaccination.TotalDoseSeries)
-                {
-                    // Vaccination is not completed (partial number of doses)
-                    startDay = rules.GetVaccineStartDayNotComplete(vaccination.MedicinalProduct);
-                    endDay = rules.GetVaccineEndDayNotComplete(vaccination.MedicinalProduct);
-                }
-                else
-                {
-                    // Vaccination completed (full number of doses)
-
-                    // If mode is not basic, use always rules for Italy
-                    var countryCode = validationMode == ValidationMode.Basic3G ? vaccination.Country : "IT";
-
-
-                    // Check rules for "BOOSTER" certificates
-                    if (vaccination.IsBooster())
-                    {
-                        startDay = rules.GetVaccineStartDayBoosterUnified(countryCode);
-                        endDay = rules.GetVaccineEndDayBoosterUnified(countryCode);
-                    }
-                    else
-                    {
-                        startDay = rules.GetVaccineStartDayCompleteUnified(countryCode, vaccination.MedicinalProduct);
-                        endDay = rules.GetVaccineEndDayCompleteUnified(countryCode, validationMode);
-                    }
-                }
-
-                // Calculate start/end dates
-                if (vaccination.MedicinalProduct == VaccineProducts.JeJVacineCode &&
-                        (vaccination.DoseNumber > vaccination.TotalDoseSeries || vaccination.DoseNumber >= 2))
-                {
-                    // For J&J booster, in case of more vaccinations than expected, the vaccine is immediately valid
-                    result.ValidFrom = vaccination.Date.Date;
-                    result.ValidUntil = vaccination.Date.Date.AddDays(endDay);
-                }
-                else
-                {
-                    result.ValidFrom = vaccination.Date.Date.AddDays(startDay);
-                    result.ValidUntil = vaccination.Date.Date.AddDays(endDay);
-                }
-
-                // Calculate the status
-
-                // Exception: Checking sputnik not from San Marino
-                if (vaccination.MedicinalProduct == VaccineProducts.Sputnik && vaccination.Country != "SM")
-                {
-                    result.ItalianStatus = DgcItalianResultStatus.NotValid;
-                    return;
-                }
-
-                if (result.ValidFrom > result.ValidationInstant.Date)
-                    result.ItalianStatus = DgcItalianResultStatus.NotValidYet;
-                else if (result.ValidUntil < result.ValidationInstant.Date)
-                    result.ItalianStatus = DgcItalianResultStatus.NotValid;
-                else
-                {
-                    if (vaccination.DoseNumber < vaccination.TotalDoseSeries)
-                    {
-                        // Incomplete cycle, invalid for BOOSTER and SCHOOL mode
-                        result.ItalianStatus = new[] {
-                            ValidationMode.Booster,
-                            ValidationMode.School
-                        }.Contains(validationMode) ? DgcItalianResultStatus.NotValid : DgcItalianResultStatus.Valid;
-                    }
-                    else
-                    {
-                        // Complete cycle
-                        if (validationMode == ValidationMode.Booster)
-                        {
-                            if (vaccination.IsBooster())
-                            {
-                                // If dose number is higher than total dose series, or minimum booster dose number reached
-                                result.ItalianStatus = DgcItalianResultStatus.Valid;
-                            }
-                            else
-                            {
-                                // Otherwise, if less thant the minimum "booster" doses, requires a test
-                                result.ItalianStatus = DgcItalianResultStatus.TestNeeded;
-                            }
-                        }
-                        else
-                        {
-                            // Non-booster mode: valid
-                            result.ItalianStatus = DgcItalianResultStatus.Valid;
-                        }
-                    }
-
-                }
-            }
+            if (certificateModel.Dgc.HasVaccinations())
+                return new VaccinationValidator(Logger);
+            if(certificateModel.Dgc.HasRecoveries())
+                return new RecoveryValidator(Logger);
+            if (certificateModel.Dgc.HasTests())
+                return new TestValidator(Logger);
+            if (certificateModel.Dgc.HasExemptions())
+                return new ExemptionValidator(Logger);
+            return null;
         }
-
-        /// <summary>
-        /// Computes the status by checking the tests in the DCC
-        /// </summary>
-        /// <param name="dgc"></param>
-        /// <param name="result">The output result compiled by the function</param>
-        /// <param name="rules"></param>
-        /// <param name="signatureValidation">The result from the signature validation step</param>
-        /// <param name="validationMode"></param>
-        private void CheckTests(EuDGC dgc, ItalianRulesValidationResult result, IEnumerable<RuleSetting> rules,
-            SignatureValidationResult? signatureValidation, ValidationMode validationMode)
-        {
-            var test = dgc.Tests?.Last(r => r.TargetedDiseaseAgent == DiseaseAgents.Covid19);
-            if (test == null) return;
-
-            // Super Greenpass check
-            if (new[] {
-                    ValidationMode.Strict2G,
-                    ValidationMode.Booster,
-                    ValidationMode.School
-                }.Contains(validationMode))
-            {
-                if (dgc.GetCertificateEntry() is TestEntry)
-                {
-                    Logger.LogWarning($"Test entries are considered not valid when validation mode is {validationMode}");
-                    result.ItalianStatus = DgcItalianResultStatus.NotValid;
-                    return;
-                }
-            }
-
-            if (test.TestResult == TestResults.NotDetected)
-            {
-                // Negative test
-                int startHours, endHours;
-
-                switch (test.TestType)
-                {
-                    case TestTypes.Rapid:
-                        startHours = rules.GetRapidTestStartHour();
-                        endHours = rules.GetRapidTestEndHour();
-                        break;
-                    case TestTypes.Molecular:
-                        startHours = rules.GetMolecularTestStartHour();
-                        endHours = rules.GetMolecularTestEndHour();
-                        break;
-                    default:
-                        Logger?.LogWarning($"Test type {test.TestType} not supported by current rules");
-                        result.ItalianStatus = DgcItalianResultStatus.NotValid;
-                        return;
-                }
-
-                result.ValidFrom = test.SampleCollectionDate.AddHours(startHours);
-                result.ValidUntil = test.SampleCollectionDate.AddHours(endHours);
-
-                // Calculate the status
-                if (result.ValidFrom > result.ValidationInstant)
-                    result.ItalianStatus = DgcItalianResultStatus.NotValidYet;
-                else if (result.ValidUntil < result.ValidationInstant)
-                    result.ItalianStatus = DgcItalianResultStatus.NotValid;
-                else
-                    result.ItalianStatus = DgcItalianResultStatus.Valid;
-            }
-            else
-            {
-                // Positive test or unknown result
-                if (test.TestResult != TestResults.Detected)
-                    Logger?.LogWarning($"Found test with unkwnown TestResult {test.TestResult}. The certificate is considered invalid");
-
-                result.ItalianStatus = DgcItalianResultStatus.NotValid;
-            }
-        }
-
-        /// <summary>
-        /// Computes the status by checking the recovery statements in the DCC
-        /// </summary>
-        /// <param name="dgc"></param>
-        /// <param name="result">The output result compiled by the function</param>
-        /// <param name="rules"></param>
-        /// <param name="signatureValidation">The result from the signature validation step</param>
-        /// <param name="validationMode"></param>
-        private void CheckRecoveryStatements(EuDGC dgc, ItalianRulesValidationResult result, IEnumerable<RuleSetting> rules,
-            SignatureValidationResult? signatureValidation, ValidationMode validationMode)
-        {
-            var recovery = dgc.Recoveries?.Last(r => r.TargetedDiseaseAgent == DiseaseAgents.Covid19);
-            if (recovery == null) return;
-
-            // If mode is not basic, use always rules for Italy
-            var countryCode = validationMode == ValidationMode.Basic3G ? recovery.Country : "IT";
-
-            // Check if is PV (post-vaccination) recovery by checking signer certificate
-            var isPvRecovery = IsRecoveryPvSignature(signatureValidation);
-
-            var startDaysToAdd = isPvRecovery ? rules.GetRecoveryPvCertStartDay() : rules.GetRecoveryCertStartDayUnified(countryCode);
-            var endDaysToAdd =
-                validationMode == ValidationMode.School ? rules.GetRecoveryCertEndDaySchool() :
-                isPvRecovery ? rules.GetRecoveryPvCertEndDay() :
-                rules.GetRecoveryCertEndDayUnified(countryCode);
-
-            result.ValidFrom = recovery.ValidFrom.Date.AddDays(startDaysToAdd);
-            if(validationMode == ValidationMode.School)
-            {
-                // Take the more restrictive from end of "quarantine" after first positive test and the original expiration from the Recovery entry
-                result.ValidUntil = recovery.FirstPositiveTestResult.Date.AddDays(endDaysToAdd);
-                if (recovery.ValidUntil < result.ValidUntil)
-                    result.ValidUntil = recovery.ValidUntil;
-            }
-            else
-            {
-                result.ValidUntil = result.ValidFrom.Value.AddDays(endDaysToAdd);
-            }
-
-            if (result.ValidFrom > result.ValidationInstant.Date)
-                result.ItalianStatus = DgcItalianResultStatus.NotValidYet;
-            else if (result.ValidationInstant.Date > result.ValidFrom.Value.AddDays(endDaysToAdd))
-                result.ItalianStatus = DgcItalianResultStatus.NotValid;
-            else
-                result.ItalianStatus = validationMode == ValidationMode.Booster ? DgcItalianResultStatus.TestNeeded : DgcItalianResultStatus.Valid;
-        }
-
-        /// <summary>
-        /// Computes the status by checking the exemption statements in the Italian DCC
-        /// </summary>
-        /// <param name="italianDgc"></param>
-        /// <param name="result">The output result compiled by the function</param>
-        /// <param name="rules"></param>
-        /// <param name="signatureValidation">The result from the signature validation step</param>
-        /// <param name="validationMode"></param>
-        private void CheckExemptionStatements(ItalianDGC italianDgc, ItalianRulesValidationResult result, IEnumerable<RuleSetting> rules,
-            SignatureValidationResult? signatureValidation, ValidationMode validationMode)
-        {
-            var exemption = italianDgc.Exemptions?.Last(r => r.TargetedDiseaseAgent == DiseaseAgents.Covid19);
-            if (exemption == null) return;
-
-            result.ValidFrom = exemption.ValidFrom;
-            result.ValidUntil = exemption.ValidUntil;
-
-            if (exemption.ValidFrom.Date > result.ValidationInstant.Date)
-                result.ItalianStatus = DgcItalianResultStatus.NotValidYet;
-            else if (exemption.ValidUntil != null && result.ValidationInstant.Date > exemption.ValidUntil?.Date)
-                result.ItalianStatus = DgcItalianResultStatus.NotValid;
-            else
-            {
-                if (validationMode == ValidationMode.Booster)
-                    result.ItalianStatus = DgcItalianResultStatus.TestNeeded;
-                else
-                    result.ItalianStatus = DgcItalianResultStatus.Valid;
-            }
-        }
-
 
         /// <summary>
         /// Check the minimum version of the SDK implementation required.
@@ -609,7 +312,7 @@ namespace DgcReader.RuleValidators.Italy
                     {
                         ValidationInstant = validationInstant,
                         ValidationMode = validationMode,
-                        ItalianStatus = DgcItalianResultStatus.NotValidated,
+                        ItalianStatus = DgcItalianResultStatus.NeedRulesVerification,
                         StatusMessage = message,
                     };
                     throw new DgcRulesValidationException(message, result);
@@ -618,26 +321,71 @@ namespace DgcReader.RuleValidators.Italy
 
         }
 
+        #endregion
 
+        #region Constructor and factory methods
 
+#if NET452
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        public DgcItalianRulesValidator(HttpClient httpClient,
+            DgcItalianRulesValidatorOptions? options = null,
+            ILogger<DgcItalianRulesValidator>? logger = null)
+        {
+            Options = options ?? new DgcItalianRulesValidatorOptions();
+            Logger = logger;
+
+            _rulesProvider = new RulesProvider(httpClient, Options, logger);
+        }
 
         /// <summary>
-        /// Check if the signer certificate is one of the signer of post-vaccination certificates
+        /// Factory method for creating an instance of <see cref="DgcItalianRulesValidator"/>
+        /// whithout using the DI mechanism. Useful for legacy applications
         /// </summary>
-        /// <param name="signatureValidationResult"></param>
+        /// <param name="httpClient">The http client instance that will be used for requests to the server</param>
+        /// <param name="options">The options for the provider</param>
+        /// <param name="logger">Instance of <see cref="ILogger"/> used by the provider (optional).</param>
         /// <returns></returns>
-        private bool IsRecoveryPvSignature(SignatureValidationResult? signatureValidationResult)
+        public static DgcItalianRulesValidator Create(HttpClient httpClient,
+            DgcItalianRulesValidatorOptions? options = null,
+            ILogger<DgcItalianRulesValidator>? logger = null)
         {
-            var extendedKeyUsages = CertificateExtendedKeyUsageUtils.GetExtendedKeyUsages(signatureValidationResult, Logger);
-
-            if (signatureValidationResult == null)
-                return false;
-
-            if (signatureValidationResult.Issuer != "IT")
-                return false;
-
-            return extendedKeyUsages.Any(usage => CertificateExtendedKeyUsageIdentifiers.RecoveryIssuersIds.Contains(usage));
+            return new DgcItalianRulesValidator(httpClient, options, logger);
         }
+
+#else
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        public DgcItalianRulesValidator(HttpClient httpClient,
+            IOptions<DgcItalianRulesValidatorOptions>? options = null,
+            ILogger<DgcItalianRulesValidator>? logger = null)
+        {
+            Options = options?.Value ?? new DgcItalianRulesValidatorOptions();
+            Logger = logger;
+
+            _rulesProvider = new RulesProvider(httpClient, Options, logger);
+        }
+
+        /// <summary>
+        /// Factory method for creating an instance of <see cref="DgcItalianRulesValidator"/>
+        /// whithout using the DI mechanism. Useful for legacy applications
+        /// </summary>
+        /// <param name="httpClient">The http client instance that will be used for requests to the server</param>
+        /// <param name="options">The options for the provider</param>
+        /// <param name="logger">Instance of <see cref="ILogger"/> used by the provider (optional).</param>
+        /// <returns></returns>
+        public static DgcItalianRulesValidator Create(HttpClient httpClient,
+            DgcItalianRulesValidatorOptions? options = null,
+            ILogger<DgcItalianRulesValidator>? logger = null)
+        {
+            return new DgcItalianRulesValidator(httpClient,
+                options == null ? null : Microsoft.Extensions.Options.Options.Create(options),
+                logger);
+        }
+#endif
+
         #endregion
     }
 }

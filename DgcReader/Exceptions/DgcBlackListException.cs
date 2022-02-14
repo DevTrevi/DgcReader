@@ -20,6 +20,14 @@ namespace DgcReader.Exceptions
         {
             Result = result;
         }
+
+        public DgcBlackListException(string message,
+            BlacklistValidationResult result, Exception innerException) :
+            base(message, innerException)
+        {
+            Result = result;
+        }
+
 #pragma warning disable CS8618
         public DgcBlackListException(SerializationInfo info, StreamingContext context)
             : base(info, context)

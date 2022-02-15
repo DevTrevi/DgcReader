@@ -31,8 +31,9 @@ namespace DgcReader.RuleValidators.Italy.Validation
                     return ValidateFor2G(certificateModel, rules, validationMode);
                 case ValidationMode.Booster:
                     return ValidateForBooster(certificateModel, rules, validationMode);
-                case ValidationMode.School:
-                    return ValidateForSchool(certificateModel, rules, validationMode);
+                // Removed - see issue https://github.com/DevTrevi/DgcReader/issues/85
+                //case ValidationMode.School:
+                //    return ValidateForSchool(certificateModel, rules, validationMode);
                 case ValidationMode.Work:
                     return ValidateForWork(certificateModel, rules, validationMode);
                 case ValidationMode.EntryItaly:

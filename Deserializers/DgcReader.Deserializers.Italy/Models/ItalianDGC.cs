@@ -1,13 +1,15 @@
 ﻿using GreenpassReader.Models;
 using Newtonsoft.Json;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 
 // Copyright (c) 2021 Davide Trevisan
 // Licensed under the Apache License, Version 2.0
 
-namespace DgcReader.RuleValidators.Italy.Models
+namespace DgcReader.Deserializers.Italy.Models
 {
     /// <summary>
     /// Italian customization of the EU Digital Green Certificate, including exemptions
@@ -20,13 +22,12 @@ namespace DgcReader.RuleValidators.Italy.Models
         [JsonProperty("e", NullValueHandling = NullValueHandling.Ignore)]
         public ExemptionEntry[]? Exemptions { get; internal set; }
 
-
-        /// <summary>
-        /// Deserialize an <see cref="ItalianDGC"/> from json
-        /// </summary>
-        /// <param name="json"></param>
-        /// <returns></returns>
-        public static new ItalianDGC? FromJson(string json) => JsonConvert.DeserializeObject<ItalianDGC>(json, EuDGCConverter.Settings);
+        /// <inheritdoc/>
+        public override IEnumerable<ICertificateEntry> GetCertificateEntries()
+        {
+            return base.GetCertificateEntries()
+                .Union(Exemptions ?? Enumerable.Empty<ICertificateEntry>());
+        }
     }
 
     /// <summary>

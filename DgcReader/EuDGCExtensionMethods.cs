@@ -19,12 +19,7 @@ namespace DgcReader
         /// <returns></returns>
         public static ICertificateEntry? GetCertificateEntry(this EuDGC dgc, string? targetedDiseaseAgent = null)
         {
-            var empty = Enumerable.Empty<ICertificateEntry>();
-
-            var q = empty
-                .Union(dgc.Recoveries ?? empty)
-                .Union(dgc.Tests ?? empty)
-                .Union(dgc.Vaccinations ?? empty);
+            var q = dgc.GetCertificateEntries();
 
             if (!string.IsNullOrEmpty(targetedDiseaseAgent))
                 q = q.Where(e => e.TargetedDiseaseAgent == targetedDiseaseAgent);

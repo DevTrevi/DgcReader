@@ -113,15 +113,6 @@ namespace DgcReader.RuleValidators.Italy
             return age;
         }
 
-
-
-        /// <summary>
-        /// Try to cast the EuDGC as the ItalianDGG customization
-        /// </summary>
-        /// <param name="dgc"></param>
-        /// <returns></returns>
-        public static ItalianDGC? AsItalianDgc(this EuDGC dgc) => dgc as ItalianDGC;
-
         /// <summary>
         /// Check if the certificate contains vaccination statements
         /// </summary>

@@ -56,6 +56,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Test", "Test", "{1240A31E-C
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DgcReader.BlacklistProviders.Italy.Test", "BlacklistProviders\Test\DgcReader.BlacklistProviders.Italy.Test\DgcReader.BlacklistProviders.Italy.Test.csproj", "{2A0B4B80-E3F2-4A07-B45C-8543464E40E4}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Deserializers", "Deserializers", "{13E1A796-5B62-4014-ABEE-AA915BFEA54E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DgcReader.Deserializers.Italy", "Deserializers\DgcReader.Deserializers.Italy\DgcReader.Deserializers.Italy.csproj", "{9F1BBBFE-AD28-453C-B867-EC0B09C237D7}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -126,6 +130,10 @@ Global
 		{2A0B4B80-E3F2-4A07-B45C-8543464E40E4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2A0B4B80-E3F2-4A07-B45C-8543464E40E4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2A0B4B80-E3F2-4A07-B45C-8543464E40E4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9F1BBBFE-AD28-453C-B867-EC0B09C237D7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9F1BBBFE-AD28-453C-B867-EC0B09C237D7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9F1BBBFE-AD28-453C-B867-EC0B09C237D7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9F1BBBFE-AD28-453C-B867-EC0B09C237D7}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -147,6 +155,7 @@ Global
 		{CE72E1E6-56A8-4252-A50D-D6AF03655287} = {510DD3B5-6B7D-4024-A1C2-B2B925A3A01D}
 		{1240A31E-C3AB-428E-80E6-48CD29CD1E2B} = {510DD3B5-6B7D-4024-A1C2-B2B925A3A01D}
 		{2A0B4B80-E3F2-4A07-B45C-8543464E40E4} = {1240A31E-C3AB-428E-80E6-48CD29CD1E2B}
+		{9F1BBBFE-AD28-453C-B867-EC0B09C237D7} = {13E1A796-5B62-4014-ABEE-AA915BFEA54E}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {4B910BDD-0DA5-4052-94AE-2E889E4FB766}

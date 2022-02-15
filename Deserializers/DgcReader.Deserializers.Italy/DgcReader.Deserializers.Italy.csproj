@@ -13,7 +13,6 @@
 		<Version>2.5.1</Version>
 		<PackageLicenseExpression> Apache-2.0</PackageLicenseExpression>
 		<PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
-		<PackageReadmeFile>README.md</PackageReadmeFile>
 		<PackageProjectUrl>https://github.com/DevTrevi/DgcReader</PackageProjectUrl>
 	</PropertyGroup>
 

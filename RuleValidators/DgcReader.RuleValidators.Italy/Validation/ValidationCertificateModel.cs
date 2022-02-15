@@ -1,8 +1,7 @@
-﻿using DgcReader.Models;
-using DgcReader.RuleValidators.Italy.Models;
+﻿using DgcReader.Deserializers.Italy.Models;
+using DgcReader.Models;
 using GreenpassReader.Models;
 using System;
-using System.Collections.Generic;
 
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 

@@ -12,7 +12,7 @@
 		<RepositoryUrl>https://github.com/DevTrevi/DGCReader</RepositoryUrl>
 		<PackageTags>DGC DCC DigitalGreenCertificate DigitalCovidCertificate Greenpass VerificaC19 Blacklist DRL</PackageTags>
 		<Description>Blacklist provider implementation using the official Italian backend APIs. This provider is included in the list of verified SDKs by Italian authorities</Description>
-		<Version>2.5.0</Version>
+		<Version>2.5.1</Version>
 		<PackageLicenseExpression> Apache-2.0</PackageLicenseExpression>
 		<PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
@@ -23,12 +23,13 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+	  <ProjectReference Include="..\..\Deserializers\DgcReader.Deserializers.Italy\DgcReader.Deserializers.Italy.csproj" />
 	  <ProjectReference Include="..\..\DgcReader.Providers.Abstractions\DgcReader.Providers.Abstractions.csproj" />
 	  <ProjectReference Include="..\..\DgcReader\DgcReader.csproj" />
 	</ItemGroup>
 
 	<ItemGroup Condition="'$(TargetFramework)' == 'net452'">
-		<PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="1.1.6"/>
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="1.1.6" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="1.1.6" />
 	</ItemGroup>
 

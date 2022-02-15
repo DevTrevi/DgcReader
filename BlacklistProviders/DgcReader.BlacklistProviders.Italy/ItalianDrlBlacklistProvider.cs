@@ -6,6 +6,8 @@ using System.Threading.Tasks;
 using System;
 using DgcReader.Providers.Abstractions;
 using DgcReader.BlacklistProviders.Italy.Entities;
+using DgcReader.Interfaces.Deserializers;
+using DgcReader.Deserializers.Italy;
 
 #if !NET452
 using Microsoft.Extensions.Options;
@@ -19,7 +21,7 @@ namespace DgcReader.BlacklistProviders.Italy
     /// <summary>
     /// Blacklist provider using the Italian backend
     /// </summary>
-    public class ItalianDrlBlacklistProvider : IBlacklistProvider, IDisposable
+    public class ItalianDrlBlacklistProvider : IBlacklistProvider, ICustomDeserializerDependentService, IDisposable
     {
         private readonly ItalianDrlBlacklistProviderOptions Options;
         private readonly ILogger<ItalianDrlBlacklistProvider>? Logger;
@@ -177,6 +179,11 @@ namespace DgcReader.BlacklistProviders.Italy
             var task = await RefreshBlacklistTaskRunner.RunSingleTask(cancellationToken);
             await task;
         }
+        #endregion
+
+        #region Implementation of ICustomDeserializerDependentService
+        /// <inheritdoc/>
+        public IDgcDeserializer GetCustomDeserializer() => new ItalianDgcDeserializer();
         #endregion
 
         /// <inheritdoc/>

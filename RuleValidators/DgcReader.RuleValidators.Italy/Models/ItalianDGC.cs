@@ -36,19 +36,19 @@ namespace DgcReader.RuleValidators.Italy.Models
     {
         /// <inheritdoc/>
         [JsonProperty("tg")]
-        public string TargetedDiseaseAgent => throw new NotImplementedException();
+        public string TargetedDiseaseAgent { get; internal set; }
 
         /// <inheritdoc/>
         [JsonProperty("co")]
-        public string Country => throw new NotImplementedException();
+        public string Country { get; internal set; }
 
         /// <inheritdoc/>
         [JsonProperty("is")]
-        public string Issuer => throw new NotImplementedException();
+        public string Issuer { get; internal set; }
 
         /// <inheritdoc/>
         [JsonProperty("ci")]
-        public string CertificateIdentifier => throw new NotImplementedException();
+        public string CertificateIdentifier { get; internal set; }
 
 
         /// <summary>

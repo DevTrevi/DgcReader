@@ -1,4 +1,5 @@
-﻿using DgcReader.RuleValidators.Italy.Const;
+﻿using DgcReader.Deserializers.Italy.Models;
+using DgcReader.RuleValidators.Italy.Const;
 using DgcReader.RuleValidators.Italy.Models;
 using Microsoft.Extensions.Logging;
 using System.Collections.Generic;

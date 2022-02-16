@@ -34,7 +34,7 @@ namespace DgcReader.RuleValidators.Italy.Validation
             if (new[] {
                 ValidationMode.Strict2G,
                 ValidationMode.Booster,
-                ValidationMode.School
+                //ValidationMode.School // Removed - see issue https://github.com/DevTrevi/DgcReader/issues/85
             }.Contains(validationMode))
             {
                 result.StatusMessage = $"Test entries are considered not valid when validation mode is {validationMode}";

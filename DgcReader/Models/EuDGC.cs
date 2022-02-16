@@ -1,7 +1,7 @@
 using System;
-using System.Globalization;
+using System.Collections.Generic;
+using System.Linq;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
 
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 
@@ -15,8 +15,9 @@ namespace GreenpassReader.Models
     /// EU Digital Green Certificate
     /// Schema version: 1.3.0 - 2021-06-09
     /// </summary>
-    public partial class EuDGC
+    public class EuDGC
     {
+        #region Properties
         /// <summary>
         /// Date of Birth of the person addressed in the DGC. ISO 8601 date format restricted to
         /// range 1900-2099
@@ -53,6 +54,31 @@ namespace GreenpassReader.Models
         /// </summary>
         [JsonProperty("ver")]
         public string SchemaVersion { get; internal set; }
+        #endregion
+
+        #region Methods
+
+        /// <summary>
+        /// Return all the <see cref="ICertificateEntry"/> in the certificate
+        /// </summary>
+        /// <returns></returns>
+        public virtual IEnumerable<ICertificateEntry> GetCertificateEntries()
+        {
+            var empty = Enumerable.Empty<ICertificateEntry>();
+
+            return empty
+                .Union(Recoveries ?? empty)
+                .Union(Tests ?? empty)
+                .Union(Vaccinations ?? empty);
+        }
+
+        /// <inheritdoc/>
+        public override string ToString()
+        {
+            return $"{this.GetType().Name}: {string.Join(", ", GetCertificateEntries())}";
+        }
+
+        #endregion
     }
 
     /// <summary>
@@ -84,6 +110,8 @@ namespace GreenpassReader.Models
         /// </summary>
         [JsonProperty("gnt", NullValueHandling = NullValueHandling.Ignore)]
         public string GivenNameTransliterated { get; internal set; }
+
+
     }
 
     /// <summary>
@@ -133,7 +161,6 @@ namespace GreenpassReader.Models
         /// </summary>
         [JsonProperty("fr")]
         public DateTimeOffset FirstPositiveTestResult { get; internal set; }
-
     }
 
     /// <summary>
@@ -321,33 +348,4 @@ namespace GreenpassReader.Models
         /// </summary>
         string TargetedDiseaseAgent { get; }
     }
-
-    public partial class EuDGC
-    {
-        /// <summary>
-        /// deserialize an <see cref="EuDGC"/> from json
-        /// </summary>
-        /// <param name="json"></param>
-        /// <returns></returns>
-        public static EuDGC? FromJson(string json) => JsonConvert.DeserializeObject<EuDGC>(json, EuDGCConverter.Settings);
-    }
-
-    /// <summary>
-    /// Json Converter settings to be used for deserializing EuDGC
-    /// </summary>
-    public static class EuDGCConverter
-    {
-        /// <summary>
-        /// Json Converter settings to be used for deserializing EuDGC
-        /// </summary>
-        public static readonly JsonSerializerSettings Settings = new JsonSerializerSettings
-        {
-            MetadataPropertyHandling = MetadataPropertyHandling.Ignore,
-            DateParseHandling = DateParseHandling.None,
-            Converters = {
-                new IsoDateTimeConverter { DateTimeStyles = DateTimeStyles.AssumeUniversal },
-            },
-        };
-    }
-
 }

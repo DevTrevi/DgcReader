@@ -15,6 +15,7 @@ using DgcReader.Interfaces.BlacklistProviders;
 using System.Linq;
 using System.Collections.Generic;
 using System.Threading;
+using DgcReader.Interfaces.Deserializers;
 
 // Copyright (c) 2021 Davide Trevisan
 // Licensed under the Apache License, Version 2.0
@@ -27,6 +28,11 @@ namespace DgcReader
     public class DgcReaderService
     {
         #region Services
+        /// <summary>
+        /// The registered deserializers
+        /// </summary>
+        public readonly IEnumerable<IDgcDeserializer> Deserializers;
+
         /// <summary>
         /// The registered TrustList providers
         /// </summary>
@@ -63,7 +69,11 @@ namespace DgcReader
                 // Step 1: decode
                 var cose = DecodeCoseObject(qrCodeData);
                 var dgcJson = GetDgcJson(cose);
-                result.Dgc = EuDGC.FromJson(dgcJson);
+                result.Issuer = cose.GetCwt()?.GetIssuer();
+
+                var deserializer = GetDeserializer(result.Issuer);
+                result.Dgc = deserializer.DeserializeDgc(dgcJson, result.Issuer);
+
 
                 // Step 2: check signature
                 try
@@ -77,7 +87,6 @@ namespace DgcReader
                     result.HasValidSignature = false;
                     return result;
                 }
-
 
 
                 return result;
@@ -121,10 +130,12 @@ namespace DgcReader
                 {
                     var cose = DecodeCoseObject(qrCodeData);
 
-
                     // Step 1: Decoding data
                     var dgcJson = GetDgcJson(cose);
-                    result.Dgc = EuDGC.FromJson(dgcJson);
+
+                    var issuer = cose.GetCwt()?.GetIssuer();
+                    var deserializer = GetDeserializer(issuer);
+                    result.Dgc = deserializer.DeserializeDgc(dgcJson, issuer);
 
                     // Step 2: check signature
                     result.Signature = await GetSignatureValidationResult(cose, validationInstant, throwOnError);
@@ -684,6 +695,12 @@ namespace DgcReader
             return null;
         }
 
+        private IDgcDeserializer GetDeserializer(string? country)
+        {
+            return Deserializers
+                .FirstOrDefault(s => s.SupportedCountryCodes?.Contains(country) == true) ??
+                Deserializers.First(s => s.SupportedCountryCodes == null);
+        }
         #endregion
 
         #region Factory methods and constructor
@@ -691,18 +708,39 @@ namespace DgcReader
         /// <summary>
         /// Instantiate the DgcReaderService
         /// </summary>
-        /// <param name="trustListProviders">The provider used to retrieve the valid public keys for signature validations</param>
-        /// <param name="blackListProviders">The provider used to check if a certificate is blacklisted</param>
-        /// <param name="rulesValidators">The service used to validate the rules for a specific country</param>
+        /// <param name="trustListProviders">The providers used to retrieve the valid public keys for signature validations</param>
+        /// <param name="blackListProviders">The providers used to check if a certificate is blacklisted</param>
+        /// <param name="rulesValidators">The services used to validate the rules for a specific country</param>
+        /// <param name="deserializers">Custom deserializers used for supporting custom schemes</param>
         /// <param name="logger"></param>
         public DgcReaderService(IEnumerable<ITrustListProvider>? trustListProviders = null,
             IEnumerable<IBlacklistProvider>? blackListProviders = null,
             IEnumerable<IRulesValidator>? rulesValidators = null,
+            IEnumerable<IDgcDeserializer>? deserializers = null,
             ILogger<DgcReaderService>? logger = null)
         {
             TrustListProviders = trustListProviders ?? Enumerable.Empty<ITrustListProvider>();
             BlackListProviders = blackListProviders ?? Enumerable.Empty<IBlacklistProvider>();
             RulesValidators = rulesValidators ?? Enumerable.Empty<IRulesValidator>();
+
+            // Select only one serializer per type
+            var allCustomDeserializers =
+                (deserializers ?? Enumerable.Empty<IDgcDeserializer>())
+                .Union(new[] { new DefaultDgcDeserializer() })
+                .Union(
+                    TrustListProviders.OfType<ICustomDeserializerDependentService>()
+                    .Union(BlackListProviders.OfType<ICustomDeserializerDependentService>())
+                    .Union(RulesValidators.OfType<ICustomDeserializerDependentService>())
+                    .Select(s => s.GetCustomDeserializer())
+                )
+                .GroupBy(s => s.GetType())
+                .Select(s => s.First())
+                .ToArray();
+
+            Deserializers = allCustomDeserializers;
+
+
+
             Logger = logger;
         }
 
@@ -712,10 +750,12 @@ namespace DgcReader
         /// <param name="trustListProvider">The provider used to retrieve the valid public keys for signature validations</param>
         /// <param name="blackListProvider">The provider used to check if a certificate is blacklisted</param>
         /// <param name="rulesValidator">The service used to validate the rules for a specific country</param>
+        /// <param name="deserializers">Custom deserializers used for supporting custom schemes</param>
         /// <param name="logger"></param>
         public static DgcReaderService Create(ITrustListProvider? trustListProvider = null,
             IBlacklistProvider? blackListProvider = null,
             IRulesValidator? rulesValidator = null,
+            IEnumerable<IDgcDeserializer>? deserializers = null,
             ILogger<DgcReaderService>? logger = null)
         {
             var trustListProviders = new List<ITrustListProvider>();
@@ -731,7 +771,7 @@ namespace DgcReader
                 rulesValidators.Add(rulesValidator);
 
 
-            return new DgcReaderService(trustListProviders, blackListProviders, rulesValidators, logger);
+            return new DgcReaderService(trustListProviders, blackListProviders, rulesValidators, deserializers, logger);
         }
 
         /// <summary>
@@ -740,13 +780,15 @@ namespace DgcReader
         /// <param name="trustListProviders">The providers used to retrieve the valid public keys for signature validations</param>
         /// <param name="blackListProviders">The providers used to check if a certificate is blacklisted</param>
         /// <param name="rulesValidators">The services used to validate the rules for a specific country</param>
+        /// <param name="deserializers">Custom deserializers used for supporting custom schemes</param>
         /// <param name="logger"></param>
         public static DgcReaderService Create(IEnumerable<ITrustListProvider>? trustListProviders = null,
             IEnumerable<IBlacklistProvider>? blackListProviders = null,
             IEnumerable<IRulesValidator>? rulesValidators = null,
+            IEnumerable<IDgcDeserializer>? deserializers = null,
             ILogger<DgcReaderService>? logger = null)
         {
-            return new DgcReaderService(trustListProviders, blackListProviders, rulesValidators, logger);
+            return new DgcReaderService(trustListProviders, blackListProviders, rulesValidators, deserializers, logger);
         }
         #endregion
     }

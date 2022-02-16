@@ -14,6 +14,8 @@ using DgcReader.RuleValidators.Italy.Providers;
 using DgcReader.Exceptions;
 using DgcReader.Models;
 using DgcReader.RuleValidators.Italy.Validation;
+using DgcReader.Interfaces.Deserializers;
+using DgcReader.Deserializers.Italy;
 
 #if NETSTANDARD2_0_OR_GREATER || NET5_0_OR_GREATER || NET47_OR_GREATER
 using Microsoft.Extensions.Options;
@@ -29,7 +31,7 @@ namespace DgcReader.RuleValidators.Italy
     /// Unofficial porting of the Italian rules from https://github.com/ministero-salute/it-dgc-verificac19-sdk-android.
     /// This service is also an implementation of <see cref="IBlacklistProvider"/>
     /// </summary>
-    public class DgcItalianRulesValidator : IRulesValidator, IBlacklistProvider
+    public class DgcItalianRulesValidator : IRulesValidator, IBlacklistProvider, ICustomDeserializerDependentService
     {
         private readonly ILogger? Logger;
         private readonly DgcItalianRulesValidatorOptions Options;
@@ -120,6 +122,11 @@ namespace DgcReader.RuleValidators.Italy
         }
         #endregion
 
+        #region Implementation of ICustomDeserializerDependentService
+        /// <inheritdoc/>
+        public IDgcDeserializer GetCustomDeserializer() => new ItalianDgcDeserializer();
+        #endregion
+
         #region Public methods
 
         /// <inheritdoc/>
@@ -198,25 +205,6 @@ namespace DgcReader.RuleValidators.Italy
                     SignatureData = signatureValidationResult,
                     ValidationInstant = validationInstant,
                 };
-
-                // Try to deserialzie dgc from Json, to get the more specific ItalianDGC
-                if (signatureValidationResult.Issuer == CountryCodes.Italy)
-                {
-                    try
-                    {
-                        // Try to check for exemptions (custom for Italy)
-                        var italianDGC = ItalianDGC.FromJson(dgcJson);
-                        if (italianDGC == null)
-                            throw new Exception($"Deserialized object is null");
-
-                        // Replace the "original" dgc with the extended version
-                        certificateModel.Dgc = italianDGC;
-                    }
-                    catch (Exception e)
-                    {
-                        Logger?.LogWarning(e, $"Error while trying to deserialize json content to {nameof(ItalianDGC)}. The original {nameof(EuDGC)} will be used for validation: {e.Message}");
-                    }
-                }
 
                 var validator = GetValidator(certificateModel);
                 if (validator == null)

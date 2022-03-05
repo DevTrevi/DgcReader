@@ -8,9 +8,9 @@
 		<Authors>Davide Trevisan</Authors>
 		<Copyright>Copyright © 2021 Davide Trevisan</Copyright>
 		<RepositoryUrl>https://github.com/DevTrevi/DGCReader</RepositoryUrl>
-		<PackageTags>DGC DCC DigitalGreenCertificate DigitalCovidCertificate Greenpass</PackageTags>
+		<PackageTags>DGC DCC DigitalGreenCertificate DigitalCovidCertificate Greenpass Covid Covid19</PackageTags>
 		<Description>Unofficial TrustList provider implementation using the Swedish backend endpoints</Description>
-		<Version>2.5.1</Version>
+		<Version>2.5.2</Version>
 		<PackageLicenseExpression> Apache-2.0</PackageLicenseExpression>
 		<PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
 		<PackageReadmeFile>README.md</PackageReadmeFile>

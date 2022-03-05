@@ -225,7 +225,7 @@ namespace DgcReader.TrustListProviders.Italy
             {
                 var start = DateTime.Now;
                 Logger?.LogDebug("Fetching valid key identifiers...");
-                var response = await _httpClient.GetAsync(CertStatusUrl, cancellationToken);
+                var response = await _httpClient.GetWithSdkUSerAgentAsync(CertStatusUrl, cancellationToken);
                 if (response.IsSuccessStatusCode)
                 {
                     string content = await response.Content.ReadAsStringAsync();
@@ -298,6 +298,7 @@ namespace DgcReader.TrustListProviders.Italy
             try
             {
                 var request = new HttpRequestMessage(HttpMethod.Get, CertUpdateUrl);
+                request.SetSdkUserAgent();
                 if (resumeToken != null)
                     request.Headers.Add(HeaderResumeToken, resumeToken.ToString());
 
@@ -334,7 +335,6 @@ namespace DgcReader.TrustListProviders.Italy
 
         private string GetCacheFolder() => Path.Combine(Options.BasePath, ProviderDataFolder);
         private string GetCacheFilePath() => Path.Combine(GetCacheFolder(), FileName);
-
 
         #endregion
     }

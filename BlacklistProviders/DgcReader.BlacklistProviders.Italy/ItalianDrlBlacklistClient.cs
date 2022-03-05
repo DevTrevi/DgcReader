@@ -45,7 +45,7 @@ namespace DgcReader.BlacklistProviders.Italy
             {
                 Logger?.LogDebug($"Checking Drl for updates...");
 
-                var response = await HttpClient.GetAsync($"{BlacklistStatusUrl}?version={localVersion}", cancellationToken);
+                var response = await HttpClient.GetWithSdkUSerAgentAsync($"{BlacklistStatusUrl}?version={localVersion}", cancellationToken);
                 if (response.IsSuccessStatusCode)
                 {
                     string content = await response.Content.ReadAsStringAsync();
@@ -79,7 +79,7 @@ namespace DgcReader.BlacklistProviders.Italy
             {
                 Logger?.LogDebug($"Checking Drl for updates...");
 
-                var response = await HttpClient.GetAsync($"{BlacklistChunkUrl}?version={localVersion}&chunk={chunk}", cancellationToken);
+                var response = await HttpClient.GetWithSdkUSerAgentAsync($"{BlacklistChunkUrl}?version={localVersion}&chunk={chunk}", cancellationToken);
                 if (response.IsSuccessStatusCode)
                 {
                     string content = await response.Content.ReadAsStringAsync();

@@ -119,7 +119,7 @@ namespace DgcReader.RuleValidators.Italy.Providers
             {
                 var start = DateTime.Now;
                 Logger?.LogDebug("Fetching rules...");
-                var response = await _httpClient.GetAsync(SdkConstants.ValidationRulesUrl, cancellationToken);
+                var response = await _httpClient.GetWithSdkUSerAgentAsync(SdkConstants.ValidationRulesUrl, cancellationToken);
                 if (response.IsSuccessStatusCode)
                 {
                     string content = await response.Content.ReadAsStringAsync();

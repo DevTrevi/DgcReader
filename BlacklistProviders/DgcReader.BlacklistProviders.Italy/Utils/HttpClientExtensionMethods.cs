@@ -2,6 +2,7 @@
 // Copyright (c) 2021 Davide Trevisan
 // Licensed under the Apache License, Version 2.0
 
+using System;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
@@ -49,9 +50,9 @@ namespace DgcReader.BlacklistProviders.Italy
             get
             {
                 var framework = System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription;
-                if (framework.StartsWith(".NET Framework"))
+                if (framework.StartsWith(".NET Framework", StringComparison.InvariantCultureIgnoreCase))
                     return "netframework";
-                if (framework.StartsWith("MONO"))
+                if (framework.StartsWith("Mono", StringComparison.InvariantCultureIgnoreCase))
                     return "mono";
                 return "dotnet";
             }

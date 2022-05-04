@@ -38,14 +38,10 @@ namespace DgcReader.RuleValidators.Italy.Validation
 
             var startDaysToAdd = isPvRecovery ? rules.GetRecoveryPvCertStartDay() : rules.GetRecoveryCertStartDayUnified(countryCode);
             var endDaysToAdd =
-                // Removed - see issue https://github.com/DevTrevi/DgcReader/issues/85
-                //validationMode == ValidationMode.School ? rules.GetRecoveryCertEndDaySchool() :
                 isPvRecovery ? rules.GetRecoveryPvCertEndDay() :
                 rules.GetRecoveryCertEndDayUnified(countryCode);
 
             var startDate =
-                // Removed - see issue https://github.com/DevTrevi/DgcReader/issues/85
-                //validationMode == ValidationMode.School ? recovery.FirstPositiveTestResult.Date :
                 recovery.ValidFrom.Date;
             var endDate = startDate.AddDays(endDaysToAdd);
 

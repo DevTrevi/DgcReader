@@ -104,8 +104,6 @@ namespace DgcReader.RuleValidators.Italy
                 settings.GetRuleInteger(SettingNames.RecoveryCertEndDayNotIT);
         }
 
-        public static int GetRecoveryCertEndDaySchool(this IEnumerable<RuleSetting> settings)
-            => settings.GetRuleInteger(SettingNames.RecoveryCertEndDaySchool);
         #endregion
 
         #region Test
@@ -164,9 +162,6 @@ namespace DgcReader.RuleValidators.Italy
                 settings.GetRuleInteger(SettingNames.VaccineEndDayBoosterIT) :
                 settings.GetRuleInteger(SettingNames.VaccineEndDayBoosterNotIT);
         }
-
-        public static int GetVaccineEndDaySchool(this IEnumerable<RuleSetting> settings)
-            => settings.GetRuleInteger(SettingNames.VaccineEndDaySchool);
 
         public static int GetVaccineEndDayCompleteExtendedEMA(this IEnumerable<RuleSetting> settings)
             => settings.GetRuleInteger(SettingNames.VaccineEndDayCompleteExtendedEMA);

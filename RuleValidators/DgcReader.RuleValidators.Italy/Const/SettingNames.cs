@@ -25,9 +25,12 @@ namespace DgcReader.RuleValidators.Italy.Const
         public const string VaccineEndDayCompleteNotIT = "vaccine_end_day_complete_NOT_IT";
         public const string VaccineStartDayBoosterNotIT = "vaccine_start_day_booster_NOT_IT";
         public const string VaccineEndDayBoosterNotIT = "vaccine_end_day_booster_NOT_IT";
+        public const string VaccineEndDayCompleteUnder18 = "vaccine_end_day_complete_under_18";
 
         public const string VaccineEndDayCompleteExtendedEMA = "vaccine_end_day_complete_extended_EMA";
         public const string EMAVaccines = "EMA_vaccines";
+
+        public const string VaccineCompleteUnder18Offset = "vaccine_complete_under_18_offset";
         #endregion
 
         #region Test

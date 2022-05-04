@@ -76,19 +76,7 @@ namespace DgcReader.RuleValidators.Italy.Validation
                 else if (result.ValidUntil < result.ValidationInstant)
                     result.ItalianStatus = DgcItalianResultStatus.Expired;
                 else
-                {
-                    if (validationMode == ValidationMode.Work &&
-                        certificateModel.Dgc.GetBirthDate().GetAge(result.ValidationInstant.Date) >= SdkConstants.VaccineMandatoryAge)
-                    {
-                        result.StatusMessage = $"Test entries are considered not valid for people over the age of {SdkConstants.VaccineMandatoryAge} when validation mode is {validationMode}";
-                        result.ItalianStatus = DgcItalianResultStatus.NotValid;
-                        Logger?.LogWarning(result.StatusMessage);
-                    }
-                    else
-                    {
-                        result.ItalianStatus = DgcItalianResultStatus.Valid;
-                    }
-                }
+                    result.ItalianStatus = DgcItalianResultStatus.Valid;
             }
             else
             {

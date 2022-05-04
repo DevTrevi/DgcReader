@@ -25,11 +25,6 @@ namespace DgcReader.RuleValidators.Italy.Models
         Booster,
 
         /// <summary>
-        /// Validates the certificate applying rules for work
-        /// </summary>
-        Work,
-
-        /// <summary>
         /// Validates the certificate applying rules needed for entry in Italy
         /// </summary>
         EntryItaly,

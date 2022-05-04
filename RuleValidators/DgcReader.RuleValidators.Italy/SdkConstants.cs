@@ -26,8 +26,8 @@ namespace DgcReader.RuleValidators.Italy
         public const string ReferenceAppMinVersion = "1.2.0";
 
         /// <summary>
-        /// Age from which the vaccine is mandatory when using work mode
+        /// Underage limit
         /// </summary>
-        public const int VaccineMandatoryAge = 50;
+        public const int VaccineUnderageAge = 18;
     }
 }

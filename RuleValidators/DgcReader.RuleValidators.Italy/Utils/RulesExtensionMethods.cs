@@ -25,7 +25,7 @@ namespace DgcReader.RuleValidators.Italy
         /// <returns></returns>
         public static RuleSetting? GetRule(this IEnumerable<RuleSetting> settings, string name, string type)
         {
-            return settings.SingleOrDefault(r => r.Name == name && r.Type == type);
+            return settings.SingleOrDefault(r => r.Name == name && (r.Type == type || string.IsNullOrEmpty(type)));
         }
 
         /// <summary>
@@ -104,8 +104,6 @@ namespace DgcReader.RuleValidators.Italy
                 settings.GetRuleInteger(SettingNames.RecoveryCertEndDayNotIT);
         }
 
-        public static int GetRecoveryCertEndDaySchool(this IEnumerable<RuleSetting> settings)
-            => settings.GetRuleInteger(SettingNames.RecoveryCertEndDaySchool);
         #endregion
 
         #region Test
@@ -132,6 +130,12 @@ namespace DgcReader.RuleValidators.Italy
         [Obsolete]
         public static int GetVaccineEndDayComplete(this IEnumerable<RuleSetting> settings, string vaccineType)
             => settings.GetRuleInteger(SettingNames.VaccineEndDayComplete, vaccineType);
+
+        public static int GetVaccineEndDayCompleteUnder18(this IEnumerable<RuleSetting> settings)
+            => settings.GetRuleInteger(SettingNames.VaccineEndDayCompleteUnder18, type: string.Empty);
+
+        public static int GetVaccineCompleteUnder18Offset(this IEnumerable<RuleSetting> settings)
+            => settings.GetRuleInteger(SettingNames.VaccineCompleteUnder18Offset, type: string.Empty);
 
         public static int GetVaccineStartDayCompleteUnified(this IEnumerable<RuleSetting> settings, string issuerCountryCode, string vaccineType)
         {
@@ -164,9 +168,6 @@ namespace DgcReader.RuleValidators.Italy
                 settings.GetRuleInteger(SettingNames.VaccineEndDayBoosterIT) :
                 settings.GetRuleInteger(SettingNames.VaccineEndDayBoosterNotIT);
         }
-
-        public static int GetVaccineEndDaySchool(this IEnumerable<RuleSetting> settings)
-            => settings.GetRuleInteger(SettingNames.VaccineEndDaySchool);
 
         public static int GetVaccineEndDayCompleteExtendedEMA(this IEnumerable<RuleSetting> settings)
             => settings.GetRuleInteger(SettingNames.VaccineEndDayCompleteExtendedEMA);

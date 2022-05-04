@@ -36,6 +36,7 @@ namespace DgcReader.RuleValidators.Italy
         private readonly ILogger? Logger;
         private readonly DgcItalianRulesValidatorOptions Options;
         private readonly RulesProvider _rulesProvider;
+        private readonly LibraryVersionCheckProvider _libraryVersionCheckProvider;
 
         #region Implementation of IRulesValidator
 
@@ -73,6 +74,7 @@ namespace DgcReader.RuleValidators.Italy
                 dgcJson,
                 validationInstant,
                 validationMode,
+                doubleScanMode: false,
                 signatureValidationResult,
                 blacklistValidationResult,
                 cancellationToken);
@@ -143,6 +145,7 @@ namespace DgcReader.RuleValidators.Italy
         /// <param name="dgcJson">The RAW json of the DGC</param>
         /// <param name="validationInstant"></param>
         /// <param name="validationMode">The Italian validation mode to be used</param>
+        /// <param name="doubleScanMode">If true, enable rules for double checks in <see cref="ValidationMode.Booster"/> mode for test entries</param>
         /// <param name="signatureValidationResult">The result from the signature validation step</param>
         /// <param name="blacklistValidationResult">The result from the blacklist validation step</param>
         /// <param name="cancellationToken"></param>
@@ -151,6 +154,7 @@ namespace DgcReader.RuleValidators.Italy
             string dgcJson,
             DateTimeOffset validationInstant,
             ValidationMode validationMode,
+            bool doubleScanMode = false,
             SignatureValidationResult? signatureValidationResult = null,
             BlacklistValidationResult? blacklistValidationResult = null,
             CancellationToken cancellationToken = default)
@@ -196,7 +200,7 @@ namespace DgcReader.RuleValidators.Italy
                 }
 
                 // Checking min version:
-                CheckMinSdkVersion(rules, validationInstant, validationMode);
+                await CheckMinSdkVersion(validationInstant, validationMode);
 
                 // Preparing model for validators
                 var certificateModel = new ValidationCertificateModel
@@ -215,7 +219,14 @@ namespace DgcReader.RuleValidators.Italy
                     return result;
                 }
 
-                return validator.CheckCertificate(certificateModel, rules, validationMode);
+                // See https://github.com/ministero-salute/it-dgc-verificac19-sdk-android/compare/1.1.5...release/1.1.6
+                if (doubleScanMode && !certificateModel.Dgc.HasTests())
+                {
+                    result.StatusMessage = "Double scan mode is supported only by Test entries";
+                    result.ItalianStatus = DgcItalianResultStatus.NotValid;
+                }
+
+                return validator.CheckCertificate(certificateModel, rules, validationMode, doubleScanMode);
             }
             catch (DgcRulesValidationException e)
             {
@@ -239,7 +250,7 @@ namespace DgcReader.RuleValidators.Italy
         {
             if (certificateModel.Dgc.HasVaccinations())
                 return new VaccinationValidator(Logger);
-            if(certificateModel.Dgc.HasRecoveries())
+            if (certificateModel.Dgc.HasRecoveries())
                 return new RecoveryValidator(Logger);
             if (certificateModel.Dgc.HasTests())
                 return new TestValidator(Logger);
@@ -252,44 +263,37 @@ namespace DgcReader.RuleValidators.Italy
         /// Check the minimum version of the SDK implementation required.
         /// If <see cref="DgcItalianRulesValidatorOptions.IgnoreMinimumSdkVersion"/> is false, an exception will be thrown if the implementation is obsolete
         /// </summary>
-        /// <param name="rules"></param>
         /// <param name="validationInstant"></param>
         /// <param name="validationMode"></param>
+        /// <param name="cancellation"></param>
         /// <exception cref="DgcRulesValidationException"></exception>
-        private void CheckMinSdkVersion(IEnumerable<RuleSetting> rules, DateTimeOffset validationInstant, ValidationMode validationMode)
+        private async Task CheckMinSdkVersion(
+            DateTimeOffset validationInstant,
+            ValidationMode validationMode,
+            CancellationToken cancellation = default)
         {
-            var obsolete = false;
-            string message = string.Empty;
+            var assemblyName = this.GetType().Assembly.GetName();
+            Version? latestVersion = null;
 
-
-            var sdkMinVersion = rules.GetRule(SettingNames.SdkMinVersion, SettingTypes.AppMinVersion);
-            if (sdkMinVersion != null)
+            // New check: verify library version by checking the GitHub repository
+            try
             {
-                if (sdkMinVersion.Value.CompareTo(SdkConstants.ReferenceSdkMinVersion) > 0)
+                latestVersion = await _libraryVersionCheckProvider.GetValueSet(cancellation);
+                if (latestVersion == null)
                 {
-                    obsolete = true;
-                    message = $"The minimum version of the SDK implementation is {sdkMinVersion.Value}. " +
-                        $"Please update the package with the latest implementation in order to get a reliable result";
+                    Logger?.LogWarning("Unable to get library version. Skip check");
+                    return;
                 }
             }
-            else
+            catch (Exception e)
             {
-                // Fallback to android app version
-                var appMinVersion = rules.GetRule(SettingNames.AndroidAppMinVersion, SettingTypes.AppMinVersion);
-                if (appMinVersion != null)
-                {
-                    if (appMinVersion.Value.CompareTo(SdkConstants.ReferenceAppMinVersion) > 0)
-                    {
-                        obsolete = true;
-                        message = $"The minimum version of the App implementation is {appMinVersion.Value}. " +
-                            $"Please update the package with the latest implementation in order to get a reliable result";
-                    }
-                }
+                Logger?.LogWarning("Failed to check library latest release: {errorMessage}", e.Message);
             }
 
-            if (obsolete)
+            var currentVersion = assemblyName.Version;
+            if (latestVersion > currentVersion)
             {
-
+                var message = $"The current {assemblyName.Name} version ({currentVersion}) is obsolete. Please update the package to the latest version ({latestVersion}) in order to get a reliable result";
                 if (Options.IgnoreMinimumSdkVersion)
                 {
                     Logger?.LogWarning(message);
@@ -325,6 +329,7 @@ namespace DgcReader.RuleValidators.Italy
             Logger = logger;
 
             _rulesProvider = new RulesProvider(httpClient, Options, logger);
+            _libraryVersionCheckProvider = new LibraryVersionCheckProvider(httpClient, logger);
         }
 
         /// <summary>
@@ -354,6 +359,7 @@ namespace DgcReader.RuleValidators.Italy
             Logger = logger;
 
             _rulesProvider = new RulesProvider(httpClient, Options, logger);
+            _libraryVersionCheckProvider = new LibraryVersionCheckProvider(httpClient, logger);
         }
 
         /// <summary>

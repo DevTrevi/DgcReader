@@ -25,11 +25,12 @@ namespace DgcReader.RuleValidators.Italy.Const
         public const string VaccineEndDayCompleteNotIT = "vaccine_end_day_complete_NOT_IT";
         public const string VaccineStartDayBoosterNotIT = "vaccine_start_day_booster_NOT_IT";
         public const string VaccineEndDayBoosterNotIT = "vaccine_end_day_booster_NOT_IT";
-
-        public const string VaccineEndDaySchool = "vaccine_end_day_school";
+        public const string VaccineEndDayCompleteUnder18 = "vaccine_end_day_complete_under_18";
 
         public const string VaccineEndDayCompleteExtendedEMA = "vaccine_end_day_complete_extended_EMA";
         public const string EMAVaccines = "EMA_vaccines";
+
+        public const string VaccineCompleteUnder18Offset = "vaccine_complete_under_18_offset";
         #endregion
 
         #region Test
@@ -49,8 +50,6 @@ namespace DgcReader.RuleValidators.Italy.Const
         public const string RecoveryCertEndDayIT = "recovery_cert_end_day_IT";
         public const string RecoveryCertStartDayNotIT = "recovery_cert_start_day_NOT_IT";
         public const string RecoveryCertEndDayNotIT = "recovery_cert_end_day_NOT_IT";
-
-        public const string RecoveryCertEndDaySchool = "recovery_cert_end_day_school";
         #endregion
 
 

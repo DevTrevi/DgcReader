@@ -17,17 +17,17 @@ namespace DgcReader.RuleValidators.Italy
         /// <summary>
         /// The version of the sdk used as reference for implementing the rules.
         /// </summary>
-        public const string ReferenceSdkMinVersion = "1.1.5";
+        public const string ReferenceSdkMinVersion = "1.1.9";
 
         /// <summary>
         /// The version of the app used as reference for implementing the rules.
         /// NOTE: this is the version of the android app using the <see cref="ReferenceSdkMinVersion"/> of the SDK. The SDK version is not available in the settings right now.
         /// </summary>
-        public const string ReferenceAppMinVersion = "1.2.0";
+        public const string ReferenceAppMinVersion = "1.3.1";
 
         /// <summary>
-        /// Age from which the vaccine is mandatory when using work mode
+        /// Underage limit
         /// </summary>
-        public const int VaccineMandatoryAge = 50;
+        public const int VaccineUnderageAge = 18;
     }
 }

@@ -20,7 +20,8 @@ namespace DgcReader.RuleValidators.Italy.Validation
         public override ItalianRulesValidationResult CheckCertificate(
             ValidationCertificateModel certificateModel,
             IEnumerable<RuleSetting> rules,
-            ValidationMode validationMode)
+            ValidationMode validationMode,
+            bool doubleScanMode)
         {
             var result = InitializeResult(certificateModel, validationMode);
 

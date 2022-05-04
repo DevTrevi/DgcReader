@@ -250,7 +250,7 @@ namespace DgcReader.RuleValidators.Italy
         {
             if (certificateModel.Dgc.HasVaccinations())
                 return new VaccinationValidator(Logger);
-            if(certificateModel.Dgc.HasRecoveries())
+            if (certificateModel.Dgc.HasRecoveries())
                 return new RecoveryValidator(Logger);
             if (certificateModel.Dgc.HasTests())
                 return new TestValidator(Logger);
@@ -273,42 +273,44 @@ namespace DgcReader.RuleValidators.Italy
             CancellationToken cancellation = default)
         {
             var assemblyName = this.GetType().Assembly.GetName();
+            Version? latestVersion = null;
 
             // New check: verify library version by checking the GitHub repository
             try
             {
-                var latestVersion = await _libraryVersionCheckProvider.GetValueSet(cancellation);
+                latestVersion = await _libraryVersionCheckProvider.GetValueSet(cancellation);
                 if (latestVersion == null)
                 {
                     Logger?.LogWarning("Unable to get library version. Skip check");
                     return;
-                }
-
-                var currentVersion = assemblyName.Version;
-                if (latestVersion > currentVersion)
-                {
-                    var message = $"The current {assemblyName.Name} version ({currentVersion}) is obsolete. Please update the package to the latest version ({latestVersion}) in order to get a reliable result";
-                    if (Options.IgnoreMinimumSdkVersion)
-                    {
-                        Logger?.LogWarning(message);
-                    }
-                    else
-                    {
-                        var result = new ItalianRulesValidationResult
-                        {
-                            ValidationInstant = validationInstant,
-                            ValidationMode = validationMode,
-                            ItalianStatus = DgcItalianResultStatus.NeedRulesVerification,
-                            StatusMessage = message,
-                        };
-                        throw new DgcRulesValidationException(message, result);
-                    }
                 }
             }
             catch (Exception e)
             {
                 Logger?.LogWarning("Failed to check library latest release: {errorMessage}", e.Message);
             }
+
+            var currentVersion = assemblyName.Version;
+            if (latestVersion > currentVersion)
+            {
+                var message = $"The current {assemblyName.Name} version ({currentVersion}) is obsolete. Please update the package to the latest version ({latestVersion}) in order to get a reliable result";
+                if (Options.IgnoreMinimumSdkVersion)
+                {
+                    Logger?.LogWarning(message);
+                }
+                else
+                {
+                    var result = new ItalianRulesValidationResult
+                    {
+                        ValidationInstant = validationInstant,
+                        ValidationMode = validationMode,
+                        ItalianStatus = DgcItalianResultStatus.NeedRulesVerification,
+                        StatusMessage = message,
+                    };
+                    throw new DgcRulesValidationException(message, result);
+                }
+            }
+
         }
 
         #endregion

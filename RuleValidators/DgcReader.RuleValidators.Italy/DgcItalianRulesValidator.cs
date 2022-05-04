@@ -36,6 +36,7 @@ namespace DgcReader.RuleValidators.Italy
         private readonly ILogger? Logger;
         private readonly DgcItalianRulesValidatorOptions Options;
         private readonly RulesProvider _rulesProvider;
+        private readonly LibraryVersionCheckProvider _libraryVersionCheckProvider;
 
         #region Implementation of IRulesValidator
 
@@ -196,7 +197,7 @@ namespace DgcReader.RuleValidators.Italy
                 }
 
                 // Checking min version:
-                CheckMinSdkVersion(rules, validationInstant, validationMode);
+                await CheckMinSdkVersion(validationInstant, validationMode);
 
                 // Preparing model for validators
                 var certificateModel = new ValidationCertificateModel
@@ -252,61 +253,52 @@ namespace DgcReader.RuleValidators.Italy
         /// Check the minimum version of the SDK implementation required.
         /// If <see cref="DgcItalianRulesValidatorOptions.IgnoreMinimumSdkVersion"/> is false, an exception will be thrown if the implementation is obsolete
         /// </summary>
-        /// <param name="rules"></param>
         /// <param name="validationInstant"></param>
         /// <param name="validationMode"></param>
+        /// <param name="cancellation"></param>
         /// <exception cref="DgcRulesValidationException"></exception>
-        private void CheckMinSdkVersion(IEnumerable<RuleSetting> rules, DateTimeOffset validationInstant, ValidationMode validationMode)
+        private async Task CheckMinSdkVersion(
+            DateTimeOffset validationInstant,
+            ValidationMode validationMode,
+            CancellationToken cancellation = default)
         {
-            var obsolete = false;
-            string message = string.Empty;
+            var assemblyName = this.GetType().Assembly.GetName();
 
-
-            var sdkMinVersion = rules.GetRule(SettingNames.SdkMinVersion, SettingTypes.AppMinVersion);
-            if (sdkMinVersion != null)
+            // New check: verify library version by checking the GitHub repository
+            try
             {
-                if (sdkMinVersion.Value.CompareTo(SdkConstants.ReferenceSdkMinVersion) > 0)
+                var latestVersion = await _libraryVersionCheckProvider.GetValueSet(cancellation);
+                if (latestVersion == null)
                 {
-                    obsolete = true;
-                    message = $"The minimum version of the SDK implementation is {sdkMinVersion.Value}. " +
-                        $"Please update the package with the latest implementation in order to get a reliable result";
+                    Logger?.LogWarning("Unable to get library version. Skip check");
+                    return;
                 }
-            }
-            else
-            {
-                // Fallback to android app version
-                var appMinVersion = rules.GetRule(SettingNames.AndroidAppMinVersion, SettingTypes.AppMinVersion);
-                if (appMinVersion != null)
+
+                var currentVersion = assemblyName.Version;
+                if (latestVersion > currentVersion)
                 {
-                    if (appMinVersion.Value.CompareTo(SdkConstants.ReferenceAppMinVersion) > 0)
+                    var message = $"The current {assemblyName.Name} version ({currentVersion}) is obsolete. Please update the package to the latest version ({latestVersion}) in order to get a reliable result";
+                    if (Options.IgnoreMinimumSdkVersion)
                     {
-                        obsolete = true;
-                        message = $"The minimum version of the App implementation is {appMinVersion.Value}. " +
-                            $"Please update the package with the latest implementation in order to get a reliable result";
+                        Logger?.LogWarning(message);
+                    }
+                    else
+                    {
+                        var result = new ItalianRulesValidationResult
+                        {
+                            ValidationInstant = validationInstant,
+                            ValidationMode = validationMode,
+                            ItalianStatus = DgcItalianResultStatus.NeedRulesVerification,
+                            StatusMessage = message,
+                        };
+                        throw new DgcRulesValidationException(message, result);
                     }
                 }
             }
-
-            if (obsolete)
+            catch (Exception e)
             {
-
-                if (Options.IgnoreMinimumSdkVersion)
-                {
-                    Logger?.LogWarning(message);
-                }
-                else
-                {
-                    var result = new ItalianRulesValidationResult
-                    {
-                        ValidationInstant = validationInstant,
-                        ValidationMode = validationMode,
-                        ItalianStatus = DgcItalianResultStatus.NeedRulesVerification,
-                        StatusMessage = message,
-                    };
-                    throw new DgcRulesValidationException(message, result);
-                }
+                Logger?.LogWarning("Failed to check library latest release: {errorMessage}", e.Message);
             }
-
         }
 
         #endregion
@@ -325,6 +317,7 @@ namespace DgcReader.RuleValidators.Italy
             Logger = logger;
 
             _rulesProvider = new RulesProvider(httpClient, Options, logger);
+            _libraryVersionCheckProvider = new LibraryVersionCheckProvider(httpClient, logger);
         }
 
         /// <summary>
@@ -354,6 +347,7 @@ namespace DgcReader.RuleValidators.Italy
             Logger = logger;
 
             _rulesProvider = new RulesProvider(httpClient, Options, logger);
+            _libraryVersionCheckProvider = new LibraryVersionCheckProvider(httpClient, logger);
         }
 
         /// <summary>

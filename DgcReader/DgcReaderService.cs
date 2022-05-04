@@ -454,12 +454,12 @@ namespace DgcReader
                 var certEntry = dgc.GetCertificateEntry();
 
                 // Tracking the validated CertificateIdentifier
-                context.CertificateIdentifier = certEntry.CertificateIdentifier;
+                context.CertificateIdentifier = certEntry?.CertificateIdentifier ?? string.Empty;
                 try
                 {
                     foreach (var blacklistProvider in BlackListProviders)
                     {
-                        var blacklisted = await blacklistProvider.IsBlacklisted(certEntry.CertificateIdentifier, cancellationToken);
+                        var blacklisted = await blacklistProvider.IsBlacklisted(context.CertificateIdentifier, cancellationToken);
 
                         // At least one check performed
                         context.BlacklistVerified = true;

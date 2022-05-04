@@ -61,7 +61,7 @@ namespace DgcReader.RuleValidators.Italy
         /// <summary>
         /// The library version
         /// </summary>
-        public static string Version => typeof(DgcItalianRulesValidator).Assembly.GetName().Version.ToString(3);
+        public static string Version => typeof(DgcItalianRulesValidator).Assembly.GetName().Version?.ToString(3) ?? string.Empty;
 
         /// <summary>
         /// The user agent string to be added to each request

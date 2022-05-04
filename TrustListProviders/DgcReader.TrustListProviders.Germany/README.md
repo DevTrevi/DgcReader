@@ -1,6 +1,7 @@
 ﻿# German Trustlist provider
 
 [![NuGet version (DgcReader.TrustListProviders.Germany)](https://img.shields.io/nuget/vpre/DgcReader.TrustListProviders.Germany)](https://www.nuget.org/packages/DgcReader.TrustListProviders.Germany/)
+![Nuget](https://img.shields.io/nuget/dt/DgcReader.TrustListProviders.Germany)
 
 Implementation of ITrustListProvider that uses the German endpoint for downloading the trusted public keys used for signature verification of the Digital Green Certificates.
 

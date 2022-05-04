@@ -2,6 +2,7 @@
 #### DgcReader.BlacklistProviders.Italy 
 
 [![NuGet version (DgcReader.BlacklistProviders.Italy)](https://img.shields.io/nuget/vpre/DgcReader.BlacklistProviders.Italy)](https://www.nuget.org/packages/DgcReader.BlacklistProviders.Italy/)
+![Nuget](https://img.shields.io/nuget/dt/DgcReader.BlacklistProviders.Italy)
 
 Implementation of `IBlacklistProvider` for verify revoked certificates.  
 You can find more details about the DRL specification in the [official documentation](https://github.com/ministero-salute/it-dgc-documentation/blob/master/DRL.md)

@@ -2,6 +2,7 @@
 #### DgcReader.RuleValidators.Germany 
 
 [![NuGet version (DgcReader.RuleValidators.Germany)](https://img.shields.io/nuget/vpre/DgcReader.RuleValidators.Germany)](https://www.nuget.org/packages/DgcReader.RuleValidators.Germany/)
+![Nuget](https://img.shields.io/nuget/dt/DgcReader.RuleValidators.Germany)
 
 Implementation of `IRulesValidator` for validating Digital Green Certificates using rules provided by the German backend.
 

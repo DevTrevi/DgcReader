@@ -1,6 +1,7 @@
 ﻿# Italian Trustlist provider
 
 [![NuGet version (DgcReader.TrustListProviders.Italy)](https://img.shields.io/nuget/vpre/DgcReader.TrustListProviders.Italy)](https://www.nuget.org/packages/DgcReader.TrustListProviders.Italy/)
+![Nuget](https://img.shields.io/nuget/dt/DgcReader.TrustListProviders.Italy)
 
 Implementation of ITrustListProvider that uses the Italian endpoint for downloading the trusted public keys used for signature verification of the Digital Green Certificates.
 

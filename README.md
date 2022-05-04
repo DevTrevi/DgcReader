@@ -3,7 +3,9 @@
 
 ### Extensible .NET library for decoding and validating European Digital Green Certificates
 [![NuGet version (DgcReader)](https://img.shields.io/nuget/vpre/DgcReader?label=DgcReader)](https://www.nuget.org/packages/DgcReader/)
+![Nuget](https://img.shields.io/nuget/dt/DgcReader)
 [![CodeQL](https://github.com/DevTrevi/DgcReader/actions/workflows/codeql-analysis.yml/badge.svg?branch=master)](https://github.com/DevTrevi/DgcReader/actions/workflows/codeql-analysis.yml)
+
 
 ## Summary
 The library allows to decode and validate any EU Digital Green Certificate, providing some abstractions to easily implement specific providers for every country backend. 
@@ -174,16 +176,17 @@ These APIs were not fully implemented in previous versions of the framework, so 
 
 ## Packages
 
-| Description | Version |
+| Description | Version  |
 |-----------------------------------------------|-----------------------------------|
-| Main package, containing the DgcReaderService         | [![NuGet version (DgcReader)](https://img.shields.io/nuget/vpre/DgcReader)](https://www.nuget.org/packages/DgcReader/) |
-| TrustList implementation for the Italian backend        | [![NuGet version (DgcReader.TrustListProviders.Italy)](https://img.shields.io/nuget/vpre/DgcReader.TrustListProviders.Italy)](https://www.nuget.org/packages/DgcReader.TrustListProviders.Italy/)  |
-| TrustList implementation for the Swedish backend        | [![NuGet version (DgcReader.TrustListProviders.Sweden)](https://img.shields.io/nuget/vpre/DgcReader.TrustListProviders.Sweden)](https://www.nuget.org/packages/DgcReader.TrustListProviders.Sweden/)  |
-| Implementation of the Italian Blacklist provider  | [![NuGet version (DgcReader.BlacklistProviders.Italy)](https://img.shields.io/nuget/vpre/DgcReader.BlacklistProviders.Italy)](https://www.nuget.org/packages/DgcReader.BlacklistProviders.Italy/) |
-| Implementation of the Italian validation rules| [![NuGet version (DgcReader.RuleValidators.Italy)](https://img.shields.io/nuget/vpre/DgcReader.RuleValidators.Italy)](https://www.nuget.org/packages/DgcReader.RuleValidators.Italy/)  |
-| Implementation of the German rules validation engine | [![NuGet version (DgcReader.RuleValidators.Germany)](https://img.shields.io/nuget/vpre/DgcReader.RuleValidators.Germany)](https://www.nuget.org/packages/DgcReader.RuleValidators.Germany/)  |
-| Abstractions for building providers and rules validators  | [![NuGet version (DgcReader.Providers.Abstractions)](https://img.shields.io/nuget/vpre/DgcReader.Providers.Abstractions)](https://www.nuget.org/packages/DgcReader.Providers.Abstractions/)  |
-| Abstractions for building TrustList providers | [![NuGet version (DgcReader.TrustListProviders.Abstractions)](https://img.shields.io/nuget/vpre/DgcReader.TrustListProviders.Abstractions)](https://www.nuget.org/packages/DgcReader.TrustListProviders.Abstractions/)  |
+| Main package, containing the DgcReaderService         | [![NuGet version (DgcReader)](https://img.shields.io/nuget/vpre/DgcReader)](https://www.nuget.org/packages/DgcReader/) ![Nuget](https://img.shields.io/nuget/dt/DgcReader) |
+| TrustList implementation for the Italian backend        | [![NuGet version (DgcReader.TrustListProviders.Italy)](https://img.shields.io/nuget/vpre/DgcReader.TrustListProviders.Italy)](https://www.nuget.org/packages/DgcReader.TrustListProviders.Italy/) ![Nuget](https://img.shields.io/nuget/dt/DgcReader.TrustListProviders.Italy) |
+| TrustList implementation for the Swedish backend        | [![NuGet version (DgcReader.TrustListProviders.Sweden)](https://img.shields.io/nuget/vpre/DgcReader.TrustListProviders.Sweden)](https://www.nuget.org/packages/DgcReader.TrustListProviders.Sweden/) ![Nuget](https://img.shields.io/nuget/dt/DgcReader.TrustListProviders.Sweden) |
+| TrustList implementation for the German backend        | [![NuGet version (DgcReader.TrustListProviders.Germany)](https://img.shields.io/nuget/vpre/DgcReader.TrustListProviders.Germany)](https://www.nuget.org/packages/DgcReader.TrustListProviders.Germany/) ![Nuget](https://img.shields.io/nuget/dt/DgcReader.TrustListProviders.Germany) |
+| Implementation of the Italian Blacklist provider  | [![NuGet version (DgcReader.BlacklistProviders.Italy)](https://img.shields.io/nuget/vpre/DgcReader.BlacklistProviders.Italy)](https://www.nuget.org/packages/DgcReader.BlacklistProviders.Italy/) ![Nuget](https://img.shields.io/nuget/dt/DgcReader.BlacklistProviders.Italy) |
+| Implementation of the Italian validation rules| [![NuGet version (DgcReader.RuleValidators.Italy)](https://img.shields.io/nuget/vpre/DgcReader.RuleValidators.Italy)](https://www.nuget.org/packages/DgcReader.RuleValidators.Italy/) ![Nuget](https://img.shields.io/nuget/dt/DgcReader.RuleValidators.Italy) |
+| Implementation of the German rules validation engine | [![NuGet version (DgcReader.RuleValidators.Germany)](https://img.shields.io/nuget/vpre/DgcReader.RuleValidators.Germany)](https://www.nuget.org/packages/DgcReader.RuleValidators.Germany/) ![Nuget](https://img.shields.io/nuget/dt/DgcReader.RuleValidators.Germany) |
+| Abstractions for building providers and rules validators  | [![NuGet version (DgcReader.Providers.Abstractions)](https://img.shields.io/nuget/vpre/DgcReader.Providers.Abstractions)](https://www.nuget.org/packages/DgcReader.Providers.Abstractions/) ![Nuget](https://img.shields.io/nuget/dt/DgcReader.Providers.Abstractions) |
+| Abstractions for building TrustList providers | [![NuGet version (DgcReader.TrustListProviders.Abstractions)](https://img.shields.io/nuget/vpre/DgcReader.TrustListProviders.Abstractions)](https://www.nuget.org/packages/DgcReader.TrustListProviders.Abstractions/) ![Nuget](https://img.shields.io/nuget/dt/DgcReader.TrustListProviders.Abstractions) |
 
 ## Extending the library
 

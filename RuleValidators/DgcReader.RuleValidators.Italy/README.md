@@ -2,6 +2,7 @@
 #### DgcReader.RuleValidators.Italy 
 
 [![NuGet version (DgcReader.RuleValidators.Italy)](https://img.shields.io/nuget/vpre/DgcReader.RuleValidators.Italy)](https://www.nuget.org/packages/DgcReader.RuleValidators.Italy/)
+![Nuget](https://img.shields.io/nuget/dt/DgcReader.RuleValidators.Italy)
 
 Implementation of `IRulesValidator` for validating Digital Green Certificates against the Italian rules.
 

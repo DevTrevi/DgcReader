@@ -61,6 +61,7 @@ namespace DgcReader
         /// <param name="dgcReaderService"></param>
         /// <param name="qrCodeData">The QRCode data of the DGC</param>
         /// <param name="validationInstant">The validation instant of the DGC</param>
+        /// <param name="doubleScanMode">If true, enable rules for double checks in <see cref="ValidationMode.Booster"/> mode for test entries</param>
         /// <param name="validationMode">The Italian validation mode</param>
         /// <param name="throwOnError">If true, throw an exception if the validation fails</param>
         /// <param name="cancellationToken"></param>
@@ -68,6 +69,7 @@ namespace DgcReader
         public static async Task<DgcValidationResult> VerifyForItaly(this DgcReaderService dgcReaderService,
             string qrCodeData,
             DateTimeOffset validationInstant,
+            bool doubleScanMode,
             ValidationMode validationMode,
             bool throwOnError = true,
             CancellationToken cancellationToken = default)
@@ -86,11 +88,39 @@ namespace DgcReader
                         dgcJson,
                         validationInstant,
                         validationMode,
+                        doubleScanMode: doubleScanMode,
                         signatureValidation,
                         blacklistValidation,
                         cancellationToken);
 
                 }, throwOnError, cancellationToken);
+        }
+
+        /// <summary>
+        /// Decodes the DGC data using IT as acceptance country, allowing to specify the <see cref="ValidationMode"/>.
+        /// It is mandatory that the <see cref="DgcItalianRulesValidator"/> is registered as RulesValidator in <see cref="DgcReaderService"/>
+        /// </summary>
+        /// <param name="dgcReaderService"></param>
+        /// <param name="qrCodeData">The QRCode data of the DGC</param>
+        /// <param name="validationInstant">The validation instant of the DGC</param>
+        /// <param name="validationMode">The Italian validation mode</param>
+        /// <param name="throwOnError">If true, throw an exception if the validation fails</param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        public static Task<DgcValidationResult> VerifyForItaly(this DgcReaderService dgcReaderService,
+            string qrCodeData,
+            DateTimeOffset validationInstant,
+            ValidationMode validationMode,
+            bool throwOnError = true,
+            CancellationToken cancellationToken = default)
+        {
+            return dgcReaderService.VerifyForItaly(
+                qrCodeData,
+                validationInstant,
+                doubleScanMode: false,
+                validationMode,
+                throwOnError: throwOnError,
+                cancellationToken);
         }
 
         /// <summary>
@@ -109,7 +139,11 @@ namespace DgcReader
             bool throwOnError = true,
             CancellationToken cancellationToken = default)
         {
-            return dgcReaderService.VerifyForItaly(qrCodeData, DateTimeOffset.Now, validationMode, throwOnError, cancellationToken);
+            return dgcReaderService.VerifyForItaly(qrCodeData,
+                DateTimeOffset.Now,
+                validationMode,
+                throwOnError,
+                cancellationToken);
         }
     }
 

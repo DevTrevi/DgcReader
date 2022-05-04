@@ -21,7 +21,7 @@ namespace DgcReader.RuleValidators.Italy.Validation
         protected ILogger? Logger { get; }
 
         /// <inheritdoc/>
-        public abstract ItalianRulesValidationResult CheckCertificate(ValidationCertificateModel certificateModel, IEnumerable<RuleSetting> rules, ValidationMode validationMode);
+        public abstract ItalianRulesValidationResult CheckCertificate(ValidationCertificateModel certificateModel, IEnumerable<RuleSetting> rules, ValidationMode validationMode, bool doubleScanMode);
 
         /// <summary>
         /// Instantiate a RecoveryValidator in the initial state, including data that will always be returned

@@ -21,7 +21,8 @@ namespace DgcReader.RuleValidators.Italy.Validation
         public override ItalianRulesValidationResult CheckCertificate(
             ValidationCertificateModel certificateModel,
             IEnumerable<RuleSetting> rules,
-            ValidationMode validationMode)
+            ValidationMode validationMode,
+            bool doubleScanMode)
         {
             var result = InitializeResult(certificateModel, validationMode);
 
@@ -29,6 +30,8 @@ namespace DgcReader.RuleValidators.Italy.Validation
             if (test == null)
                 return result;
 
+            // Check if the validation mode selected is Booster, then check if double scan flow is selected
+            var isADoubleScanBoosterTest = validationMode == ValidationMode.Booster;
 
             // Super Greenpass check
             if (new[] {
@@ -53,7 +56,12 @@ namespace DgcReader.RuleValidators.Italy.Validation
                         break;
                     case TestTypes.Molecular:
                         result.ValidFrom = test.SampleCollectionDate.AddHours(rules.GetMolecularTestStartHour());
-                        result.ValidUntil = test.SampleCollectionDate.AddHours(rules.GetMolecularTestEndHour());
+
+                        // See https://github.com/ministero-salute/it-dgc-verificac19-sdk-android/compare/1.1.5...release/1.1.6
+                        if (doubleScanMode && isADoubleScanBoosterTest)
+                            result.ValidUntil = test.SampleCollectionDate.AddHours(rules.GetRapidTestEndHour());
+                        else
+                            result.ValidUntil = test.SampleCollectionDate.AddHours(rules.GetMolecularTestEndHour());
                         break;
                     default:
                         result.StatusMessage = $"Test type {test.TestType} not supported by current rules";

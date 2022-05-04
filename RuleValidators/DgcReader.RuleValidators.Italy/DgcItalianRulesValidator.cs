@@ -73,6 +73,7 @@ namespace DgcReader.RuleValidators.Italy
                 dgcJson,
                 validationInstant,
                 validationMode,
+                doubleScanMode: false,
                 signatureValidationResult,
                 blacklistValidationResult,
                 cancellationToken);
@@ -143,6 +144,7 @@ namespace DgcReader.RuleValidators.Italy
         /// <param name="dgcJson">The RAW json of the DGC</param>
         /// <param name="validationInstant"></param>
         /// <param name="validationMode">The Italian validation mode to be used</param>
+        /// <param name="doubleScanMode">If true, enable rules for double checks in <see cref="ValidationMode.Booster"/> mode for test entries</param>
         /// <param name="signatureValidationResult">The result from the signature validation step</param>
         /// <param name="blacklistValidationResult">The result from the blacklist validation step</param>
         /// <param name="cancellationToken"></param>
@@ -151,6 +153,7 @@ namespace DgcReader.RuleValidators.Italy
             string dgcJson,
             DateTimeOffset validationInstant,
             ValidationMode validationMode,
+            bool doubleScanMode = false,
             SignatureValidationResult? signatureValidationResult = null,
             BlacklistValidationResult? blacklistValidationResult = null,
             CancellationToken cancellationToken = default)
@@ -215,7 +218,14 @@ namespace DgcReader.RuleValidators.Italy
                     return result;
                 }
 
-                return validator.CheckCertificate(certificateModel, rules, validationMode);
+                // See https://github.com/ministero-salute/it-dgc-verificac19-sdk-android/compare/1.1.5...release/1.1.6
+                if (doubleScanMode && !certificateModel.Dgc.HasTests())
+                {
+                    result.StatusMessage = "Double scan mode is supported only by Test entries";
+                    result.ItalianStatus = DgcItalianResultStatus.NotValid;
+                }
+
+                return validator.CheckCertificate(certificateModel, rules, validationMode, doubleScanMode);
             }
             catch (DgcRulesValidationException e)
             {

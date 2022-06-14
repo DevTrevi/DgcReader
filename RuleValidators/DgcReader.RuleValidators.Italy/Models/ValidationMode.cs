@@ -23,10 +23,5 @@ namespace DgcReader.RuleValidators.Italy.Models
         /// Enables the booster check, that requires at least 3 vaccination doses to be considered valid (or 2 doses in case of Johnson &amp; Johnson)
         /// </summary>
         Booster,
-
-        /// <summary>
-        /// Validates the certificate applying rules needed for entry in Italy
-        /// </summary>
-        EntryItaly,
     }
 }

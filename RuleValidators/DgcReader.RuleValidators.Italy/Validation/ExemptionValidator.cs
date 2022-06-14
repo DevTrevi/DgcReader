@@ -40,10 +40,6 @@ namespace DgcReader.RuleValidators.Italy.Validation
             {
                 switch (validationMode)
                 {
-                    case ValidationMode.EntryItaly:
-                        result.ItalianStatus = DgcItalianResultStatus.NotValid;
-                        result.StatusMessage = $"Exemptions are not valid for entry in Italy";
-                        break;
                     case ValidationMode.Booster:
                         result.ItalianStatus = DgcItalianResultStatus.TestNeeded;
                         result.StatusMessage = $"Certificate is valid, but mode {validationMode} requires also a valid test";

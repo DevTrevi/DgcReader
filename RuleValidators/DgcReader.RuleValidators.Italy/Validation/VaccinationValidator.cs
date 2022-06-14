@@ -32,8 +32,6 @@ namespace DgcReader.RuleValidators.Italy.Validation
                     return ValidateFor2G(certificateModel, rules, validationMode);
                 case ValidationMode.Booster:
                     return ValidateForBooster(certificateModel, rules, validationMode);
-                case ValidationMode.EntryItaly:
-                    return ValidateForEntryItaly(certificateModel, rules, validationMode);
                 default:
                     var result = InitializeResult(certificateModel, validationMode);
 
@@ -273,63 +271,6 @@ namespace DgcReader.RuleValidators.Italy.Validation
             }
             else
                 result.ItalianStatus = DgcItalianResultStatus.NotValid;
-
-            return result;
-        }
-
-        /// <summary>
-        /// Porting of vaccineEntryItalyStrategy
-        /// </summary>
-        /// <param name="certificateModel"></param>
-        /// <param name="rules"></param>
-        /// <param name="validationMode"></param>
-        /// <returns></returns>
-        private ItalianRulesValidationResult ValidateForEntryItaly(
-            ValidationCertificateModel certificateModel,
-            IEnumerable<RuleSetting> rules,
-            ValidationMode validationMode)
-        {
-            var result = InitializeResult(certificateModel, validationMode);
-
-            var vaccination = certificateModel.Dgc.GetCertificateEntry<VaccinationEntry>(DiseaseAgents.Covid19);
-            if (vaccination == null)
-                return result;
-
-            var validationDate = certificateModel.ValidationInstant.Date;
-            var vaccinationDate = vaccination.Date.Date;
-            var birthDate = certificateModel.Dgc.GetBirthDate().AddDays(rules.GetVaccineCompleteUnder18Offset());
-            var isUnderage = birthDate.GetAge(validationDate) < SdkConstants.VaccineUnderageAge;
-
-            var startDaysToAdd =
-                vaccination.IsBooster() ? rules.GetVaccineStartDayBoosterUnified(CountryCodes.NotItaly) :
-                !vaccination.IsComplete() ? rules.GetVaccineStartDayNotComplete(vaccination.MedicinalProduct) :
-                rules.GetVaccineStartDayCompleteUnified(CountryCodes.NotItaly, vaccination.MedicinalProduct);
-
-            var endDaysToAdd =
-                vaccination.IsComplete() && isUnderage ? rules.GetVaccineEndDayCompleteUnder18() :
-                vaccination.IsBooster() ? rules.GetVaccineEndDayBoosterUnified(CountryCodes.NotItaly) :
-                !vaccination.IsComplete() ? rules.GetVaccineEndDayNotComplete(vaccination.MedicinalProduct) :
-                rules.GetVaccineEndDayCompleteUnified(CountryCodes.NotItaly);
-
-            result.ValidFrom = vaccinationDate.AddDays(startDaysToAdd);
-            result.ValidUntil = vaccinationDate.AddDays(endDaysToAdd);
-
-            if (validationDate < result.ValidFrom)
-                result.ItalianStatus = DgcItalianResultStatus.NotValidYet;
-            else if (validationDate > result.ValidUntil)
-                result.ItalianStatus = DgcItalianResultStatus.Expired;
-            else if (!rules.IsEMA(vaccination))
-            {
-                result.ItalianStatus = DgcItalianResultStatus.NotValid;
-                result.StatusMessage = $"Vaccination with {vaccination.MedicinalProduct} from country {vaccination.Country} are not considered valid by EMA";
-            }
-            else if (!vaccination.IsComplete())
-            {
-                result.ItalianStatus = DgcItalianResultStatus.NotValid;
-                result.StatusMessage = $"Vaccination is not complete";
-            }
-            else
-                result.ItalianStatus = DgcItalianResultStatus.Valid;
 
             return result;
         }

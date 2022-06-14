@@ -31,8 +31,8 @@ namespace DgcReader.RuleValidators.Italy.Validation
             if (recovery == null)
                 return result;
 
-            // If mode is not 3G, use always rules for Italy
-            var countryCode = validationMode == ValidationMode.Basic3G ? recovery.Country : CountryCodes.Italy;
+            // Always use Italy for getting rules
+            var countryCode = CountryCodes.Italy;
 
             // Check if is PV (post-vaccination) recovery by checking signer certificate
             var isPvRecovery = IsRecoveryPvSignature(certificateModel.SignatureData);

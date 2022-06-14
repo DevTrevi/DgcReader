@@ -12,7 +12,7 @@
 		<RepositoryUrl>https://github.com/DevTrevi/DGCReader</RepositoryUrl>
 		<PackageTags>DGC DCC DigitalGreenCertificate DigitalCovidCertificate Greenpass VerificaC19 Blacklist DRL Covid Covid19</PackageTags>
 		<Description>Blacklist provider implementation using the official Italian backend APIs. This provider is included in the list of verified SDKs by Italian authorities</Description>
-		<Version>2.5.4</Version>
+		<Version>2.5.5</Version>
 		<PackageLicenseExpression> Apache-2.0</PackageLicenseExpression>
 		<PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
 		<PackageReadmeFile>README.md</PackageReadmeFile>

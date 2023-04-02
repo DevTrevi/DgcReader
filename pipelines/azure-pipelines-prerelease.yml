@@ -43,13 +43,12 @@ steps:
     minorVersion: '$(minorVersion)'
     patchVersion: '$(patchVersion)'
 
-- task: NuGetToolInstaller@1
-  displayName: 'Install NuGet'
-
-- script: nuget push $(Build.ArtifactStagingDirectory)\**\*.nupkg -Source $(nugetSource) -ApiKey $(nuget-org-apikey) -SkipDuplicate -NoSymbols
-  displayName: 'Push to NuGet.org'
-  enabled: false
-
+- task: DotNetCoreCLI@2
+  inputs:
+    command: 'push'
+    packagesToPush: '$(Build.ArtifactStagingDirectory)/*.nupkg'
+    nuGetFeedType: 'external'
+    publishFeedCredentials: 'NuGet.org devTrevi'
 
 - task: PublishBuildArtifacts@1
   inputs:

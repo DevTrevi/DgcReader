@@ -3,10 +3,6 @@ parameters:
     displayName: 'Push packages to NuGet.org'
     type: boolean
     default: true
-  - name: CreateGitHubRelease
-    displayName: 'Create GitHub release'
-    type: boolean
-    default: false
 
 trigger: none
 pr: none
@@ -58,21 +54,6 @@ steps:
     nuGetFeedType: 'external'
     publishFeedCredentials: 'NuGet.org devTrevi'
   enabled: ${{ parameters.PushToNuget }}
-
-- task: GitHubRelease@1
-  inputs:
-    gitHubConnection: 'DevTrevi GitHub OAuth'
-    repositoryName: '$(Build.Repository.Name)'
-    action: 'create'
-    target: '$(Build.SourceVersion)'
-    tagSource: 'userSpecifiedTag'
-    tag: 'v$(majorVersion).$(minorVersion).$(patchVersion)-test'
-    title: 'v$(majorVersion).$(minorVersion).$(patchVersion)-test'
-    isDraft: true
-    isPreRelease: true
-    changeLogCompareToRelease: 'lastFullRelease'
-    changeLogType: 'commitBased'
-  enabled: ${{ parameters.CreateGitHubRelease }}
 
 - task: PublishBuildArtifacts@1
   inputs:

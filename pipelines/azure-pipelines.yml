@@ -1,9 +1,27 @@
+parameters:
+  - name: PushToNuget
+    displayName: 'Push packages to NuGet.org'
+    type: boolean
+    default: true
+  - name: CreateGitHubRelease
+    displayName: 'Create GitHub release'
+    type: boolean
+    default: true
+    
+
 trigger: none
 pr: none
 
 variables:
 - name: BuildConfiguration
-  value: 'release'
+  value: 'release'  
+- name: packagesInfoPath
+  value: "./PackagesInfo.proj"
+  readonly: true
+- name: EnablePush
+  value: true
+  readonly: false
+
 
 pool:
   vmImage: windows-latest
@@ -41,7 +59,7 @@ steps:
     packagesToPush: '$(Build.ArtifactStagingDirectory)/**/*.nupkg'
     nuGetFeedType: 'external'
     publishFeedCredentials: 'NuGet.org devTrevi'
-  enabled: false
+  enabled: ${{ parameters.PushToNuget }}
 
 - task: GitHubRelease@1
   inputs:
@@ -55,6 +73,7 @@ steps:
     isDraft: true
     changeLogCompareToRelease: 'lastFullRelease'
     changeLogType: 'commitBased'
+  enabled: ${{ parameters.CreateGitHubRelease }}
 
 - task: PublishBuildArtifacts@1
   inputs:

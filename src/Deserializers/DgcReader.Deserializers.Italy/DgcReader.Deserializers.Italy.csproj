@@ -3,7 +3,7 @@
 	<Import Project="..\..\..\PackagesInfo.proj"/>
 
 	<PropertyGroup>
-		<TargetFrameworks>net452;netstandard2.0</TargetFrameworks>
+		<TargetFrameworks>netstandard2.0;net452</TargetFrameworks>
 		<LangVersion>Latest</LangVersion>
 		<Nullable>enable</Nullable>
 		<Description>Deserializer for EuDGC certificates issued by Italy including custom entries</Description>

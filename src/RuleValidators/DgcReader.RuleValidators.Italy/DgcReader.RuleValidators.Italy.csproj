@@ -3,7 +3,7 @@
 	<Import Project="..\..\..\PackagesInfo.proj"/>
 
 	<PropertyGroup>
-		<TargetFrameworks>net452;net47;netstandard2.0;net5.0</TargetFrameworks>
+		<TargetFrameworks>net5.0;netstandard2.0;net47;net452</TargetFrameworks>
 		<LangVersion>Latest</LangVersion>
 		<Nullable>enable</Nullable>
 		<Description>Implementation of the Italian rules for validating Digital Green Certificates. This provider is included in the list of verified SDKs by Italian authorities</Description>

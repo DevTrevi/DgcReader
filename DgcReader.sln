@@ -5,6 +5,7 @@ VisualStudioVersion = 17.0.31717.71
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{5541974F-21E6-4B6E-AB62-1A78A34CB87C}"
 	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
 		ItalianConfiguration.md = ItalianConfiguration.md
 		LICENSE = LICENSE
 		PackagesInfo.proj = PackagesInfo.proj

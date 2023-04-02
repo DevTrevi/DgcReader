@@ -1,21 +1,20 @@
 ﻿// Copyright (c) 2021 Davide Trevisan
 // Licensed under the Apache License, Version 2.0
 
-namespace DgcReader.RuleValidators.Germany.CovpassDgcCertlogic.Data
+namespace DgcReader.RuleValidators.Germany.CovpassDgcCertlogic.Data;
+
+/// <summary>
+/// Rule type
+/// </summary>
+public enum RuleType
 {
     /// <summary>
-    /// Rule type
+    /// Invalidation rule
     /// </summary>
-    public enum RuleType
-    {
-        /// <summary>
-        /// Invalidation rule
-        /// </summary>
-        INVALIDATION,
+    INVALIDATION,
 
-        /// <summary>
-        /// Acceptance rule
-        /// </summary>
-        ACCEPTANCE,
-    }
+    /// <summary>
+    /// Acceptance rule
+    /// </summary>
+    ACCEPTANCE,
 }

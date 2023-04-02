@@ -7,40 +7,39 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using System.Globalization;
 
-namespace DgcReader
+namespace DgcReader;
+
+/// <summary>
+/// Default implementation of <see cref="IDgcDeserializer"/>
+/// This will deserialize standard European Digital Green Certificates
+/// </summary>
+public class DefaultDgcDeserializer : IDgcDeserializer
 {
-    /// <summary>
-    /// Default implementation of <see cref="IDgcDeserializer"/>
-    /// This will deserialize standard European Digital Green Certificates
-    /// </summary>
-    public class DefaultDgcDeserializer : IDgcDeserializer
+    /// <inheritdoc/>
+    public DefaultDgcDeserializer()
     {
-        /// <inheritdoc/>
-        public DefaultDgcDeserializer()
+        SerializerSettings = new JsonSerializerSettings
         {
-            SerializerSettings = new JsonSerializerSettings
-            {
-                MetadataPropertyHandling = MetadataPropertyHandling.Ignore,
-                DateParseHandling = DateParseHandling.None,
-                Converters = {
-                    new IsoDateTimeConverter { DateTimeStyles = DateTimeStyles.AssumeUniversal },
-                },
-            };
-        }
-
-        /// <summary>
-        /// Serializer settings used by <see cref="DeserializeDgc(string, string)"/>
-        /// </summary>
-        public virtual JsonSerializerSettings SerializerSettings { get; }
-
-        /// <inheritdoc/>
-        public virtual string[]? SupportedCountryCodes => null;
-
-        /// <inheritdoc/>
-        public virtual EuDGC? DeserializeDgc(string json, string? issuerCountry)
-        {
-            return JsonConvert.DeserializeObject<EuDGC>(json, SerializerSettings);
-        }
-
+            MetadataPropertyHandling = MetadataPropertyHandling.Ignore,
+            DateParseHandling = DateParseHandling.None,
+            Converters = {
+                new IsoDateTimeConverter { DateTimeStyles = DateTimeStyles.AssumeUniversal },
+            },
+        };
     }
+
+    /// <summary>
+    /// Serializer settings used by <see cref="DeserializeDgc(string, string)"/>
+    /// </summary>
+    public virtual JsonSerializerSettings SerializerSettings { get; }
+
+    /// <inheritdoc/>
+    public virtual string[]? SupportedCountryCodes => null;
+
+    /// <inheritdoc/>
+    public virtual EuDGC? DeserializeDgc(string json, string? issuerCountry)
+    {
+        return JsonConvert.DeserializeObject<EuDGC>(json, SerializerSettings);
+    }
+
 }

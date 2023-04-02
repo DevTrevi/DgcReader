@@ -1,21 +1,20 @@
 ﻿// Copyright (c) 2021 Davide Trevisan
 // Licensed under the Apache License, Version 2.0
 
-namespace DgcReader.Interfaces.TrustListProviders
+namespace DgcReader.Interfaces.TrustListProviders;
+
+/// <summary>
+/// RSA algorithm parameters
+/// </summary>
+public interface IRSAParameters
 {
     /// <summary>
-    /// RSA algorithm parameters
+    /// The Exponent component of the RSA public key
     /// </summary>
-    public interface IRSAParameters
-    {
-        /// <summary>
-        /// The Exponent component of the RSA public key
-        /// </summary>
-        byte[] Exponent { get; }
+    byte[] Exponent { get; }
 
-        /// <summary>
-        /// The Modulus component of the RSA public key
-        /// </summary>
-        byte[] Modulus { get; }
-    }
+    /// <summary>
+    /// The Modulus component of the RSA public key
+    /// </summary>
+    byte[] Modulus { get; }
 }

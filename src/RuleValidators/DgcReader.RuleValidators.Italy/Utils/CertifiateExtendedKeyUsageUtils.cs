@@ -15,82 +15,81 @@ using System.Security.Cryptography;
 // Copyright (c) 2021 Davide Trevisan
 // Licensed under the Apache License, Version 2.0
 
-namespace DgcReader.RuleValidators.Italy
+namespace DgcReader.RuleValidators.Italy;
+
+internal static class CertificateExtendedKeyUsageUtils
 {
-    internal static class CertificateExtendedKeyUsageUtils
+    /// <summary>
+    /// Read the extended key usage identifiers from the signer certificate
+    /// </summary>
+    /// <param name="signatureValidation"></param>
+    /// <param name="logger"></param>
+    /// <returns></returns>
+    public static IEnumerable<string> GetExtendedKeyUsages(SignatureValidationResult? signatureValidation, ILogger? logger)
     {
-        /// <summary>
-        /// Read the extended key usage identifiers from the signer certificate
-        /// </summary>
-        /// <param name="signatureValidation"></param>
-        /// <param name="logger"></param>
-        /// <returns></returns>
-        public static IEnumerable<string> GetExtendedKeyUsages(SignatureValidationResult? signatureValidation, ILogger? logger)
+        if (signatureValidation == null)
         {
-            if (signatureValidation == null)
-            {
-                logger?.LogWarning("Unable to get extended key usage: No signature validation result available");
-                return Enumerable.Empty<string>();
-            }
+            logger?.LogWarning("Unable to get extended key usage: No signature validation result available");
+            return Enumerable.Empty<string>();
+        }
 
-            if (signatureValidation.PublicKeyData?.Certificate == null)
-            {
-                logger?.LogWarning("Unable to get extended key usage: Certificate is not available. " +
-                    "Try to use a TrustListProvider capable of returning signer certificates, or enable the sotrage of certificates in the current TrustListProvider");
+        if (signatureValidation.PublicKeyData?.Certificate == null)
+        {
+            logger?.LogWarning("Unable to get extended key usage: Certificate is not available. " +
+                "Try to use a TrustListProvider capable of returning signer certificates, or enable the sotrage of certificates in the current TrustListProvider");
 
-                return Enumerable.Empty<string>();
-            }
-            try
-            {
+            return Enumerable.Empty<string>();
+        }
+        try
+        {
 
 #if NETSTANDARD
-                // For netstandard, use BouncyCastle in order to be compatible with Xamarin/Mono
+            // For netstandard, use BouncyCastle in order to be compatible with Xamarin/Mono
 
-                var certificate = new X509CertificateParser().ReadCertificate(AddPemHeaders(signatureValidation.PublicKeyData.Certificate));
-                var enhancedKeyExtensions = certificate.GetExtendedKeyUsage();
-                if (enhancedKeyExtensions != null)
-                {
-                    return enhancedKeyExtensions.OfType<string>().ToArray();
-                }
-                return Enumerable.Empty<string>();
+            var certificate = new X509CertificateParser().ReadCertificate(AddPemHeaders(signatureValidation.PublicKeyData.Certificate));
+            var enhancedKeyExtensions = certificate.GetExtendedKeyUsage();
+            if (enhancedKeyExtensions != null)
+            {
+                return enhancedKeyExtensions.OfType<string>().ToArray();
+            }
+            return Enumerable.Empty<string>();
 
 #else
-                var certificate = new X509Certificate2(signatureValidation.PublicKeyData.Certificate);
-                var enhancedKeyExtensions = certificate.Extensions.OfType<X509EnhancedKeyUsageExtension>();
+            var certificate = new X509Certificate2(signatureValidation.PublicKeyData.Certificate);
+            var enhancedKeyExtensions = certificate.Extensions.OfType<X509EnhancedKeyUsageExtension>();
 
-                if (enhancedKeyExtensions == null)
-                    return Enumerable.Empty<string>();
-
-                return enhancedKeyExtensions
-                    .SelectMany(e => e.EnhancedKeyUsages.OfType<Oid>())
-                    .Where(r => !string.IsNullOrEmpty(r.Value))
-                    .Select(r=>r.Value).Cast<string>()
-                    .ToArray();
-#endif
-            }
-            catch (Exception e)
-            {
-                logger?.LogError(e, $"Error while parsing signer certificate: {e.Message}");
+            if (enhancedKeyExtensions == null)
                 return Enumerable.Empty<string>();
-            }
+
+            return enhancedKeyExtensions
+                .SelectMany(e => e.EnhancedKeyUsages.OfType<Oid>())
+                .Where(r => !string.IsNullOrEmpty(r.Value))
+                .Select(r=>r.Value).Cast<string>()
+                .ToArray();
+#endif
         }
+        catch (Exception e)
+        {
+            logger?.LogError(e, $"Error while parsing signer certificate: {e.Message}");
+            return Enumerable.Empty<string>();
+        }
+    }
 
 
 #if NETSTANDARD
-        private static byte[] AddPemHeaders(byte[] certificateData)
+    private static byte[] AddPemHeaders(byte[] certificateData)
+    {
+        const string PemHeader = "-----BEGIN CERTIFICATE-----";
+        const string PemFooter = "-----END CERTIFICATE-----";
+
+        var decoded = Convert.ToBase64String(certificateData);
+
+        if (!decoded.StartsWith(PemHeader) && !decoded.EndsWith(PemFooter))
         {
-            const string PemHeader = "-----BEGIN CERTIFICATE-----";
-            const string PemFooter = "-----END CERTIFICATE-----";
-
-            var decoded = Convert.ToBase64String(certificateData);
-
-            if (!decoded.StartsWith(PemHeader) && !decoded.EndsWith(PemFooter))
-            {
-                decoded = PemHeader + "\n" + decoded + "\n" + PemFooter;
-                return Encoding.ASCII.GetBytes(decoded);
-            }
-            return certificateData;
+            decoded = PemHeader + "\n" + decoded + "\n" + PemFooter;
+            return Encoding.ASCII.GetBytes(decoded);
         }
-#endif
+        return certificateData;
     }
+#endif
 }

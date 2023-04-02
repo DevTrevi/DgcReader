@@ -2,11 +2,10 @@
 
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 
-namespace DgcReader.TrustListProviders.Germany.Backend
+namespace DgcReader.TrustListProviders.Germany.Backend;
+
+internal class GermanyTrustList
 {
-    internal class GermanyTrustList
-    {
-        [JsonProperty("certificates")]
-        public CertificateEntry[] Certificates { get; set; }
-    }
+    [JsonProperty("certificates")]
+    public CertificateEntry[] Certificates { get; set; }
 }

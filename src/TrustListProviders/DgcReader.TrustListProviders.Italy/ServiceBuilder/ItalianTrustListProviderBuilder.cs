@@ -7,55 +7,54 @@ using System.Linq;
 // Copyright (c) 2021 Davide Trevisan
 // Licensed under the Apache License, Version 2.0
 
-namespace Microsoft.Extensions.DependencyInjection
+namespace Microsoft.Extensions.DependencyInjection;
+
+/// <summary>
+/// Builder exposing methods for configuring the <see cref="ItalianTrustListProvider"/> service
+/// </summary>
+public class ItalianTrustListProviderBuilder
 {
+    static readonly Func<IServiceProvider, ItalianTrustListProvider> _providerFactory = sp => sp.GetRequiredService<ItalianTrustListProvider>();
+
     /// <summary>
-    /// Builder exposing methods for configuring the <see cref="ItalianTrustListProvider"/> service
+    /// Returns the services collection
     /// </summary>
-    public class ItalianTrustListProviderBuilder
+    private IServiceCollection Services { get; }
+
+    /// <summary>
+    /// Initializes a new instance of <see cref="ItalianTrustListProviderBuilder"/>
+    /// </summary>
+    /// <param name="services"></param>
+    public ItalianTrustListProviderBuilder(IServiceCollection services)
     {
-        static readonly Func<IServiceProvider, ItalianTrustListProvider> _providerFactory = sp => sp.GetRequiredService<ItalianTrustListProvider>();
+        Services = services;
 
-        /// <summary>
-        /// Returns the services collection
-        /// </summary>
-        private IServiceCollection Services { get; }
+        Services.AddHttpClient();
 
-        /// <summary>
-        /// Initializes a new instance of <see cref="ItalianTrustListProviderBuilder"/>
-        /// </summary>
-        /// <param name="services"></param>
-        public ItalianTrustListProviderBuilder(IServiceCollection services)
+        Services.AddSingleton<ItalianTrustListProvider>();
+
+        var sd = Services.FirstOrDefault(s => s.ServiceType == typeof(ITrustListProvider) && s.ImplementationFactory == _providerFactory);
+        if (sd == null)
+            Services.AddSingleton<ITrustListProvider, ItalianTrustListProvider>(_providerFactory);
+    }
+
+
+    /// <summary>
+    /// Configures the <see cref="ItalianTrustListProvider"/> service
+    /// </summary>
+    /// <param name="configuration">The delegate used to configure the options</param>
+    /// <returns></returns>
+    /// <exception cref="ArgumentNullException"></exception>
+    public ItalianTrustListProviderBuilder Configure(Action<ItalianTrustListProviderOptions> configuration)
+    {
+        if (configuration is null)
         {
-            Services = services;
-
-            Services.AddHttpClient();
-
-            Services.AddSingleton<ItalianTrustListProvider>();
-
-            var sd = Services.FirstOrDefault(s => s.ServiceType == typeof(ITrustListProvider) && s.ImplementationFactory == _providerFactory);
-            if (sd == null)
-                Services.AddSingleton<ITrustListProvider, ItalianTrustListProvider>(_providerFactory);
+            throw new ArgumentNullException(nameof(configuration));
         }
 
+        Services.Configure(configuration);
 
-        /// <summary>
-        /// Configures the <see cref="ItalianTrustListProvider"/> service
-        /// </summary>
-        /// <param name="configuration">The delegate used to configure the options</param>
-        /// <returns></returns>
-        /// <exception cref="ArgumentNullException"></exception>
-        public ItalianTrustListProviderBuilder Configure(Action<ItalianTrustListProviderOptions> configuration)
-        {
-            if (configuration is null)
-            {
-                throw new ArgumentNullException(nameof(configuration));
-            }
-
-            Services.Configure(configuration);
-
-            return this;
-        }
+        return this;
     }
 }
 

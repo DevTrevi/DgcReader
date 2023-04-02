@@ -5,86 +5,85 @@ using System;
 // Copyright (c) 2021 Davide Trevisan
 // Licensed under the Apache License, Version 2.0
 
-namespace Microsoft.Extensions.DependencyInjection
+namespace Microsoft.Extensions.DependencyInjection;
+
+/// <summary>
+/// Exposes extensions allowing to register the <see cref="DgcGermanRulesValidator"/> service
+/// </summary>
+public static class DgcGermanRulesValidatorServiceExtensions
 {
     /// <summary>
-    /// Exposes extensions allowing to register the <see cref="DgcGermanRulesValidator"/> service
+    /// Registers the <see cref="DgcGermanRulesValidator"/> service in the DI container
     /// </summary>
-    public static class DgcGermanRulesValidatorServiceExtensions
+    /// <param name="services"></param>
+    /// <returns></returns>
+    /// <exception cref="ArgumentNullException"></exception>
+    public static DgcGermanRulesValidatorServiceBuilder AddGermanRulesValidator(this IServiceCollection services)
     {
-        /// <summary>
-        /// Registers the <see cref="DgcGermanRulesValidator"/> service in the DI container
-        /// </summary>
-        /// <param name="services"></param>
-        /// <returns></returns>
-        /// <exception cref="ArgumentNullException"></exception>
-        public static DgcGermanRulesValidatorServiceBuilder AddGermanRulesValidator(this IServiceCollection services)
+        if (services is null)
         {
-            if (services is null)
-            {
-                throw new ArgumentNullException(nameof(services));
-            }
-            return new DgcGermanRulesValidatorServiceBuilder(services);
+            throw new ArgumentNullException(nameof(services));
         }
+        return new DgcGermanRulesValidatorServiceBuilder(services);
+    }
 
-        /// <summary>
-        /// Registers the <see cref="DgcGermanRulesValidator"/> service in the DI container
-        /// </summary>
-        /// <param name="services"></param>
-        /// <param name="configuration"></param>
-        /// <returns></returns>
-        /// <exception cref="ArgumentNullException"></exception>
-        public static IServiceCollection AddGermanRulesValidator(this IServiceCollection services,
-            Action<DgcGermanRulesValidatorOptions> configuration)
-        {
-            if (services is null)
-                throw new ArgumentNullException(nameof(services));
-            if(configuration is null)
-                throw new ArgumentNullException(nameof(configuration));
+    /// <summary>
+    /// Registers the <see cref="DgcGermanRulesValidator"/> service in the DI container
+    /// </summary>
+    /// <param name="services"></param>
+    /// <param name="configuration"></param>
+    /// <returns></returns>
+    /// <exception cref="ArgumentNullException"></exception>
+    public static IServiceCollection AddGermanRulesValidator(this IServiceCollection services,
+        Action<DgcGermanRulesValidatorOptions> configuration)
+    {
+        if (services is null)
+            throw new ArgumentNullException(nameof(services));
+        if(configuration is null)
+            throw new ArgumentNullException(nameof(configuration));
 
-            services.AddGermanRulesValidator().Configure(configuration);
+        services.AddGermanRulesValidator().Configure(configuration);
 
-            return services;
-        }
+        return services;
+    }
 
 
-        // Extensions for DgcReaderServiceBuilder
+    // Extensions for DgcReaderServiceBuilder
 
-        /// <summary>
-        /// Registers the <see cref="DgcGermanRulesValidator"/> service in the DI container
-        /// </summary>
-        /// <param name="dgcBuilder"></param>
-        /// <returns></returns>
-        /// <exception cref="ArgumentNullException"></exception>
-        public static DgcReaderServiceBuilder AddGermanRulesValidator(this DgcReaderServiceBuilder dgcBuilder)
-        {
-            if (dgcBuilder is null)
-                throw new ArgumentNullException(nameof(dgcBuilder));
+    /// <summary>
+    /// Registers the <see cref="DgcGermanRulesValidator"/> service in the DI container
+    /// </summary>
+    /// <param name="dgcBuilder"></param>
+    /// <returns></returns>
+    /// <exception cref="ArgumentNullException"></exception>
+    public static DgcReaderServiceBuilder AddGermanRulesValidator(this DgcReaderServiceBuilder dgcBuilder)
+    {
+        if (dgcBuilder is null)
+            throw new ArgumentNullException(nameof(dgcBuilder));
 
-            dgcBuilder.Services.AddGermanRulesValidator();
-            return dgcBuilder;
-        }
+        dgcBuilder.Services.AddGermanRulesValidator();
+        return dgcBuilder;
+    }
 
-        /// <summary>
-        /// Registers the <see cref="DgcGermanRulesValidator"/> service in the DI container
-        /// </summary>
-        /// <param name="dgcBuilder"></param>
-        /// <param name="configuration"></param>
-        /// <returns></returns>
-        /// <exception cref="ArgumentNullException"></exception>
-        public static DgcReaderServiceBuilder AddGermanRulesValidator(this DgcReaderServiceBuilder dgcBuilder,
-            Action<DgcGermanRulesValidatorOptions> configuration)
-        {
-            if (dgcBuilder is null)
-                throw new ArgumentNullException(nameof(dgcBuilder));
-            if (configuration is null)
-                throw new ArgumentNullException(nameof(configuration));
+    /// <summary>
+    /// Registers the <see cref="DgcGermanRulesValidator"/> service in the DI container
+    /// </summary>
+    /// <param name="dgcBuilder"></param>
+    /// <param name="configuration"></param>
+    /// <returns></returns>
+    /// <exception cref="ArgumentNullException"></exception>
+    public static DgcReaderServiceBuilder AddGermanRulesValidator(this DgcReaderServiceBuilder dgcBuilder,
+        Action<DgcGermanRulesValidatorOptions> configuration)
+    {
+        if (dgcBuilder is null)
+            throw new ArgumentNullException(nameof(dgcBuilder));
+        if (configuration is null)
+            throw new ArgumentNullException(nameof(configuration));
 
-            dgcBuilder.AddGermanRulesValidator();
-            dgcBuilder.Services.Configure(configuration);
+        dgcBuilder.AddGermanRulesValidator();
+        dgcBuilder.Services.Configure(configuration);
 
-            return dgcBuilder;
-        }
+        return dgcBuilder;
     }
 }
 

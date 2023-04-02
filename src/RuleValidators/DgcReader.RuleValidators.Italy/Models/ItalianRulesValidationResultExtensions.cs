@@ -4,46 +4,45 @@ using DgcReader.RuleValidators.Italy.Models;
 // Copyright (c) 2021 Davide Trevisan
 // Licensed under the Apache License, Version 2.0
 
-namespace DgcReader
+namespace DgcReader;
+
+/// <summary>
+/// Extension methods for ItalianRulesValidation types
+/// </summary>
+public static class ItalianRulesValidationResultExtensions
 {
     /// <summary>
-    /// Extension methods for ItalianRulesValidation types
+    /// Converts the <see cref="DgcItalianResultStatus"/> to the standard <see cref="DgcResultStatus"/>
     /// </summary>
-    public static class ItalianRulesValidationResultExtensions
+    /// <param name="status"></param>
+    /// <returns></returns>
+    public static DgcResultStatus ToDgcResultStatus(this DgcItalianResultStatus status)
     {
-        /// <summary>
-        /// Converts the <see cref="DgcItalianResultStatus"/> to the standard <see cref="DgcResultStatus"/>
-        /// </summary>
-        /// <param name="status"></param>
-        /// <returns></returns>
-        public static DgcResultStatus ToDgcResultStatus(this DgcItalianResultStatus status)
+        switch (status)
         {
-            switch (status)
-            {
-                case DgcItalianResultStatus.NeedRulesVerification:
-                    return DgcResultStatus.NeedRulesVerification;
+            case DgcItalianResultStatus.NeedRulesVerification:
+                return DgcResultStatus.NeedRulesVerification;
 
-                case DgcItalianResultStatus.NotEuDCC:
-                    return DgcResultStatus.NotEuDCC;
+            case DgcItalianResultStatus.NotEuDCC:
+                return DgcResultStatus.NotEuDCC;
 
-                case DgcItalianResultStatus.InvalidSignature:
-                    return DgcResultStatus.InvalidSignature;
+            case DgcItalianResultStatus.InvalidSignature:
+                return DgcResultStatus.InvalidSignature;
 
-                case DgcItalianResultStatus.Revoked:
-                    return DgcResultStatus.Blacklisted;
+            case DgcItalianResultStatus.Revoked:
+                return DgcResultStatus.Blacklisted;
 
-                case DgcItalianResultStatus.NotValid:
-                case DgcItalianResultStatus.NotValidYet:
-                case DgcItalianResultStatus.TestNeeded:
-                case DgcItalianResultStatus.Expired:
-                    return DgcResultStatus.NotValid;
+            case DgcItalianResultStatus.NotValid:
+            case DgcItalianResultStatus.NotValidYet:
+            case DgcItalianResultStatus.TestNeeded:
+            case DgcItalianResultStatus.Expired:
+                return DgcResultStatus.NotValid;
 
-                case DgcItalianResultStatus.Valid:
-                    return DgcResultStatus.Valid;
+            case DgcItalianResultStatus.Valid:
+                return DgcResultStatus.Valid;
 
-                default:
-                    return DgcResultStatus.OpenResult;
-            }
+            default:
+                return DgcResultStatus.OpenResult;
         }
     }
 }

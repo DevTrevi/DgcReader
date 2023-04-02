@@ -5,67 +5,66 @@ using System;
 // Copyright (c) 2021 Davide Trevisan
 // Licensed under the Apache License, Version 2.0
 
-namespace Microsoft.Extensions.DependencyInjection
+namespace Microsoft.Extensions.DependencyInjection;
+
+/// <summary>
+/// Exposes extensions allowing to register the <see cref="GermanTrustListProvider"/> service
+/// </summary>
+public static class GermanTrustListProviderServiceExtensions
 {
     /// <summary>
-    /// Exposes extensions allowing to register the <see cref="GermanTrustListProvider"/> service
+    /// Registers the <see cref="GermanTrustListProvider"/> service in the DI container
     /// </summary>
-    public static class GermanTrustListProviderServiceExtensions
+    /// <param name="services"></param>
+    /// <returns></returns>
+    /// <exception cref="ArgumentNullException"></exception>
+    public static GermanTrustListProviderBuilder AddGermanTrustListProvider(this IServiceCollection services)
     {
-        /// <summary>
-        /// Registers the <see cref="GermanTrustListProvider"/> service in the DI container
-        /// </summary>
-        /// <param name="services"></param>
-        /// <returns></returns>
-        /// <exception cref="ArgumentNullException"></exception>
-        public static GermanTrustListProviderBuilder AddGermanTrustListProvider(this IServiceCollection services)
+        if (services is null)
         {
-            if (services is null)
-            {
-                throw new ArgumentNullException(nameof(services));
-            }
-            return new GermanTrustListProviderBuilder(services);
+            throw new ArgumentNullException(nameof(services));
         }
+        return new GermanTrustListProviderBuilder(services);
+    }
 
-        /// <summary>
-        /// Registers the <see cref="GermanTrustListProvider"/> service in the DI container
-        /// </summary>
-        /// <param name="dgcBuilder"></param>
-        /// <returns></returns>
-        /// <exception cref="ArgumentNullException"></exception>
-        public static DgcReaderServiceBuilder AddGermanTrustListProvider(this DgcReaderServiceBuilder dgcBuilder)
+    /// <summary>
+    /// Registers the <see cref="GermanTrustListProvider"/> service in the DI container
+    /// </summary>
+    /// <param name="dgcBuilder"></param>
+    /// <returns></returns>
+    /// <exception cref="ArgumentNullException"></exception>
+    public static DgcReaderServiceBuilder AddGermanTrustListProvider(this DgcReaderServiceBuilder dgcBuilder)
+    {
+        if (dgcBuilder is null)
         {
-            if (dgcBuilder is null)
-            {
-                throw new ArgumentNullException(nameof(dgcBuilder));
-            }
-            dgcBuilder.Services.AddGermanTrustListProvider();
-            return dgcBuilder;
+            throw new ArgumentNullException(nameof(dgcBuilder));
         }
+        dgcBuilder.Services.AddGermanTrustListProvider();
+        return dgcBuilder;
+    }
 
-        /// <summary>
-        /// Registers the <see cref="GermanTrustListProvider"/> service in the DI container
-        /// </summary>
-        /// <param name="dgcBuilder"></param>
-        /// <param name="configuration"></param>
-        /// <returns></returns>
-        /// <exception cref="ArgumentNullException"></exception>
-        public static DgcReaderServiceBuilder AddGermanTrustListProvider(this DgcReaderServiceBuilder dgcBuilder,
-            Action<GermanTrustListProviderOptions> configuration)
-        {
-            if (dgcBuilder is null)
-                throw new ArgumentNullException(nameof(dgcBuilder));
+    /// <summary>
+    /// Registers the <see cref="GermanTrustListProvider"/> service in the DI container
+    /// </summary>
+    /// <param name="dgcBuilder"></param>
+    /// <param name="configuration"></param>
+    /// <returns></returns>
+    /// <exception cref="ArgumentNullException"></exception>
+    public static DgcReaderServiceBuilder AddGermanTrustListProvider(this DgcReaderServiceBuilder dgcBuilder,
+        Action<GermanTrustListProviderOptions> configuration)
+    {
+        if (dgcBuilder is null)
+            throw new ArgumentNullException(nameof(dgcBuilder));
 
-            if (configuration is null)
-                throw new ArgumentNullException(nameof(configuration));
-
-
-            dgcBuilder.AddGermanTrustListProvider();
-            dgcBuilder.Services.Configure(configuration);
+        if (configuration is null)
+            throw new ArgumentNullException(nameof(configuration));
 
 
-            return dgcBuilder;
-        }
+        dgcBuilder.AddGermanTrustListProvider();
+        dgcBuilder.Services.Configure(configuration);
+
+
+        return dgcBuilder;
     }
 }
 

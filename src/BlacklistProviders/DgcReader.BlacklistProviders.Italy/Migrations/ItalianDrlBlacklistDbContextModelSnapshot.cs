@@ -5,55 +5,54 @@ using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
 using DgcReader.BlacklistProviders.Italy;
 
-namespace DgcReader.BlacklistProviders.Italy.Migrations
+namespace DgcReader.BlacklistProviders.Italy.Migrations;
+
+[DbContext(typeof(ItalianDrlBlacklistDbContext))]
+partial class ItalianDrlBlacklistDbContextModelSnapshot : ModelSnapshot
 {
-    [DbContext(typeof(ItalianDrlBlacklistDbContext))]
-    partial class ItalianDrlBlacklistDbContextModelSnapshot : ModelSnapshot
+    protected override void BuildModel(ModelBuilder modelBuilder)
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
-        {
-            modelBuilder
-                .HasAnnotation("ProductVersion", "1.1.6");
+        modelBuilder
+            .HasAnnotation("ProductVersion", "1.1.6");
 
-            modelBuilder.Entity("DgcReader.BlacklistProviders.Italy.Entities.BlacklistEntry", b =>
-                {
-                    b.Property<string>("HashedUCVI")
-                        .ValueGeneratedOnAdd()
-                        .HasMaxLength(44);
+        modelBuilder.Entity("DgcReader.BlacklistProviders.Italy.Entities.BlacklistEntry", b =>
+            {
+                b.Property<string>("HashedUCVI")
+                    .ValueGeneratedOnAdd()
+                    .HasMaxLength(44);
 
-                    b.HasKey("HashedUCVI");
+                b.HasKey("HashedUCVI");
 
-                    b.ToTable("DgcReader_ItalianDrl_Blacklist");
-                });
+                b.ToTable("DgcReader_ItalianDrl_Blacklist");
+            });
 
-            modelBuilder.Entity("DgcReader.BlacklistProviders.Italy.Entities.SyncStatus", b =>
-                {
-                    b.Property<int>("Id");
+        modelBuilder.Entity("DgcReader.BlacklistProviders.Italy.Entities.SyncStatus", b =>
+            {
+                b.Property<int>("Id");
 
-                    b.Property<int>("CurrentVersion");
+                b.Property<int>("CurrentVersion");
 
-                    b.Property<string>("CurrentVersionId")
-                        .HasMaxLength(24);
+                b.Property<string>("CurrentVersionId")
+                    .HasMaxLength(24);
 
-                    b.Property<DateTime>("LastCheck");
+                b.Property<DateTime>("LastCheck");
 
-                    b.Property<int>("LastChunkSaved");
+                b.Property<int>("LastChunkSaved");
 
-                    b.Property<int>("TargetChunkSize");
+                b.Property<int>("TargetChunkSize");
 
-                    b.Property<int>("TargetChunksCount");
+                b.Property<int>("TargetChunksCount");
 
-                    b.Property<int>("TargetTotalNumberUCVI");
+                b.Property<int>("TargetTotalNumberUCVI");
 
-                    b.Property<int>("TargetVersion");
+                b.Property<int>("TargetVersion");
 
-                    b.Property<string>("TargetVersionId")
-                        .HasMaxLength(24);
+                b.Property<string>("TargetVersionId")
+                    .HasMaxLength(24);
 
-                    b.HasKey("Id");
+                b.HasKey("Id");
 
-                    b.ToTable("DgcReader_ItalianDrl_SyncStatus");
-                });
-        }
+                b.ToTable("DgcReader_ItalianDrl_SyncStatus");
+            });
     }
 }

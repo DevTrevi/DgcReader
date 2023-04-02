@@ -6,87 +6,84 @@ using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace DgcReader.RuleValidators.Italy.Validation
+namespace DgcReader.RuleValidators.Italy.Validation;
+
+/// <summary>
+/// Validator for Recovery entries
+/// </summary>
+public class RecoveryValidator : BaseValidator
 {
-    /// <summary>
-    /// Validator for Recovery entries
-    /// </summary>
-    public class RecoveryValidator : BaseValidator
+    /// <inheritdoc/>
+    public RecoveryValidator(ILogger? logger) : base(logger)
     {
-        /// <inheritdoc/>
-        public RecoveryValidator(ILogger? logger) : base(logger)
-        {
-        }
+    }
 
-        /// <inheritdoc/>
-        public override ItalianRulesValidationResult CheckCertificate(
-            ValidationCertificateModel certificateModel,
-            IEnumerable<RuleSetting> rules,
-            ValidationMode validationMode,
-            bool doubleScanMode)
-        {
-            var result = InitializeResult(certificateModel, validationMode);
+    /// <inheritdoc/>
+    public override ItalianRulesValidationResult CheckCertificate(
+        ValidationCertificateModel certificateModel,
+        IEnumerable<RuleSetting> rules,
+        ValidationMode validationMode,
+        bool doubleScanMode)
+    {
+        var result = InitializeResult(certificateModel, validationMode);
 
-            var recovery = certificateModel.Dgc.GetCertificateEntry<RecoveryEntry>(DiseaseAgents.Covid19);
-            if (recovery == null)
-                return result;
-
-            // Always use Italy for getting rules
-            var countryCode = CountryCodes.Italy;
-
-            // Check if is PV (post-vaccination) recovery by checking signer certificate
-            var isPvRecovery = IsRecoveryPvSignature(certificateModel.SignatureData);
-
-            var startDaysToAdd = isPvRecovery ? rules.GetRecoveryPvCertStartDay() : rules.GetRecoveryCertStartDayUnified(countryCode);
-            var endDaysToAdd =
-                isPvRecovery ? rules.GetRecoveryPvCertEndDay() :
-                rules.GetRecoveryCertEndDayUnified(countryCode);
-
-            var startDate =
-                recovery.ValidFrom.Date;
-            var endDate = startDate.AddDays(endDaysToAdd);
-
-
-            result.ValidFrom = startDate.AddDays(startDaysToAdd);
-            result.ValidUntil = endDate;
-
-            if (result.ValidationInstant.Date < result.ValidFrom)
-                result.ItalianStatus = DgcItalianResultStatus.NotValidYet;
-            else if (result.ValidationInstant.Date > result.ValidUntil)
-                result.ItalianStatus = DgcItalianResultStatus.Expired;
-            else
-            {
-                if (validationMode == ValidationMode.Booster && !isPvRecovery)
-                {
-                    result.ItalianStatus = DgcItalianResultStatus.TestNeeded;
-                    result.StatusMessage = "Certificate is valid, but a test is also needed if mode is booster and the recovery certificate is not issued after a vaccination";
-                }
-                else
-                    result.ItalianStatus = DgcItalianResultStatus.Valid;
-            }
-
+        var recovery = certificateModel.Dgc.GetCertificateEntry<RecoveryEntry>(DiseaseAgents.Covid19);
+        if (recovery == null)
             return result;
-        }
+
+        // Always use Italy for getting rules
+        var countryCode = CountryCodes.Italy;
+
+        // Check if is PV (post-vaccination) recovery by checking signer certificate
+        var isPvRecovery = IsRecoveryPvSignature(certificateModel.SignatureData);
+
+        var startDaysToAdd = isPvRecovery ? rules.GetRecoveryPvCertStartDay() : rules.GetRecoveryCertStartDayUnified(countryCode);
+        var endDaysToAdd =
+            isPvRecovery ? rules.GetRecoveryPvCertEndDay() :
+            rules.GetRecoveryCertEndDayUnified(countryCode);
+
+        var startDate =
+            recovery.ValidFrom.Date;
+        var endDate = startDate.AddDays(endDaysToAdd);
 
 
-        /// <summary>
-        /// Check if the signer certificate is one of the signer of post-vaccination certificates
-        /// </summary>
-        /// <param name="signatureValidationResult"></param>
-        /// <returns></returns>
-        private bool IsRecoveryPvSignature(SignatureValidationResult? signatureValidationResult)
+        result.ValidFrom = startDate.AddDays(startDaysToAdd);
+        result.ValidUntil = endDate;
+
+        if (result.ValidationInstant.Date < result.ValidFrom)
+            result.ItalianStatus = DgcItalianResultStatus.NotValidYet;
+        else if (result.ValidationInstant.Date > result.ValidUntil)
+            result.ItalianStatus = DgcItalianResultStatus.Expired;
+        else
         {
-            var extendedKeyUsages = CertificateExtendedKeyUsageUtils.GetExtendedKeyUsages(signatureValidationResult, Logger);
-
-            if (signatureValidationResult == null)
-                return false;
-
-            if (signatureValidationResult.Issuer != CountryCodes.Italy)
-                return false;
-
-            return extendedKeyUsages.Any(usage => CertificateExtendedKeyUsageIdentifiers.RecoveryIssuersIds.Contains(usage));
+            if (validationMode == ValidationMode.Booster && !isPvRecovery)
+            {
+                result.ItalianStatus = DgcItalianResultStatus.TestNeeded;
+                result.StatusMessage = "Certificate is valid, but a test is also needed if mode is booster and the recovery certificate is not issued after a vaccination";
+            }
+            else
+                result.ItalianStatus = DgcItalianResultStatus.Valid;
         }
+
+        return result;
     }
 
 
+    /// <summary>
+    /// Check if the signer certificate is one of the signer of post-vaccination certificates
+    /// </summary>
+    /// <param name="signatureValidationResult"></param>
+    /// <returns></returns>
+    private bool IsRecoveryPvSignature(SignatureValidationResult? signatureValidationResult)
+    {
+        var extendedKeyUsages = CertificateExtendedKeyUsageUtils.GetExtendedKeyUsages(signatureValidationResult, Logger);
+
+        if (signatureValidationResult == null)
+            return false;
+
+        if (signatureValidationResult.Issuer != CountryCodes.Italy)
+            return false;
+
+        return extendedKeyUsages.Any(usage => CertificateExtendedKeyUsageIdentifiers.RecoveryIssuersIds.Contains(usage));
+    }
 }

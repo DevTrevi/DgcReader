@@ -1,21 +1,17 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
+	<Import Project="..\..\PackagesInfo.proj"/>
+	
 	<PropertyGroup>
 		<TargetFrameworks>net452;net47;netstandard2.0;net5.0</TargetFrameworks>
 		<LangVersion>Latest</LangVersion>
 		<Nullable>annotations</Nullable>
-		<GenerateDocumentationFile>true</GenerateDocumentationFile>
-		<Authors>Davide Trevisan</Authors>
-		<Copyright>Copyright © 2021 Davide Trevisan</Copyright>
-		<RepositoryUrl>https://github.com/DevTrevi/DGCReader</RepositoryUrl>
-		<PackageTags>DGC DCC DigitalGreenCertificate DigitalCovidCertificate Greenpass Covid Covid19</PackageTags>
 		<Description>Library for decoding and validating European Digital Green Certificates</Description>
-		<Version>2.5.5</Version>
-		<PackageLicenseExpression> Apache-2.0</PackageLicenseExpression>
-		<PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
-		<PackageProjectUrl>https://github.com/DevTrevi/DgcReader</PackageProjectUrl>
 	</PropertyGroup>
+
+	
+	
 	<PropertyGroup Condition="$(TargetFramework) == 'net5.0'">
 		<Nullable>enable</Nullable>
 	</PropertyGroup>

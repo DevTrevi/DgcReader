@@ -7,7 +7,8 @@ variables:
   value: 'https://api.nuget.org/v3/index.json'
 - name: BuildConfiguration
   value: 'release'
-  packagesInfoPath: "./PackagesInfo.proj"
+- name: packagesInfoPath
+  value: "./PackagesInfo.proj"
 
 pool:
   vmImage: windows-latest
@@ -20,6 +21,8 @@ steps:
    $version = $xml.Project.PropertyGroup.Version
    $versionChunks = $version.Split(".")[0..2]
    
+   echo "Package version is $version"
+
    echo "##vso[task.setvariable variable=majorVersion]$($versionChunks[0])"
    echo "##vso[task.setvariable variable=minorVersion]$($versionChunks[1])"
    echo "##vso[task.setvariable variable=patchVersion]$($versionChunks[2])"
@@ -31,22 +34,22 @@ steps:
     version: 6.0.x
 
 - task: DotNetCoreCLI@2
+  displayName: 'dotnet build and pack'
   inputs:
     command: 'pack'
     packagesToPack: '**/*.csproj'
-    verbosityPack: 'Normal'
+    verbosityPack: 'Minimal'
     versioningScheme: byPrereleaseNumber
     majorVersion: '$(majorVersion)'
     minorVersion: '$(minorVersion)'
     patchVersion: '$(patchVersion)'
 
-- task: NuGetToolInstaller@1
-  displayName: 'Install NuGet'
-
-- script: nuget push $(Build.ArtifactStagingDirectory)\**\*.nupkg -Source $(nugetSource) -ApiKey $(nuget-org-apikey) -SkipDuplicate -NoSymbols
-  displayName: 'Push to NuGet.org'
-  enabled: false
-
+- task: NuGetCommand@2
+  inputs:
+    command: 'push'
+    packagesToPush: '$(Build.ArtifactStagingDirectory)/**/*.nupkg'
+    nuGetFeedType: 'external'
+    publishFeedCredentials: 'NuGet.org devTrevi'
 
 - task: PublishBuildArtifacts@1
   inputs:

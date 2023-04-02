@@ -56,7 +56,8 @@ public class ItalianDrlBlacklistManager
         Logger = logger;
     }
 
-    #region Public methods
+    // Public methods
+
     /// <summary>
     /// Check if the specified UCVI is blacklisted
     /// </summary>
@@ -158,9 +159,9 @@ public class ItalianDrlBlacklistManager
         return this.UpdateFromServer(0, cancellationToken);
     }
 
-    #endregion
 
-    #region Private methods
+
+    // Private methods
 
     /// <summary>
     /// Updates the local blacklist if a new version is available from the remote server
@@ -626,5 +627,4 @@ public class ItalianDrlBlacklistManager
             Logger?.LogError(e, $"Error while notifying download progress: {e.Message}");
         }
     }
-#endregion
 }

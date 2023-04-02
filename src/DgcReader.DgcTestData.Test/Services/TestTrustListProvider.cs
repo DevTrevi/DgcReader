@@ -35,7 +35,8 @@ namespace DgcReader.DgcTestData.Test.Services
             Loader = loader;
         }
 
-        #region Implementation of ITrustListProvider
+        // Implementation of ITrustListProvider
+
         /// <inheritdoc/>
         public bool SupportsCountryCodes => true;
 
@@ -70,9 +71,9 @@ namespace DgcReader.DgcTestData.Test.Services
             TrustList = ToTrustListData(entries.SelectMany(e => e.Value.Select(r => (e.Key, r))));
             return Task.FromResult(TrustList);
         }
-        #endregion
+        
 
-        #region Private
+        // Private
         private IEnumerable<ITrustedCertificateData> ToTrustListData(IEnumerable<(string Country, TestEntry Entry)> testEntries)
         {
 
@@ -85,9 +86,9 @@ namespace DgcReader.DgcTestData.Test.Services
 
             return results;
         }
-        #endregion
 
-        #region Models
+        // Models
+
         public class TestTrustedCertData : ITrustedCertificateData
         {
 
@@ -220,7 +221,6 @@ namespace DgcReader.DgcTestData.Test.Services
             public byte[] Modulus { get; set; }
         }
 
-#endregion
     }
 
 }

@@ -73,9 +73,10 @@ internal static class RulesExtensionMethods
     public static string ToUpperInvariantNotNull(this string s)
         => s?.ToUpperInvariant() ?? string.Empty;
 
-    #region Start/end days
+    // Start/end days
 
-    #region Recovery
+    // Recovery
+
     [Obsolete]
     public static int GetRecoveryCertStartDay(this IEnumerable<RuleSetting> settings)
         => settings.GetRuleInteger(SettingNames.RecoveryCertStartDay);
@@ -104,9 +105,8 @@ internal static class RulesExtensionMethods
             settings.GetRuleInteger(SettingNames.RecoveryCertEndDayNotIT);
     }
 
-    #endregion
 
-    #region Test
+    // Test
     public static int GetMolecularTestStartHour(this IEnumerable<RuleSetting> settings)
         => settings.GetRuleInteger(SettingNames.MolecularTestStartHours);
     public static int GetMolecularTestEndHour(this IEnumerable<RuleSetting> settings)
@@ -116,9 +116,10 @@ internal static class RulesExtensionMethods
         => settings.GetRuleInteger(SettingNames.RapidTestStartHours);
     public static int GetRapidTestEndHour(this IEnumerable<RuleSetting> settings)
         => settings.GetRuleInteger(SettingNames.RapidTestEndHours);
-    #endregion
 
-    #region Vaccination
+
+    // Vaccination
+
     public static int GetVaccineStartDayNotComplete(this IEnumerable<RuleSetting> settings, string vaccineType)
         => settings.GetRuleInteger(SettingNames.VaccineStartDayNotComplete, vaccineType);
     public static int GetVaccineEndDayNotComplete(this IEnumerable<RuleSetting> settings, string vaccineType)
@@ -199,7 +200,5 @@ internal static class RulesExtensionMethods
     /// <inheritdoc cref="IsEMA(IEnumerable{RuleSetting}, string, string)"/>
     public static bool IsEMA(this IEnumerable<RuleSetting> settings, VaccinationEntry vaccination)
         => settings.IsEMA(vaccination.MedicinalProduct, vaccination.Country);
-    #endregion
 
-    #endregion
 }

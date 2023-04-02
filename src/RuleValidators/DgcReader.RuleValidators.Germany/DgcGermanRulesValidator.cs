@@ -143,7 +143,7 @@ public class DgcGermanRulesValidator : IRulesValidator
     }
 #endif
 
-    #region Implementation of IRulesValidator
+    // Implementation of IRulesValidator
 
     /// <inheritdoc/>
     public async Task<IRulesValidationResult> GetRulesValidationResult(EuDGC? dgc,
@@ -283,9 +283,9 @@ public class DgcGermanRulesValidator : IRulesValidator
         return supportedCountries.Any(r=>r.Equals(countryCode, StringComparison.InvariantCultureIgnoreCase));
     }
 
-    #endregion
+    
 
-    #region Public methods
+    // Public methods
 
     /// <summary>
     /// Refresh all the valuesets (and their identifiers)
@@ -321,9 +321,9 @@ public class DgcGermanRulesValidator : IRulesValidator
             await _rulesProvider.RefreshValueSet(country, cancellationToken);
         }
     }
-    #endregion
+    
 
-    #region Private
+    // Private
 
     private async Task<Dictionary<string, JObject>> GetValueSetsJson(CancellationToken cancellationToken = default)
     {
@@ -342,5 +342,4 @@ public class DgcGermanRulesValidator : IRulesValidator
         }
         return temp;
     }
-    #endregion
 }

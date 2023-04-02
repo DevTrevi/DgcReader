@@ -106,7 +106,7 @@ public class GermanTrustListProvider : ThreadsafeTrustListProvider<GermanTrustLi
     }
 #endif
 
-    #region Implementation of ITrustListProvider
+    // Implementation of ITrustListProvider
 
     /// <inheritdoc/>
     public override bool SupportsCountryCodes => true;
@@ -114,9 +114,9 @@ public class GermanTrustListProvider : ThreadsafeTrustListProvider<GermanTrustLi
     /// <inheritdoc/>
     public override bool SupportsCertificates => true;
 
-    #endregion
+    
 
-    #region Implementation of TrustListProviderBase
+    // Implementation of TrustListProviderBase
 
     /// <inheritdoc/>
     protected override async Task<ITrustList?> GetValuesFromServer(CancellationToken cancellationToken = default)
@@ -218,9 +218,9 @@ public class GermanTrustListProvider : ThreadsafeTrustListProvider<GermanTrustLi
         File.WriteAllText(filePath, json);
         return Task.FromResult(0);
     }
-    #endregion
+    
 
-    #region Private
+    // Private
 
     private async Task<GermanyTrustList> GetCertificatesFromServer(CancellationToken cancellationToken = default)
     {
@@ -261,5 +261,4 @@ public class GermanTrustListProvider : ThreadsafeTrustListProvider<GermanTrustLi
     private string GetCacheFolder() => Path.Combine(Options.BasePath, ProviderDataFolder);
     private string GetCacheFilePath() => Path.Combine(GetCacheFolder(), FileName);
 
-    #endregion
 }

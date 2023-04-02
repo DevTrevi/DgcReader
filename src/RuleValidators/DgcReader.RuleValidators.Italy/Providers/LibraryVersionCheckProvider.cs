@@ -93,8 +93,8 @@ internal class LibraryVersionCheckProvider : ThreadsafeValueSetProvider<Version>
         return Task.FromResult(LatestVersion);
     }
 
+    // Private
 
-    #region Private
     private static string GetGitHubReleasesRequestUrl(int page, int pageSize)
     {
         return $"{GirtHubReleasesApiUrl}?per_page={pageSize}&page={page}";
@@ -108,5 +108,4 @@ internal class LibraryVersionCheckProvider : ThreadsafeValueSetProvider<Version>
 
         return Version.Parse(versionString);
     }
-    #endregion
 }

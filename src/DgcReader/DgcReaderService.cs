@@ -27,7 +27,8 @@ namespace DgcReader;
 /// </summary>
 public class DgcReaderService
 {
-    #region Services
+    // Services
+
     /// <summary>
     /// The registered deserializers
     /// </summary>
@@ -48,9 +49,9 @@ public class DgcReaderService
     /// </summary>
     public readonly IEnumerable<IRulesValidator> RulesValidators;
     private readonly ILogger? Logger;
-    #endregion
 
-    #region Main public methods
+
+    // Main public methods
 
     /// <summary>
     /// Decodes the DGC data, trowing exceptions only if data is in invalid format
@@ -238,9 +239,9 @@ public class DgcReaderService
         return temp.Where(r => !string.IsNullOrEmpty(r)).OrderBy(r => r).ToArray();
     }
 
-    #endregion
+    
 
-    #region Overloads
+    // Overloads
 
     /// <summary>
     /// Decodes the DGC data, trowing exceptions only if data is in invalid format
@@ -320,9 +321,9 @@ public class DgcReaderService
     {
         return Verify(qrCodeData, acceptanceCountryCode, validationInstant, false, cancellationToken);
     }
-    #endregion
+    
 
-    #region Private
+    // Private methods
 
     /// <summary>
     /// Executes all the decoding steps to get the Cose object from the QR code data
@@ -701,9 +702,9 @@ public class DgcReaderService
             .FirstOrDefault(s => s.SupportedCountryCodes?.Contains(country) == true) ??
             Deserializers.First(s => s.SupportedCountryCodes == null);
     }
-    #endregion
+    
 
-    #region Factory methods and constructor
+    // Factory methods and constructor
 
     /// <summary>
     /// Instantiate the DgcReaderService
@@ -790,5 +791,5 @@ public class DgcReaderService
     {
         return new DgcReaderService(trustListProviders, blackListProviders, rulesValidators, deserializers, logger);
     }
-    #endregion
+
 }

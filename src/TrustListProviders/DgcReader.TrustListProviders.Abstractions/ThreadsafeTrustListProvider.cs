@@ -41,7 +41,7 @@ public abstract class ThreadsafeTrustListProvider : ThreadsafeValueSetProvider<I
         Options = options;
     }
 
-    #region Implementation of ITrustListProvider
+    // Implementation of ITrustListProvider
 
     /// <inheritdoc/>
     public abstract bool SupportsCountryCodes { get; }
@@ -80,9 +80,9 @@ public abstract class ThreadsafeTrustListProvider : ThreadsafeValueSetProvider<I
         return q.SingleOrDefault();
     }
 
-    #endregion
+    
 
-    #region Implementation of ThreadsafeValueSetProvider
+    // Implementation of ThreadsafeValueSetProvider
 
     /// <inheritdoc/>
     public override TimeSpan MinRefreshInterval => Options.MinRefreshInterval;
@@ -101,7 +101,7 @@ public abstract class ThreadsafeTrustListProvider : ThreadsafeValueSetProvider<I
 
     /// <inheritdoc/>
     protected override DateTimeOffset GetLastUpdate(ITrustList valueSet) => valueSet.LastUpdate;
-    #endregion
+
 }
 
 /// <inheritdoc cref="ThreadsafeTrustListProvider"/>

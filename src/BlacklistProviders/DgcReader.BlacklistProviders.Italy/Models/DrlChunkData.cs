@@ -49,7 +49,8 @@ public class DrlChunkData : IDrlVersionInfo
     [JsonProperty("totalNumberUCVI")]
     public int TotalNumberUCVI { get; set; }
 
-    #region Full download
+    // Full download
+
     /// <summary>
     /// Revoked UCVIs for this chunk
     /// </summary>
@@ -77,9 +78,10 @@ public class DrlChunkData : IDrlVersionInfo
     [JsonProperty("lastElementInChunk")]
     public string LastElementInChunk { get; set; }
 
-    #endregion
+    
 
-    #region Incremental download
+    // Incremental download
+
     /// <summary>
     /// Checked version of the blacklist
     /// </summary>
@@ -93,7 +95,6 @@ public class DrlChunkData : IDrlVersionInfo
     public DrlDelta Delta { get; set; }
 
 
-    #endregion
 
     /// <inheritdoc/>
     public override string ToString()

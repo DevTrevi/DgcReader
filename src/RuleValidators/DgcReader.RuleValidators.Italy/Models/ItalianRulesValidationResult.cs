@@ -17,7 +17,8 @@ public class ItalianRulesValidationResult : IRulesValidationResult
     /// </summary>
     public DgcItalianResultStatus ItalianStatus { get; internal set; } = DgcItalianResultStatus.NeedRulesVerification;
 
-    #region Implementation of IRulesValidationResult
+    // Implementation of IRulesValidationResult
+
     /// <summary>
     /// The validation status of the DGC
     /// </summary>
@@ -31,9 +32,10 @@ public class ItalianRulesValidationResult : IRulesValidationResult
 
     /// <inheritdoc/>
     public string RulesVerificationCountry => "IT";
-    #endregion
+    
 
-    #region Additional info
+    // Additional info
+
     /// <summary>
     /// The instant when the certificate was validated against the business rules.
     /// </summary>
@@ -58,7 +60,6 @@ public class ItalianRulesValidationResult : IRulesValidationResult
     /// </summary>
     public ValidationMode ValidationMode { get; internal set; }
 
-    #endregion
 }
 
 /// <summary>

@@ -90,7 +90,6 @@ public static class CertLogicOperators
         return operators;
     }
 
-    #region Implementations
 
     /// <summary>
     /// Implementation of the plusTime specification
@@ -301,8 +300,6 @@ public static class CertLogicOperators
 
         return splitted[index];
     }
-
-    #endregion
 
     /// <summary>
     /// Represent a time unit used by the CertLogic rules

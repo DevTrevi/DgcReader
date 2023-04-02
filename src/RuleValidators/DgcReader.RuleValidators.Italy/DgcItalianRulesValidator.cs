@@ -38,7 +38,7 @@ public class DgcItalianRulesValidator : IRulesValidator, IBlacklistProvider, ICu
     private readonly RulesProvider _rulesProvider;
     private readonly LibraryVersionCheckProvider _libraryVersionCheckProvider;
 
-    #region Implementation of IRulesValidator
+    // Implementation of IRulesValidator
 
     /// <inheritdoc/>
     public async Task<IRulesValidationResult> GetRulesValidationResult(EuDGC? dgc,
@@ -98,9 +98,9 @@ public class DgcItalianRulesValidator : IRulesValidator, IBlacklistProvider, ICu
         var supportedCountries = await GetSupportedCountries();
         return supportedCountries.Any(r => r.Equals(countryCode, StringComparison.InvariantCultureIgnoreCase));
     }
-    #endregion
+    
 
-    #region Implementation of IBlackListProvider
+    // Implementation of IBlackListProvider
 
     /// <inheritdoc/>
     public async Task<bool> IsBlacklisted(string certificateIdentifier, CancellationToken cancellationToken = default)
@@ -122,14 +122,14 @@ public class DgcItalianRulesValidator : IRulesValidator, IBlacklistProvider, ICu
     {
         await _rulesProvider.RefreshValueSet(cancellationToken);
     }
-    #endregion
 
-    #region Implementation of ICustomDeserializerDependentService
+    // Implementation of ICustomDeserializerDependentService
+    
     /// <inheritdoc/>
     public IDgcDeserializer GetCustomDeserializer() => new ItalianDgcDeserializer();
-    #endregion
+    
 
-    #region Public methods
+    // Public methods
 
     /// <inheritdoc/>
     public async Task<IEnumerable<string>?> GetBlacklist(CancellationToken cancellationToken = default)
@@ -242,9 +242,8 @@ public class DgcItalianRulesValidator : IRulesValidator, IBlacklistProvider, ICu
         return result;
     }
 
-    #endregion
 
-    #region Validation methods
+    // Validation methods
 
     private ICertificateEntryValidator? GetValidator(ValidationCertificateModel certificateModel)
     {
@@ -313,9 +312,8 @@ public class DgcItalianRulesValidator : IRulesValidator, IBlacklistProvider, ICu
 
     }
 
-    #endregion
 
-    #region Constructor and factory methods
+    // Constructor and factory methods
 
 #if NET452
     /// <summary>
@@ -380,5 +378,4 @@ public class DgcItalianRulesValidator : IRulesValidator, IBlacklistProvider, ICu
     }
 #endif
 
-    #endregion
 }

@@ -36,7 +36,8 @@ public class ItalianDrlBlacklistProvider : IBlacklistProvider, ICustomDeserializ
         remove { BlacklistManager.DownloadProgressChanged -= value; }
     }
 
-    #region Constructor
+    // Constructor
+
 #if NET452
     /// <summary>
     /// Constructor for the provider
@@ -114,9 +115,9 @@ public class ItalianDrlBlacklistProvider : IBlacklistProvider, ICustomDeserializ
             logger);
     }
 #endif
-    #endregion
+    
 
-    #region Implementation of IBlacklistProvider
+    // Implementation of IBlacklistProvider
 
     /// <inheritdoc/>
     public async Task<bool> IsBlacklisted(string certificateIdentifier, CancellationToken cancellationToken = default)
@@ -179,12 +180,12 @@ public class ItalianDrlBlacklistProvider : IBlacklistProvider, ICustomDeserializ
         var task = await RefreshBlacklistTaskRunner.RunSingleTask(cancellationToken);
         await task;
     }
-    #endregion
+    
 
-    #region Implementation of ICustomDeserializerDependentService
+    // Implementation of ICustomDeserializerDependentService
+
     /// <inheritdoc/>
     public IDgcDeserializer GetCustomDeserializer() => new ItalianDgcDeserializer();
-    #endregion
 
     /// <inheritdoc/>
     public void Dispose()

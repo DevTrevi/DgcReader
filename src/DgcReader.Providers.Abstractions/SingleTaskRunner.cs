@@ -101,8 +101,6 @@ public class SingleTaskRunner<T> : IDisposable
         }
     }
 
-    #region Private
-
     private void CancelTaskExecution()
     {
         if (_taskCancellation == null)
@@ -121,5 +119,4 @@ public class SingleTaskRunner<T> : IDisposable
     {
         CancelTaskExecution();
     }
-    #endregion
 }

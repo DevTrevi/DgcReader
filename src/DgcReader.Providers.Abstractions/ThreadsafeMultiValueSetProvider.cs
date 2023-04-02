@@ -227,7 +227,7 @@ public abstract class ThreadsafeMultiValueSetProvider<T, TKey> : IMultiValueSetP
         }
     }
 
-    #region Methods to be implemented
+    // Methods to be implemented
 
     /// <summary>
     /// Executes the request to the server for getting the updated valueset
@@ -297,9 +297,9 @@ public abstract class ThreadsafeMultiValueSetProvider<T, TKey> : IMultiValueSetP
     /// multiple instances for reading
     /// </summary>
     public virtual bool TryReloadFromCacheWhenExpired => false;
-    #endregion
+    
 
-    #region Private
+    // Private
 
     /// <summary>
     /// If not already started, starts a new task for refreshing the rules from the remote server
@@ -378,5 +378,4 @@ public abstract class ThreadsafeMultiValueSetProvider<T, TKey> : IMultiValueSetP
             runner.Dispose();
         }
     }
-    #endregion
 }

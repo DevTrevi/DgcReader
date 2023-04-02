@@ -17,7 +17,8 @@ namespace GreenpassReader.Models;
 /// </summary>
 public class EuDGC
 {
-    #region Properties
+    // Properties
+
     /// <summary>
     /// Date of Birth of the person addressed in the DGC. ISO 8601 date format restricted to
     /// range 1900-2099
@@ -54,9 +55,9 @@ public class EuDGC
     /// </summary>
     [JsonProperty("ver")]
     public string SchemaVersion { get; internal set; }
-    #endregion
+    
 
-    #region Methods
+    // Methods
 
     /// <summary>
     /// Return all the <see cref="ICertificateEntry"/> in the certificate
@@ -78,7 +79,6 @@ public class EuDGC
         return $"{this.GetType().Name}: {string.Join(", ", GetCertificateEntries())}";
     }
 
-    #endregion
 }
 
 /// <summary>

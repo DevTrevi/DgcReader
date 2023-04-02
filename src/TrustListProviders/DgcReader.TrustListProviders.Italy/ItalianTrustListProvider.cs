@@ -108,7 +108,7 @@ public class ItalianTrustListProvider : ThreadsafeTrustListProvider<ItalianTrust
     }
 #endif
 
-    #region Implementation of ITrustListProvider
+    // Implementation of ITrustListProvider
 
     /// <inheritdoc/>
     public override bool SupportsCountryCodes => true;
@@ -116,10 +116,10 @@ public class ItalianTrustListProvider : ThreadsafeTrustListProvider<ItalianTrust
     /// <inheritdoc/>
     public override bool SupportsCertificates => true;
 
-    #endregion
 
 
-    #region Implementation of ThreadsafeValueSetProvider
+    // Implementation of ThreadsafeValueSetProvider
+
     /// <inheritdoc/>
     protected override async Task<ITrustList?> GetValuesFromServer(CancellationToken cancellationToken = default)
     {
@@ -215,9 +215,9 @@ public class ItalianTrustListProvider : ThreadsafeTrustListProvider<ItalianTrust
         File.WriteAllText(filePath, json);
         return Task.FromResult(0);
     }
-    #endregion
+    
 
-    #region Private
+    // Private
 
     private async Task<string[]> FetchCertificatesStatus(CancellationToken cancellationToken = default)
     {
@@ -336,5 +336,4 @@ public class ItalianTrustListProvider : ThreadsafeTrustListProvider<ItalianTrust
     private string GetCacheFolder() => Path.Combine(Options.BasePath, ProviderDataFolder);
     private string GetCacheFilePath() => Path.Combine(GetCacheFolder(), FileName);
 
-    #endregion
 }

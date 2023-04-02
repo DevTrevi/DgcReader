@@ -113,7 +113,7 @@ public class SwedishTrustListProvider : ThreadsafeTrustListProvider<SwedishTrust
     }
 #endif
 
-    #region Implementation of ITrustListProvider
+    // Implementation of ITrustListProvider
 
     /// <inheritdoc/>
     public override bool SupportsCountryCodes => true;
@@ -121,9 +121,8 @@ public class SwedishTrustListProvider : ThreadsafeTrustListProvider<SwedishTrust
     /// <inheritdoc/>
     public override bool SupportsCertificates => false;
 
-    #endregion
 
-    #region Implementation of TrustListProviderBase
+    // Implementation of TrustListProviderBase
 
     /// <inheritdoc/>
     protected override async Task<ITrustList?> GetValuesFromServer(CancellationToken cancellationToken = default)
@@ -259,9 +258,9 @@ public class SwedishTrustListProvider : ThreadsafeTrustListProvider<SwedishTrust
         return Task.FromResult(0);
 
     }
-    #endregion
+    
 
-    #region Private
+    // Private
 
     private byte[] Verify(string content)
     {
@@ -367,5 +366,4 @@ public class SwedishTrustListProvider : ThreadsafeTrustListProvider<SwedishTrust
 #endif
     }
 
-#endregion
 }

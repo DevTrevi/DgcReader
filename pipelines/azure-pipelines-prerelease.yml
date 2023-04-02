@@ -7,7 +7,8 @@ variables:
   value: 'https://api.nuget.org/v3/index.json'
 - name: BuildConfiguration
   value: 'release'
-  packagesInfoPath: "./PackagesInfo.proj"
+- name: packagesInfoPath
+  value: "./PackagesInfo.proj"
 
 pool:
   vmImage: windows-latest

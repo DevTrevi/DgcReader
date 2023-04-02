@@ -44,11 +44,10 @@ steps:
     minorVersion: '$(minorVersion)'
     patchVersion: '$(patchVersion)'
 
-- task: DotNetCoreCLI@2
-  displayName: 'dotnet push'
+- task: NuGetCommand@2
   inputs:
     command: 'push'
-    packagesToPush: '$(Build.ArtifactStagingDirectory)/*.nupkg'
+    packagesToPush: '$(Build.ArtifactStagingDirectory)/**/*.nupkg'
     nuGetFeedType: 'external'
     publishFeedCredentials: 'NuGet.org devTrevi'
 

@@ -29,18 +29,6 @@ public class TestValidator : BaseValidator
         if (test == null)
             return result;
 
-        // Super Greenpass check
-        if (new[] {
-            ValidationMode.Strict2G,
-            ValidationMode.Booster,
-        }.Contains(validationMode))
-        {
-            result.StatusMessage = $"Test entries are considered not valid when validation mode is {validationMode}";
-            result.ItalianStatus = DgcItalianResultStatus.NotValid;
-            Logger?.LogWarning(result.StatusMessage);
-            return result;
-        }
-
         if (test.TestResult == TestResults.NotDetected)
         {
             // Negative test

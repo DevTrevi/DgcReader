@@ -54,15 +54,7 @@ public class RecoveryValidator : BaseValidator
         else if (result.ValidationInstant.Date > result.ValidUntil)
             result.ItalianStatus = DgcItalianResultStatus.Expired;
         else
-        {
-            if (validationMode == ValidationMode.Booster && !isPvRecovery)
-            {
-                result.ItalianStatus = DgcItalianResultStatus.TestNeeded;
-                result.StatusMessage = "Certificate is valid, but a test is also needed if mode is booster and the recovery certificate is not issued after a vaccination";
-            }
-            else
-                result.ItalianStatus = DgcItalianResultStatus.Valid;
-        }
+            result.ItalianStatus = DgcItalianResultStatus.Valid;
 
         return result;
     }

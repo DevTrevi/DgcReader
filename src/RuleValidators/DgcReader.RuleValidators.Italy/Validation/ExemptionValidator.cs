@@ -36,18 +36,7 @@ public class ExemptionValidator : BaseValidator
         else if (exemption.ValidUntil != null && result.ValidationInstant.Date > exemption.ValidUntil?.Date)
             result.ItalianStatus = DgcItalianResultStatus.Expired;
         else
-        {
-            switch (validationMode)
-            {
-                case ValidationMode.Booster:
-                    result.ItalianStatus = DgcItalianResultStatus.TestNeeded;
-                    result.StatusMessage = $"Certificate is valid, but mode {validationMode} requires also a valid test";
-                    break;
-                default:
-                    result.ItalianStatus = DgcItalianResultStatus.Valid;
-                    break;
-            }
-        }
+            result.ItalianStatus = DgcItalianResultStatus.Valid;
 
         return result;
     }

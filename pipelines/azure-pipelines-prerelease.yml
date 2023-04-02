@@ -7,11 +7,24 @@ variables:
   value: 'https://api.nuget.org/v3/index.json'
 - name: BuildConfiguration
   value: 'release'
+  packagesInfoPath: "./PackagesInfo.proj"
 
 pool:
   vmImage: windows-latest
 
 steps:
+
+- powershell: |
+
+   $xml = [Xml] (Get-Content $(packagesInfoPath))
+   $version = $xml.Project.PropertyGroup.Version
+   $versionChunks = $version.Split(".")[0..2]
+   
+   echo "##vso[task.setvariable variable=majorVersion]$($versionChunks[0])"
+   echo "##vso[task.setvariable variable=minorVersion]$($versionChunks[1])"
+   echo "##vso[task.setvariable variable=patchVersion]$($versionChunks[2])"
+  displayName: 'Get packages version'
+
 - task: UseDotNet@2
   displayName: "Use .NET Sdk"
   inputs:
@@ -21,14 +34,18 @@ steps:
   inputs:
     command: 'pack'
     packagesToPack: '**/*.csproj'
-    versioningScheme: 'byEnvVar'
-    versionEnvVar: 'prerelease-version'
     verbosityPack: 'Normal'
+    versioningScheme: byPrereleaseNumber
+    majorVersion: '$(majorVersion)'
+    minorVersion: '$(minorVersion)'
+    patchVersion: '$(patchVersion)'
 
 - task: NuGetToolInstaller@1
   displayName: 'Install NuGet'
+
 - script: nuget push $(Build.ArtifactStagingDirectory)\**\*.nupkg -Source $(nugetSource) -ApiKey $(nuget-org-apikey) -SkipDuplicate -NoSymbols
   displayName: 'Push to NuGet.org'
+  enabled: false
 
 
 - task: PublishBuildArtifacts@1

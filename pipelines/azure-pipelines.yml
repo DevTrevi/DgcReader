@@ -31,10 +31,12 @@ steps:
     versioningScheme: 'off'
     verbosityPack: 'Normal'
 
-- task: NuGetToolInstaller@1
-  displayName: 'Install NuGet'
-- script: nuget push $(Build.ArtifactStagingDirectory)\**\*.nupkg -Source $(nugetSource) -ApiKey $(nuget-org-apikey) -SkipDuplicate -NoSymbols
-  displayName: 'Push to NuGet.org'
+- task: NuGetCommand@2
+  inputs:
+    command: 'push'
+    packagesToPush: '$(Build.ArtifactStagingDirectory)/**/*.nupkg'
+    nuGetFeedType: 'external'
+    publishFeedCredentials: 'NuGet.org devTrevi'
 
 
 - task: PublishBuildArtifacts@1

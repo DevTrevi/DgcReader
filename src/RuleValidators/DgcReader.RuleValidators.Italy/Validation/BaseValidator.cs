@@ -21,7 +21,7 @@ public abstract class BaseValidator : ICertificateEntryValidator
     protected ILogger? Logger { get; }
 
     /// <inheritdoc/>
-    public abstract ItalianRulesValidationResult CheckCertificate(ValidationCertificateModel certificateModel, IEnumerable<RuleSetting> rules, ValidationMode validationMode, bool doubleScanMode);
+    public abstract ItalianRulesValidationResult CheckCertificate(ValidationCertificateModel certificateModel, IEnumerable<RuleSetting> rules, ValidationMode validationMode);
 
     /// <summary>
     /// Instantiate a RecoveryValidator in the initial state, including data that will always be returned

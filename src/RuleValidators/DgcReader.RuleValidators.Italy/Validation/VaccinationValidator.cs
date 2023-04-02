@@ -21,8 +21,7 @@ public class VaccinationValidator : BaseValidator
     public override ItalianRulesValidationResult CheckCertificate(
         ValidationCertificateModel certificateModel,
         IEnumerable<RuleSetting> rules,
-        ValidationMode validationMode,
-        bool doubleScanMode)
+        ValidationMode validationMode)
     {
         switch (validationMode)
         {

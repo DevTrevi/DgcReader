@@ -20,8 +20,7 @@ public class ExemptionValidator : BaseValidator
     public override ItalianRulesValidationResult CheckCertificate(
         ValidationCertificateModel certificateModel,
         IEnumerable<RuleSetting> rules,
-        ValidationMode validationMode,
-        bool doubleScanMode)
+        ValidationMode validationMode)
     {
         var result = InitializeResult(certificateModel, validationMode);
 

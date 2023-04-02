@@ -15,11 +15,9 @@ public interface ICertificateEntryValidator
     /// <param name="certificateModel"></param>
     /// <param name="rules"></param>
     /// <param name="validationMode"></param>
-    /// <param name="doubleScanMode">If true, enable rules for double checks in <see cref="ValidationMode.Booster"/> mode for test entries</param>
     /// <returns></returns>
     ItalianRulesValidationResult CheckCertificate(
         ValidationCertificateModel certificateModel,
         IEnumerable<RuleSetting> rules,
-        ValidationMode validationMode,
-        bool doubleScanMode);
+        ValidationMode validationMode);
 }

@@ -5,60 +5,66 @@ VisualStudioVersion = 17.0.31717.71
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{5541974F-21E6-4B6E-AB62-1A78A34CB87C}"
 	ProjectSection(SolutionItems) = preProject
-		azure-pipelines-prerelease.yml = azure-pipelines-prerelease.yml
-		azure-pipelines.yml = azure-pipelines.yml
+		.editorconfig = .editorconfig
 		ItalianConfiguration.md = ItalianConfiguration.md
 		LICENSE = LICENSE
+		PackagesInfo.proj = PackagesInfo.proj
 		README.md = README.md
 	EndProjectSection
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DgcReader", "DgcReader\DgcReader.csproj", "{4083F14B-F8A9-417C-BCAE-046890F9D9FA}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DgcReader", "src\DgcReader\DgcReader.csproj", "{4083F14B-F8A9-417C-BCAE-046890F9D9FA}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DgcReader.DgcTestData.Test", "DgcReader.DgcTestData.Test\DgcReader.DgcTestData.Test.csproj", "{81D84B8A-EA63-4C5B-8AD1-D5ECDA7E637A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DgcReader.DgcTestData.Test", "src\DgcReader.DgcTestData.Test\DgcReader.DgcTestData.Test.csproj", "{81D84B8A-EA63-4C5B-8AD1-D5ECDA7E637A}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "TrustListProviders", "TrustListProviders", "{1EDBDF25-24C7-4B77-8FDA-1D891E3DF11C}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "RuleValidators", "RuleValidators", "{BEA722FC-0C1B-4BDD-A273-4B415029F06F}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DgcReader.TrustListProviders.Abstractions", "TrustListProviders\DgcReader.TrustListProviders.Abstractions\DgcReader.TrustListProviders.Abstractions.csproj", "{7E9EAE53-37A0-4C36-95A3-383528B60922}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DgcReader.TrustListProviders.Abstractions", "src\TrustListProviders\DgcReader.TrustListProviders.Abstractions\DgcReader.TrustListProviders.Abstractions.csproj", "{7E9EAE53-37A0-4C36-95A3-383528B60922}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DgcReader.TrustListProviders.Italy", "TrustListProviders\DgcReader.TrustListProviders.Italy\DgcReader.TrustListProviders.Italy.csproj", "{AFC20E83-8EDE-407A-A595-E302302442DC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DgcReader.TrustListProviders.Italy", "src\TrustListProviders\DgcReader.TrustListProviders.Italy\DgcReader.TrustListProviders.Italy.csproj", "{AFC20E83-8EDE-407A-A595-E302302442DC}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Test", "Test", "{3EF4A069-88A1-484F-AA55-8703DC4E7754}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Test", "Test", "{7124E97F-3F0F-471F-8330-176CCD30FD9F}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DgcReader.TrustListProviders.Italy.Test", "TrustListProviders\Test\DgcReader.TrustListProviders.Italy.Test\DgcReader.TrustListProviders.Italy.Test.csproj", "{1DC09E90-5392-49D1-BBED-2DCC9212C9A6}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DgcReader.TrustListProviders.Italy.Test", "src\TrustListProviders\Test\DgcReader.TrustListProviders.Italy.Test\DgcReader.TrustListProviders.Italy.Test.csproj", "{1DC09E90-5392-49D1-BBED-2DCC9212C9A6}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DgcReader.RuleValidators.Italy", "RuleValidators\DgcReader.RuleValidators.Italy\DgcReader.RuleValidators.Italy.csproj", "{91CB7FE6-1AEA-41F9-97B3-8E3363904A4B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DgcReader.RuleValidators.Italy", "src\RuleValidators\DgcReader.RuleValidators.Italy\DgcReader.RuleValidators.Italy.csproj", "{91CB7FE6-1AEA-41F9-97B3-8E3363904A4B}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DgcReader.RuleValidators.Italy.Test", "RuleValidators\Test\DgcReader.RuleValidators.Italy.Test\DgcReader.RuleValidators.Italy.Test.csproj", "{DBF0FE0F-3FB3-4CB4-BB1E-1A3A85A6CA58}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DgcReader.RuleValidators.Italy.Test", "src\RuleValidators\Test\DgcReader.RuleValidators.Italy.Test\DgcReader.RuleValidators.Italy.Test.csproj", "{DBF0FE0F-3FB3-4CB4-BB1E-1A3A85A6CA58}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DgcReader.TrustListProviders.Sweden", "TrustListProviders\DgcReader.TrustListProviders.Sweden\DgcReader.TrustListProviders.Sweden.csproj", "{C60069CB-71EA-4868-B173-830FEDBEF40B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DgcReader.TrustListProviders.Sweden", "src\TrustListProviders\DgcReader.TrustListProviders.Sweden\DgcReader.TrustListProviders.Sweden.csproj", "{C60069CB-71EA-4868-B173-830FEDBEF40B}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DgcReader.TrustListProviders.Sweden.Test", "TrustListProviders\Test\DgcReader.TrustListProviders.Sweden.Test\DgcReader.TrustListProviders.Sweden.Test.csproj", "{5EFC234F-DFE7-410B-A6F6-0B5C93C03FA6}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DgcReader.TrustListProviders.Sweden.Test", "src\TrustListProviders\Test\DgcReader.TrustListProviders.Sweden.Test\DgcReader.TrustListProviders.Sweden.Test.csproj", "{5EFC234F-DFE7-410B-A6F6-0B5C93C03FA6}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DgcReader.TrustListProviders.Germany", "TrustListProviders\DgcReader.TrustListProviders.Germany\DgcReader.TrustListProviders.Germany.csproj", "{C46CEC6E-A018-44F0-8E2A-F80B5CEA2C8F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DgcReader.TrustListProviders.Germany", "src\TrustListProviders\DgcReader.TrustListProviders.Germany\DgcReader.TrustListProviders.Germany.csproj", "{C46CEC6E-A018-44F0-8E2A-F80B5CEA2C8F}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DgcReader.TrustListProviders.Germany.Test", "TrustListProviders\Test\DgcReader.TrustListProviders.Germany.Test\DgcReader.TrustListProviders.Germany.Test.csproj", "{F20D016F-D27E-4072-8E26-54C90598A106}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DgcReader.TrustListProviders.Germany.Test", "src\TrustListProviders\Test\DgcReader.TrustListProviders.Germany.Test\DgcReader.TrustListProviders.Germany.Test.csproj", "{F20D016F-D27E-4072-8E26-54C90598A106}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DgcReader.RuleValidators.Germany", "RuleValidators\DgcReader.RuleValidators.Germany\DgcReader.RuleValidators.Germany.csproj", "{426FA351-B507-464D-AB23-AA8183FD7499}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DgcReader.RuleValidators.Germany", "src\RuleValidators\DgcReader.RuleValidators.Germany\DgcReader.RuleValidators.Germany.csproj", "{426FA351-B507-464D-AB23-AA8183FD7499}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DgcReader.RuleValidators.Germany.Test", "RuleValidators\Test\DgcReader.RuleValidators.Germany.Test\DgcReader.RuleValidators.Germany.Test.csproj", "{18449B88-3812-4DA3-A4E3-0B6CD94FC9A4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DgcReader.RuleValidators.Germany.Test", "src\RuleValidators\Test\DgcReader.RuleValidators.Germany.Test\DgcReader.RuleValidators.Germany.Test.csproj", "{18449B88-3812-4DA3-A4E3-0B6CD94FC9A4}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DgcReader.Providers.Abstractions", "DgcReader.Providers.Abstractions\DgcReader.Providers.Abstractions.csproj", "{DFC231D4-0E4A-46C9-BA09-186AF59A9D21}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DgcReader.Providers.Abstractions", "src\DgcReader.Providers.Abstractions\DgcReader.Providers.Abstractions.csproj", "{DFC231D4-0E4A-46C9-BA09-186AF59A9D21}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "BlackListProviders", "BlackListProviders", "{510DD3B5-6B7D-4024-A1C2-B2B925A3A01D}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DgcReader.BlacklistProviders.Italy", "BlacklistProviders\DgcReader.BlacklistProviders.Italy\DgcReader.BlacklistProviders.Italy.csproj", "{CE72E1E6-56A8-4252-A50D-D6AF03655287}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DgcReader.BlacklistProviders.Italy", "src\BlacklistProviders\DgcReader.BlacklistProviders.Italy\DgcReader.BlacklistProviders.Italy.csproj", "{CE72E1E6-56A8-4252-A50D-D6AF03655287}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Test", "Test", "{1240A31E-C3AB-428E-80E6-48CD29CD1E2B}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DgcReader.BlacklistProviders.Italy.Test", "BlacklistProviders\Test\DgcReader.BlacklistProviders.Italy.Test\DgcReader.BlacklistProviders.Italy.Test.csproj", "{2A0B4B80-E3F2-4A07-B45C-8543464E40E4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DgcReader.BlacklistProviders.Italy.Test", "src\BlacklistProviders\Test\DgcReader.BlacklistProviders.Italy.Test\DgcReader.BlacklistProviders.Italy.Test.csproj", "{2A0B4B80-E3F2-4A07-B45C-8543464E40E4}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Deserializers", "Deserializers", "{13E1A796-5B62-4014-ABEE-AA915BFEA54E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DgcReader.Deserializers.Italy", "Deserializers\DgcReader.Deserializers.Italy\DgcReader.Deserializers.Italy.csproj", "{9F1BBBFE-AD28-453C-B867-EC0B09C237D7}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DgcReader.Deserializers.Italy", "src\Deserializers\DgcReader.Deserializers.Italy\DgcReader.Deserializers.Italy.csproj", "{9F1BBBFE-AD28-453C-B867-EC0B09C237D7}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Pipelines", "Pipelines", "{073DC309-6433-4758-9461-B2DE0D2CF204}"
+	ProjectSection(SolutionItems) = preProject
+		pipelines\azure-pipelines-prerelease.yml = pipelines\azure-pipelines-prerelease.yml
+		pipelines\azure-pipelines.yml = pipelines\azure-pipelines.yml
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

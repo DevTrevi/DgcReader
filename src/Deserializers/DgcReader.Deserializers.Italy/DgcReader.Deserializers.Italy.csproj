@@ -1,0 +1,16 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<Import Project="..\..\..\PackagesInfo.proj"/>
+
+	<PropertyGroup>
+		<TargetFrameworks>netstandard2.0;net452</TargetFrameworks>
+		<LangVersion>Latest</LangVersion>
+		<Nullable>enable</Nullable>
+		<Description>Deserializer for EuDGC certificates issued by Italy including custom entries</Description>
+	</PropertyGroup>
+
+	<ItemGroup>
+	  <ProjectReference Include="..\..\DgcReader\DgcReader.csproj" />
+	</ItemGroup>
+
+</Project>

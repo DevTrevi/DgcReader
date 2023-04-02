@@ -18,9 +18,6 @@ variables:
 - name: packagesInfoPath
   value: "./PackagesInfo.proj"
   readonly: true
-- name: EnablePush
-  value: true
-  readonly: false
 
 
 pool:

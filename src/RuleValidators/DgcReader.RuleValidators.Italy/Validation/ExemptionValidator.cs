@@ -20,8 +20,7 @@ public class ExemptionValidator : BaseValidator
     public override ItalianRulesValidationResult CheckCertificate(
         ValidationCertificateModel certificateModel,
         IEnumerable<RuleSetting> rules,
-        ValidationMode validationMode,
-        bool doubleScanMode)
+        ValidationMode validationMode)
     {
         var result = InitializeResult(certificateModel, validationMode);
 
@@ -37,18 +36,7 @@ public class ExemptionValidator : BaseValidator
         else if (exemption.ValidUntil != null && result.ValidationInstant.Date > exemption.ValidUntil?.Date)
             result.ItalianStatus = DgcItalianResultStatus.Expired;
         else
-        {
-            switch (validationMode)
-            {
-                case ValidationMode.Booster:
-                    result.ItalianStatus = DgcItalianResultStatus.TestNeeded;
-                    result.StatusMessage = $"Certificate is valid, but mode {validationMode} requires also a valid test";
-                    break;
-                default:
-                    result.ItalianStatus = DgcItalianResultStatus.Valid;
-                    break;
-            }
-        }
+            result.ItalianStatus = DgcItalianResultStatus.Valid;
 
         return result;
     }

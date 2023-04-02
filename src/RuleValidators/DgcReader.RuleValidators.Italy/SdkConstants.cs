@@ -17,7 +17,7 @@ internal class SdkConstants
     /// <summary>
     /// The version of the sdk used as reference for implementing the rules.
     /// </summary>
-    public const string ReferenceSdkMinVersion = "1.1.10";
+    public const string ReferenceSdkMinVersion = "1.1.11";
 
     /// <summary>
     /// The version of the app used as reference for implementing the rules.

@@ -1,6 +1,8 @@
 ﻿// Copyright (c) 2021 Davide Trevisan
 // Licensed under the Apache License, Version 2.0
 
+using System;
+
 namespace DgcReader.RuleValidators.Italy.Models;
 
 /// <summary>
@@ -17,10 +19,12 @@ public enum ValidationMode
     /// Enables the "Super Greenpass" check, restricting the validation to vaccinations and recovery certificates only.
     /// Test results are not considered valid in this mode.
     /// </summary>
+    [Obsolete]
     Strict2G,
 
     /// <summary>
     /// Enables the booster check, that requires at least 3 vaccination doses to be considered valid (or 2 doses in case of Johnson &amp; Johnson)
     /// </summary>
+    [Obsolete]
     Booster,
 }

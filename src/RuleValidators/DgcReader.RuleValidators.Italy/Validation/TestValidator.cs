@@ -21,29 +21,13 @@ public class TestValidator : BaseValidator
     public override ItalianRulesValidationResult CheckCertificate(
         ValidationCertificateModel certificateModel,
         IEnumerable<RuleSetting> rules,
-        ValidationMode validationMode,
-        bool doubleScanMode)
+        ValidationMode validationMode)
     {
         var result = InitializeResult(certificateModel, validationMode);
 
         var test = certificateModel.Dgc.GetCertificateEntry<TestEntry>(DiseaseAgents.Covid19);
         if (test == null)
             return result;
-
-        // Check if the validation mode selected is Booster, then check if double scan flow is selected
-        var isADoubleScanBoosterTest = validationMode == ValidationMode.Booster;
-
-        // Super Greenpass check
-        if (new[] {
-            ValidationMode.Strict2G,
-            ValidationMode.Booster,
-        }.Contains(validationMode))
-        {
-            result.StatusMessage = $"Test entries are considered not valid when validation mode is {validationMode}";
-            result.ItalianStatus = DgcItalianResultStatus.NotValid;
-            Logger?.LogWarning(result.StatusMessage);
-            return result;
-        }
 
         if (test.TestResult == TestResults.NotDetected)
         {
@@ -56,12 +40,7 @@ public class TestValidator : BaseValidator
                     break;
                 case TestTypes.Molecular:
                     result.ValidFrom = test.SampleCollectionDate.AddHours(rules.GetMolecularTestStartHour());
-
-                    // See https://github.com/ministero-salute/it-dgc-verificac19-sdk-android/compare/1.1.5...release/1.1.6
-                    if (doubleScanMode && isADoubleScanBoosterTest)
-                        result.ValidUntil = test.SampleCollectionDate.AddHours(rules.GetRapidTestEndHour());
-                    else
-                        result.ValidUntil = test.SampleCollectionDate.AddHours(rules.GetMolecularTestEndHour());
+                    result.ValidUntil = test.SampleCollectionDate.AddHours(rules.GetMolecularTestEndHour());
                     break;
                 default:
                     result.StatusMessage = $"Test type {test.TestType} not supported by current rules";

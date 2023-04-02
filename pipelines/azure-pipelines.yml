@@ -1,11 +1,4 @@
-trigger:
-  paths:
-   exclude:
-     - README.md
-     - '**/*.Test'
-  tags:
-    include:
-      - 'v2.*'
+trigger: none
 pr: none
 
 variables:
@@ -16,6 +9,20 @@ pool:
   vmImage: windows-latest
 
 steps:
+
+- powershell: |
+
+   $xml = [Xml] (Get-Content $(packagesInfoPath))
+   $version = $xml.Project.PropertyGroup.Version
+   $versionChunks = $version.Split(".")[0..2]
+   
+   echo "Package version is $version"
+
+   echo "##vso[task.setvariable variable=majorVersion]$($versionChunks[0])"
+   echo "##vso[task.setvariable variable=minorVersion]$($versionChunks[1])"
+   echo "##vso[task.setvariable variable=patchVersion]$($versionChunks[2])"
+  displayName: 'Get packages version'
+
 - task: UseDotNet@2
   displayName: "Use .NET Sdk"
   inputs:
@@ -34,7 +41,20 @@ steps:
     packagesToPush: '$(Build.ArtifactStagingDirectory)/**/*.nupkg'
     nuGetFeedType: 'external'
     publishFeedCredentials: 'NuGet.org devTrevi'
+  enabled: false
 
+- task: GitHubRelease@1
+  inputs:
+    gitHubConnection: 'DevTrevi GitHub OAuth'
+    repositoryName: '$(Build.Repository.Name)'
+    action: 'create'
+    target: '$(Build.SourceVersion)'
+    tagSource: 'userSpecifiedTag'
+    tag: 'v$(majorVersion).$(minorVersion).$(patchVersion)-test'
+    title: 'v$(majorVersion).$(minorVersion).$(patchVersion)-test'
+    isDraft: true
+    changeLogCompareToRelease: 'lastFullRelease'
+    changeLogType: 'commitBased'
 
 - task: PublishBuildArtifacts@1
   inputs:

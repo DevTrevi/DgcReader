@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFrameworks>net452;net47;net6.0;net5.0</TargetFrameworks>
+		<TargetFrameworks>net6.0;net5.0;net47;net452</TargetFrameworks>
 		<Nullable>annotations</Nullable>
 		<LangVersion>Latest</LangVersion>
 		<IsPackable>false</IsPackable>

@@ -1,5 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
+	<Import Project="..\..\..\PackagesInfo.proj"/>
+
 	<PropertyGroup>
 		<!-- Workaround for migrations EFCore 1.x -->
 		<!--<OutputType>Exe</OutputType>-->

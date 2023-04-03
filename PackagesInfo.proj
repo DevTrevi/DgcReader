@@ -1,11 +1,11 @@
 ﻿<Project>
 	<PropertyGroup>
-		<Version>2.6.0</Version>
+		<Version>2.6.1</Version>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<Authors>Davide Trevisan</Authors>
 		<Copyright>Copyright © 2021 Davide Trevisan</Copyright>
 		<RepositoryUrl>https://github.com/DevTrevi/DGCReader</RepositoryUrl>
-		<PackageLicenseExpression> Apache-2.0</PackageLicenseExpression>
+		<PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
 		<PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
 		<PackageProjectUrl>https://github.com/DevTrevi/DgcReader</PackageProjectUrl>
 		<PackageTags>DGC DCC DigitalGreenCertificate DigitalCovidCertificate Greenpass Covid Covid19 VerificaC19</PackageTags>
